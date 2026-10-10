@@ -1,0 +1,14 @@
+{
+  "accuracy-claim-kit": [
+    "COMPARISON_TOLERANCE",
+    "DEFAULT_CONFIDENCE",
+    "DEFAULT_MIN_N",
+    "assessAccuracyClaim",
+    "cohenKappa",
+    "gwetAC1",
+    "maxDisplayDecimals",
+    "percentAgreement",
+    "wilsonInterval",
+    "zForConfidence"
+  ]
+}
