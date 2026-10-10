@@ -13,6 +13,8 @@ import type {
   AssessOptions,
   ReasonCode,
 } from '../src/index.js'
+import { gwetAC1, percentAgreement } from '../src/index.js'
+import { pctCeil, pctFloor } from '../src/format.js'
 import { vectors } from './vectors.js'
 
 // Verdict regression table. Each row is one honest input that must pass or one
@@ -928,5 +930,179 @@ describe('scales linearly on hostile sizes', () => {
       }),
     )
     expect(r.explanation[0]?.length).toBeLessThan(400)
+  })
+})
+
+// ---- codex review round (07521bf): each block failed on that commit -------
+
+const B: AccuracyClaimInput = {
+  claim: { metric: 'accuracy', value: 0.98 },
+  sample: { n: 1000, correct: 990 },
+  provenance: { source: 'human' },
+  sampling: 'random',
+}
+
+describe('a captured length is validated before any loop', () => {
+  const lying = (length: unknown, element: unknown = ['a', 'a']): unknown[] =>
+    new Proxy([] as unknown[], {
+      get: (_t, k) => (k === 'length' ? length : element),
+    })
+
+  it('rejects Infinity, NaN, negative, fractional and oversized pair lengths quickly', () => {
+    for (const length of [Infinity, Number.NaN, -1, 1.5, 2 ** 32, 1e9, '3', null]) {
+      for (const f of [percentAgreement, cohenKappa, gwetAC1]) {
+        expect(() => f(lying(length) as [string, string][]), `${String(length)}`).toThrow(
+          length === '3' || length === null ? TypeError : RangeError,
+        )
+      }
+    }
+  })
+
+  it('rejects a pair that claims a wrong length', () => {
+    const pair = new Proxy(['a', 'a'], { get: (t, k) => (k === 'length' ? Infinity : Reflect.get(t, k) as unknown) })
+    expect(() => percentAgreement([pair as unknown as [string, string]])).toThrow(RangeError)
+  })
+
+  it('rejects a bad strata length', () => {
+    for (const length of [Infinity, Number.NaN, -1, 1.5, 1e9]) {
+      const strata = lying(length, { name: 'a', n: 10, correct: 5 })
+      expect(() => assessAccuracyClaim({ ...B, strata: strata as never })).toThrow(RangeError)
+    }
+  })
+
+  it('still accepts real arrays and honest proxies', () => {
+    expect(percentAgreement([['a', 'a']])).toMatchObject({ n: 1, value: 1 })
+    const honest = new Proxy([['a', 'a'], ['a', 'b']] as [string, string][], {})
+    expect(percentAgreement(honest)).toMatchObject({ n: 2, value: 0.5 })
+  })
+})
+
+describe('the printed display is judged as well as the value', () => {
+  it('"100%" over a 0.996 value on 1000/1000 is overstated, not supported', () => {
+    const r = assessAccuracyClaim({
+      ...B,
+      claim: { metric: 'accuracy', value: 0.996, display: '100%' },
+      sample: { n: 1000, correct: 1000 },
+    })
+    expect(r.verdict).toBe('overstated')
+    expect(r.reasons).toEqual(['claim-beyond-conservative-bound'])
+    expect(r.assessedValue).toBe(1)
+    expect(r.claimed).toBe(0.996)
+    expect(r.explanation[0]).toContain('printed figure')
+  })
+
+  it('"0%" over a 0.004 error rate with zero errors is overstated', () => {
+    const r = assessAccuracyClaim({
+      ...B,
+      claim: { metric: 'error-rate', value: 0.004, display: '0%' },
+      sample: { n: 1000, errors: 0 },
+    })
+    expect(r.verdict).toBe('overstated')
+    expect(r.assessedValue).toBe(0)
+  })
+
+  it('a printed figure above the interval is contradicted even if the value is not', () => {
+    const r = assessAccuracyClaim({
+      ...B,
+      claim: { metric: 'accuracy', value: 0.9949, display: '99%' },
+      sample: { n: 1000, correct: 900 },
+    })
+    expect(r.verdict).toBe('contradicted')
+  })
+
+  it('uses the value when it is the more favorable of the two', () => {
+    const r = assessAccuracyClaim({ ...B, claim: { metric: 'accuracy', value: 0.985, display: '98%' } })
+    expect(r.assessedValue).toBe(0.985)
+    expect(r.verdict).toBe('overstated')
+  })
+
+  it('leaves a consistent, honest claim supported', () => {
+    const r = assessAccuracyClaim({ ...B, claim: { metric: 'accuracy', value: 0.98, display: '98%' } })
+    expect(r.verdict).toBe('supported')
+    expect(r.assessedValue).toBe(0.98)
+  })
+
+  it('still throws when value and display disagree by more than rounding', () => {
+    expect(() => assessAccuracyClaim({ ...B, claim: { metric: 'accuracy', value: 0.9, display: '100%' } })).toThrow(RangeError)
+  })
+
+  it('without a display, assessedValue is the value', () => {
+    expect(assessAccuracyClaim(B).assessedValue).toBe(0.98)
+  })
+})
+
+describe('an undefined agreement statistic must be well formed and cannot pass a gate', () => {
+  const prov = (agreement: unknown): AccuracyClaimInput['provenance'] =>
+    ({ source: 'human', agreement }) as AccuracyClaimInput['provenance']
+
+  it('throws unless an undefined statistic has value null', () => {
+    for (const value of [Number.NaN, 0, 1, '0.5', {}, [], undefined, Infinity]) {
+      expect(
+        () => assessAccuracyClaim({ ...B, provenance: prov({ statistic: 'cohen-kappa', status: 'undefined', value }) }),
+        `${typeof value}:${JSON.stringify(value) ?? 'undefined'}`,
+      ).toThrow(/value/)
+    }
+  })
+
+  it('a kit-made undefined result is accepted, and refused when a minimum is set', () => {
+    const undef = cohenKappa([['a', 'a'], ['a', 'a']])
+    expect(assessAccuracyClaim({ ...B, provenance: prov(undef) }).verdict).toBe('supported')
+    const r = assessAccuracyClaim({ ...B, provenance: prov(undef) }, { minAgreement: 0.1 })
+    expect(r.verdict).toBe('refused')
+    expect(r.reasons).toEqual(['agreement-undefined'])
+  })
+
+  it('a defined statistic with a malformed value still throws', () => {
+    for (const value of [Number.NaN, '0.5', null, {}]) {
+      expect(() => assessAccuracyClaim({ ...B, provenance: prov({ statistic: 'gwet-ac1', value }) })).toThrow()
+    }
+  })
+})
+
+describe('formatted bounds never cross the bound', () => {
+  it('n = 1e14 all correct does not print 100%', () => {
+    const r = assessAccuracyClaim({ ...B, claim: { metric: 'accuracy', value: 0.5 }, sample: { n: 1e14, correct: 1e14 } })
+    expect(r.suggestedStatement).not.toMatch(/^At least 100/)
+    expect(r.suggestedStatement).toMatch(/^At least 99\.9999/)
+    expect(r.interval?.low).toBeLessThan(1)
+  })
+
+  it('floors and ceils exactly, with no slack', () => {
+    expect(pctFloor(0.9999999999999999, 4)).toBe('99.9999%')
+    expect(pctCeil(1e-17, 2)).toBe('0.01%')
+    expect(pctFloor(0.98, 0)).toBe('97%') // the double 0.98 is a hair below 98%
+    expect(pctCeil(0.98, 0)).toBe('98%')
+    expect(pctFloor(0.5, 0)).toBe('50%')
+    expect(pctCeil(0.5, 3)).toBe('50.000%')
+    expect(pctCeil(1, 2)).toBe('100.00%')
+    expect(pctFloor(0, 3)).toBe('0.000%')
+    expect(pctFloor(0.123456, 2)).toBe('12.34%')
+    expect(pctCeil(0.123456, 2)).toBe('12.35%')
+  })
+
+  it('every explanation figure for a limit is rounded outward too', () => {
+    const r = assessAccuracyClaim({ ...B, claim: { metric: 'accuracy', value: 0.998, display: '99.8%' }, sample: { n: 500, correct: 499 } })
+    expect(r.explanation[0]).toContain('(98.875%)') // limit is 98.8759...%
+  })
+})
+
+describe('confidence labels', () => {
+  const label = (confidence: number): string => {
+    const r = assessAccuracyClaim(B, { confidence })
+    return /\((.*?) Wilson interval/.exec(r.suggestedStatement)?.[1] as string
+  }
+
+  it('never prints 100%', () => {
+    expect(label(1 - Number.EPSILON / 2)).toBe('99.999999999%')
+    expect(label(0.9999999999999999)).not.toBe('100%')
+  })
+
+  it('keeps ordinary levels tidy', () => {
+    expect(label(0.95)).toBe('95%')
+    expect(label(0.9)).toBe('90%')
+    expect(label(0.99)).toBe('99%')
+    expect(label(0.999)).toBe('99.9%')
+    expect(label(0.57)).toBe('57%')
+    expect(label(0.6827)).toBe('68.27%')
   })
 })

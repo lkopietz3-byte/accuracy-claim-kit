@@ -8,7 +8,8 @@
   "Formulas (all in exact or 60-digit decimal arithmetic, never the TS code path):",
   "",
   "  z (two-sided confidence c):",
-  "      c <= 0.5 : z =  NormalDist().inv_cdf(0.5 + c/2)",
+  "      c <= 0.5 : z = x solving erf(x/sqrt 2) = c  (Newton on the erf Taylor series,",
+  "                 60-digit decimal; avoids the 0.5 + c/2 cancellation)",
   "      c  > 0.5 : z = -NormalDist().inv_cdf((1 - c)/2)",
   "  Wilson score interval (Wilson 1927), successes s, trials n:",
   "      centre  = (s + z^2/2) / (n + z^2)",
@@ -1134,20 +1135,32 @@
  ],
  "zForConfidence": [
   [
+   1e-16,
+   1.2533141373155002e-16
+  ],
+  [
+   1e-12,
+   1.2533141373155002e-12
+  ],
+  [
+   1e-09,
+   1.2533141373155004e-09
+  ],
+  [
    1e-06,
-   1.253314137212722e-06
+   1.2533141373158284e-06
   ],
   [
    0.01,
-   0.012533469508069274
+   0.012533469508069264
   ],
   [
    0.1,
-   0.12566134685507413
+   0.12566134685507405
   ],
   [
    0.25,
-   0.3186393639643752
+   0.31863936396437514
   ],
   [
    0.5,
@@ -7740,7 +7753,7 @@
    "n": 50,
    "confidence": 0.0001,
    "low": 0.0,
-   "high": 3.1415926690514823e-10,
+   "high": 3.141592669052174e-10,
    "point": 0.0
   },
   {
@@ -7773,6 +7786,126 @@
    "confidence": 0.0001,
    "low": 0.3079812230529747,
    "high": 0.30798835871901137,
+   "point": 0.30798479087452474
+  },
+  {
+   "successes": 0,
+   "n": 50,
+   "confidence": 1e-16,
+   "low": 0.0,
+   "high": 3.141592653589793e-34,
+   "point": 0.0
+  },
+  {
+   "successes": 7,
+   "n": 50,
+   "confidence": 1e-16,
+   "low": 0.13999999999999999,
+   "high": 0.14,
+   "point": 0.14
+  },
+  {
+   "successes": 50,
+   "n": 50,
+   "confidence": 1e-16,
+   "low": 1.0,
+   "high": 1.0,
+   "point": 1.0
+  },
+  {
+   "successes": 499,
+   "n": 500,
+   "confidence": 1e-16,
+   "low": 0.998,
+   "high": 0.998,
+   "point": 0.998
+  },
+  {
+   "successes": 81,
+   "n": 263,
+   "confidence": 1e-16,
+   "low": 0.30798479087452474,
+   "high": 0.30798479087452474,
+   "point": 0.30798479087452474
+  },
+  {
+   "successes": 0,
+   "n": 50,
+   "confidence": 1e-12,
+   "low": 0.0,
+   "high": 3.141592653589793e-26,
+   "point": 0.0
+  },
+  {
+   "successes": 7,
+   "n": 50,
+   "confidence": 1e-12,
+   "low": 0.1399999999999385,
+   "high": 0.1400000000000615,
+   "point": 0.14
+  },
+  {
+   "successes": 50,
+   "n": 50,
+   "confidence": 1e-12,
+   "low": 1.0,
+   "high": 1.0,
+   "point": 1.0
+  },
+  {
+   "successes": 499,
+   "n": 500,
+   "confidence": 1e-12,
+   "low": 0.9979999999999974,
+   "high": 0.9980000000000026,
+   "point": 0.998
+  },
+  {
+   "successes": 81,
+   "n": 263,
+   "confidence": 1e-12,
+   "low": 0.30798479087448905,
+   "high": 0.3079847908745604,
+   "point": 0.30798479087452474
+  },
+  {
+   "successes": 0,
+   "n": 50,
+   "confidence": 1e-09,
+   "low": 0.0,
+   "high": 3.141592653589794e-20,
+   "point": 0.0
+  },
+  {
+   "successes": 7,
+   "n": 50,
+   "confidence": 1e-09,
+   "low": 0.13999999993849815,
+   "high": 0.14000000006150184,
+   "point": 0.14
+  },
+  {
+   "successes": 50,
+   "n": 50,
+   "confidence": 1e-09,
+   "low": 1.0,
+   "high": 1.0,
+   "point": 1.0
+  },
+  {
+   "successes": 499,
+   "n": 500,
+   "confidence": 1e-09,
+   "low": 0.9979999999974959,
+   "high": 0.9980000000025041,
+   "point": 0.998
+  },
+  {
+   "successes": 81,
+   "n": 263,
+   "confidence": 1e-09,
+   "low": 0.3079847908388464,
+   "high": 0.30798479091020303,
    "point": 0.30798479087452474
   }
  ],

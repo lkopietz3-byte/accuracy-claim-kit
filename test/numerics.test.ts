@@ -357,3 +357,23 @@ describe('agreement input validation', () => {
     expect(() => gwetAC1([['a', 'b']], { categories: '2' as unknown as number })).toThrow(TypeError)
   })
 })
+
+describe('very small confidence levels keep their digits', () => {
+  it('z for 1e-16 is sqrt(pi/2) * 1e-16, not 0', () => {
+    const z = zForConfidence(1e-16)
+    expect(Math.abs(z - 1.2533141373155002e-16) / 1.2533141373155002e-16).toBeLessThan(1e-12)
+  })
+
+  it('wilsonInterval(0, 30, { confidence: 1e-16 }) is a tiny but nonzero interval', () => {
+    const r = wilsonInterval(0, 30, { confidence: 1e-16 })
+    expect(r.z).toBeGreaterThan(1e-16)
+    expect(r.low).toBe(0)
+    expect(Math.abs(r.high - 5.235987755982989e-34) / 5.235987755982989e-34).toBeLessThan(1e-9)
+  })
+
+  it('is monotone through the c = 0.5 switch between the two forms', () => {
+    const cs = [0.4, 0.49, 0.499999, 0.5, 0.500001, 0.51, 0.6]
+    const zs = cs.map((c) => zForConfidence(c))
+    for (let i = 1; i < zs.length; i++) expect(zs[i] as number).toBeGreaterThan(zs[i - 1] as number)
+  })
+})

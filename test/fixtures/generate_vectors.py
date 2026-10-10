@@ -7,7 +7,8 @@ Nothing here is shared with the TypeScript implementation.
 Formulas (all in exact or 60-digit decimal arithmetic, never the TS code path):
 
   z (two-sided confidence c):
-      c <= 0.5 : z =  NormalDist().inv_cdf(0.5 + c/2)
+      c <= 0.5 : z = x solving erf(x/sqrt 2) = c  (Newton on the erf Taylor series,
+                 60-digit decimal; avoids the 0.5 + c/2 cancellation)
       c  > 0.5 : z = -NormalDist().inv_cdf((1 - c)/2)
   Wilson score interval (Wilson 1927), successes s, trials n:
       centre  = (s + z^2/2) / (n + z^2)
@@ -35,9 +36,59 @@ getcontext().prec = 60
 ND = NormalDist()
 
 
+def _atan_inv(k):
+    """atan(1/k) as a Decimal, from its Taylor series."""
+    k = Decimal(k)
+    x = 1 / k
+    total, term, n = x, x, 1
+    while abs(term) > Decimal(10) ** -(getcontext().prec + 5):
+        term = -term * x * x
+        n += 2
+        total += term / n
+    return total
+
+
+def _pi():
+    """Machin: pi = 16 atan(1/5) - 4 atan(1/239)."""
+    return 16 * _atan_inv(5) - 4 * _atan_inv(239)
+
+
+def z_central(c):
+    """x with erf(x/sqrt 2) = c (so P(|Z| <= x) = c), in 60-digit decimal.
+
+    Newton on f(x) = erf(x/sqrt 2) - c, with erf from its Taylor series
+    2/sqrt(pi) * sum (-1)^n y^(2n+1) / (n! (2n+1)). Needs no cancellation-prone
+    0.5 + c/2 step, so it stays exact for c as small as 1e-16 and below.
+    Used for c <= 0.5, where NormalDist.inv_cdf(0.5 + c/2) loses digits.
+    """
+    pi = _pi()
+    sqrt2 = Decimal(2).sqrt()
+    c = Decimal(c)
+
+    def erf(y):
+        total, term, n = Decimal(0), y, 0
+        while True:
+            total += term / (2 * n + 1)
+            n += 1
+            term = -term * y * y / n
+            if abs(term) < Decimal(10) ** -(getcontext().prec + 5):
+                break
+        return 2 / pi.sqrt() * total
+
+    x = c * (pi / 2).sqrt()
+    for _ in range(40):
+        f = erf(x / sqrt2) - c
+        d = (2 / pi).sqrt() * (-(x * x) / 2).exp()
+        step = f / d
+        x -= step
+        if abs(step) < Decimal(10) ** -50 * max(abs(x), Decimal(10) ** -40):
+            break
+    return float(x)
+
+
 def z_for(c):
     if c <= 0.5:
-        return ND.inv_cdf(0.5 + c / 2)
+        return z_central(c)
     return -ND.inv_cdf((1 - c) / 2)
 
 
@@ -108,7 +159,7 @@ def main():
     ps = [p for p in ps if 0 < p < 1]
     out["normalQuantile"] = [[p, ND.inv_cdf(p)] for p in ps]
 
-    confs = [1e-6, 0.01, 0.1, 0.25, 0.5, 0.5000001, 0.6827, 0.8, 0.9, 0.95, 0.975, 0.99, 0.999, 0.9999, 0.99999, 0.999999]
+    confs = [1e-16, 1e-12, 1e-9, 1e-6, 0.01, 0.1, 0.25, 0.5, 0.5000001, 0.6827, 0.8, 0.9, 0.95, 0.975, 0.99, 0.999, 0.9999, 0.99999, 0.999999]
     out["zForConfidence"] = [[c, z_for(c)] for c in confs]
 
     # wilson --------------------------------------------------------------
@@ -124,7 +175,7 @@ def main():
                 if 0 <= s <= n:
                     lo, hi, pt = wilson(s, n, c)
                     cases.append({"successes": s, "n": n, "confidence": c, "low": lo, "high": hi, "point": pt})
-    for c in [0.5, 0.6827, 0.975, 0.999999, 0.5000001, 0.0001]:
+    for c in [0.5, 0.6827, 0.975, 0.999999, 0.5000001, 0.0001, 1e-16, 1e-12, 1e-9]:
         for (s, n) in [(0, 50), (7, 50), (50, 50), (499, 500), (81, 263)]:
             lo, hi, pt = wilson(s, n, c)
             cases.append({"successes": s, "n": n, "confidence": c, "low": lo, "high": hi, "point": pt})
