@@ -27,6 +27,7 @@ Does this accuracy or error-rate number have the evidence to carry it? Wilson in
 
 - A refusal means "cannot tell", never "false". Fail only on positive evidence; malformed input throws and never returns a verdict or permission.
 - Keep the claimant-favoring tolerance (`COMPARISON_TOLERANCE`) as the only place floating-point noise is absorbed. Rows exactly at each boundary stay in the verdict table.
+- Validate every captured array length before looping, and judge the printed display as well as the value.
 - Read every caller property once; never list keys, call `toJSON` or `then`.
 - Statements describe evidence only. They must never say the system is accurate, and bounds round in the cautious direction.
 - Do not add legal, regulatory or compliance claims anywhere in docs or output.

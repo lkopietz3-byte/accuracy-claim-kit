@@ -52,7 +52,7 @@ const result = assessAccuracyClaim({
 result.verdict // 'overstated'
 result.reasons // ['claim-beyond-conservative-bound', 'precision-too-fine']
 result.explanation[0]
-// 'The claimed 99.800% is inside the 95% Wilson interval but above its lower end (98.876%), which is the most the evidence supports.'
+// 'The claimed 99.800% is inside the 95% Wilson interval but above its lower end (98.875%), which is the most the evidence supports.'
 result.interval // { low: 0.98875..., high: 0.99964..., point: 0.998, confidence: 0.95, z: 1.95996..., successes: 499, n: 500 }
 result.suggestedStatement
 // 'At least 98.8% accurate (95% Wilson interval 98.87% to 99.97%, n = 500, human labels, random sample)'
@@ -110,7 +110,7 @@ Returns `{ low, high, point, confidence, z, successes, n }`. `point` is `success
 | `cohenKappa` | chance agreement is exactly 1: both raters used one and the same single label for every item | `expected-agreement-is-1` |
 | `gwetAC1` | fewer than two categories (pass `{ categories: Q }` if the scale allows more than were used) | `single-category` |
 
-`categories` is the number of distinct labels seen (for `gwetAC1`, the Q used). Kappa and AC1 are computed from integer counts with `BigInt`, so there is no subtraction error. Malformed pairs throw (`TypeError` for a wrong type, `RangeError` for a wrong length or a non-finite number).
+`categories` is the number of distinct labels seen (for `gwetAC1`, the Q used). Kappa and AC1 are computed from integer counts with `BigInt`, so there is no subtraction error. Malformed pairs throw (`TypeError` for a wrong type, `RangeError` for a wrong length or a non-finite number). An array's `length` is validated before it is used (a whole number from 0 to 10,000,000), so a Proxy that reports `Infinity`, `NaN` or a huge length throws instead of looping; the same limit applies to `strata`.
 
 Pass a result straight into `provenance.agreement`.
 
@@ -127,14 +127,15 @@ assessAccuracyClaim({
 }, { confidence?, minN?, minAgreement? })
 ```
 
-Returns `{ verdict, reasons, explanation, metric, claimed, n, interval, conservativeBound, suggestedStatement }`. `reasons` has at least one code and `explanation` has one plain sentence per code. When refused, `interval` and `conservativeBound` are `null` so no number is there to quote, and `suggestedStatement` says why no figure can be given.
+Returns `{ verdict, reasons, explanation, metric, claimed, assessedValue, n, interval, conservativeBound, suggestedStatement }`. `reasons` has at least one code and `explanation` has one plain sentence per code. When refused, `interval` and `conservativeBound` are `null` so no number is there to quote, and `suggestedStatement` says why no figure can be given.
 
 Rules you can rely on:
 
 - **Malformed input throws and never returns a verdict.** Wrong runtime type: `TypeError`. Right type, unusable value (NaN, fractional counts, `correct > n`, a figure outside 0..1, an unknown enum string, a `display` that is not a percent or does not match `value`, strata that do not add up to the sample, duplicate stratum names, more included retractions than items): `RangeError`.
 - **Every property is read once**, in a fixed order, before any judgment. Proxies, getters, class instances, inherited fields and null-prototype objects all work. A getter that throws propagates its own error. No key listing, `toJSON` or `then` is ever used.
 - **A refusal outranks a verdict.** A ranked sample with a plainly false claim is refused, not contradicted.
-- **`display`** is optional. When given, its number of decimals is checked against the interval (see below). Whole-percent figures are never flagged.
+- **`display`** is optional. Readers see the printed figure, so when it is given the verdict judges the **more favorable of `value` and the parsed display** (the higher for accuracy, the lower for error rate). That figure is returned as `assessedValue`, and the explanation says "printed figure" when it came from the display. A `value` of 0.996 printed as "100%" on 1000 of 1000 correct is judged as 100% and comes out `overstated`, not `supported`. A display that disagrees with `value` by more than its own rounding (half a unit of its last digit) throws `RangeError`, so the two can never quietly diverge. The number of decimals is also checked against the interval (see below); whole-percent figures are never flagged.
+- **`provenance.agreement`**: a defined statistic needs a finite `value` from -1 to 1. An undefined one (`status: 'undefined'`, as `cohenKappa` and `gwetAC1` return) must carry `value: null`; `NaN`, numbers, text or objects in its place throw. An undefined statistic is accepted as input but can never pass a gate (`agreement-undefined`).
 - **`options.minAgreement`** (from -1 to 1) turns agreement into a gate. Equal to the minimum passes. Without it, a supplied agreement statistic is only echoed in the statement.
 - **Strata**: if two strata have non-overlapping intervals the combined number is refused. The intervals use a Bonferroni split of the error budget across strata (`k` strata use confidence `1 - (1 - confidence) / k`), so many strata do not cause refusals by chance. One stratum never triggers it.
 
@@ -148,7 +149,7 @@ A figure printed with `D` decimals has a last digit worth `10^-D` percentage poi
 
 ### Suggested statements
 
-For non-refused results: `At least X% accurate (95% Wilson interval L% to H%, n = N, human labels, random sample)`, or `At most X% error rate (...)`. Bounds always round in the cautious direction (lower end down, upper end up). The statement describes the evidence; it never says the system is accurate.
+For non-refused results: `At least X% accurate (95% Wilson interval L% to H%, n = N, human labels, random sample)`, or `At most X% error rate (...)`. Bounds always round in the cautious direction (lower end down, upper end up), exactly: the double is split into mantissa and exponent and rounded with integer arithmetic, so a printed bound is never on the favorable side of the number it describes (an all-correct sample of 1e14 prints `At least 99.9999...%`, never 100%). The confidence level is labeled from its shortest decimal text, rounded down, and never prints as 100% (`0.95` reads `95%`). The statement describes the evidence; it never says the system is accurate.
 
 ## Formulas
 
@@ -162,7 +163,7 @@ Wilson interval = [centre - margin, centre + margin]
 
 The code evaluates the lower limit as `s^2 / (n * (A + B))` with `A = s + z^2/2` and `B = z * sqrt(s(n - s)/n + z^2/4)`, which is the same number without cancellation when `s` is small. Above the midpoint the upper limit is `1 - (lower limit for n - s)`.
 
-`z` comes from an inverse normal CDF: Acklam's rational approximation followed by one Halley refinement step against an `erf`/`erfc` written out in the source. It matches Python's `NormalDist().inv_cdf` to about 2e-15 relative on the reference points. Below p of about 1e-300 the refinement is skipped and the answer is good to about 1e-9.
+`z` comes from an inverse normal CDF: Acklam's rational approximation followed by one Halley refinement step against an `erf`/`erfc` written out in the source. It matches Python's `NormalDist().inv_cdf` to about 2e-15 relative on the reference points. For confidence levels up to 0.5 the quantile is solved from the displacement `c/2` from the median rather than from `0.5 + c/2`, which would round away every digit of a tiny `c` (`zForConfidence(1e-16)` is about 1.2533e-16, not 0); the Python generator checks that range with a Newton solve of the erf Taylor series in 60-digit decimal because `NormalDist` has the same cancellation there. Below p of about 1e-300 the refinement is skipped and the answer is good to about 1e-9.
 
 For two raters over `N` items, `a_k` and `b_k` the counts of label `k` from each rater, `agree` the items with equal labels:
 
