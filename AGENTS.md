@@ -1,4 +1,4 @@
-# accuracy-claim-kit — agent instructions
+# accuracy-claim-kit - agent instructions
 
 Does this accuracy or error-rate number have the evidence to carry it? Wilson intervals, inter-rater agreement (percent agreement, Cohen's kappa, Gwet's AC1) and a refuse-or-judge verdict on a claimed figure, computed from caller-supplied counts. Zero-dependency, offline TypeScript.
 
