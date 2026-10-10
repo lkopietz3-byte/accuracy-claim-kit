@@ -16,21 +16,26 @@ export function splitDouble(x: number): { mantissa: bigint; exponent: number } {
 }
 
 /**
- * True when |x - D / 10^scale| <= 1/2 * 10^-places, judged on the exact value
- * of the double x. `digits` is D as a BigInt and the printed figure is
- * D / 10^scale; `places` is how many of those decimals are the last digit's
- * place (so half a unit of the last digit is 0.5 * 10^-places).
+ * True when |x - D / 10^scale| <= 1/2 * 10^-places + 1 ulp of x, judged on the
+ * exact value of the double x. `digits` is D as a BigInt and the printed figure
+ * is D / 10^scale; `places` is the decimal place of the printed last digit (so
+ * half a unit of it is 0.5 * 10^-places). The one-ulp allowance is the spacing
+ * of doubles at x (2^exponent of its mantissa), so a value that is the double
+ * nearest to a figure a person rounded by hand is never rejected for the
+ * double's own representation error, while a real gap many ulps wide still is.
+ * No floating-point tolerance is involved.
  */
 export function withinHalfUnit(x: number, digits: bigint, scale: number, places: number): boolean {
-  // Work in units of 10^-scale: |x * 10^scale - D| <= 10^(scale - places) / 2.
+  // Work in units of 10^-scale and double everything to keep 1/2 an integer:
+  // 2 |x * 10^scale - D| <= 10^(scale - places) + 2 * ulp * 10^scale
   const { mantissa, exponent } = splitDouble(x)
   const ten = 10n ** BigInt(scale)
-  const allowance = 10n ** BigInt(scale - places) // twice the half-unit, in the same units
+  const half = 10n ** BigInt(scale - places) // twice the half-unit
   if (exponent >= 0) {
     const lhs = 2n * mantissa * (1n << BigInt(exponent)) * ten - 2n * digits
-    return (lhs < 0n ? -lhs : lhs) <= allowance
+    return (lhs < 0n ? -lhs : lhs) <= half + 2n * (1n << BigInt(exponent)) * ten
   }
-  const s = 1n << BigInt(-exponent)
+  const s = 1n << BigInt(-exponent) // 1 / ulp
   const lhs = 2n * mantissa * ten - 2n * digits * s
-  return (lhs < 0n ? -lhs : lhs) <= allowance * s
+  return (lhs < 0n ? -lhs : lhs) <= half * s + 2n * ten
 }

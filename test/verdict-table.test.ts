@@ -1124,13 +1124,24 @@ describe('display agreement with the value is exact, with no tolerance', () => {
     expect(() => assessAccuracyClaim(withDisplay(0.98, '98.0%'))).not.toThrow()
   })
 
-  it('compares against the exact value of the double', () => {
-    // the double nearest 0.985 is a hair below it, so "99%" is just over half a unit away
-    expect(() => assessAccuracyClaim(withDisplay(0.985, '99%'))).toThrow(RangeError)
-    expect(() => assessAccuracyClaim(withDisplay(0.985, '98%'))).not.toThrow()
-    // ...and the double nearest 0.9985 is a hair above it, so "99.8%" is just over half a unit away
-    expect(() => assessAccuracyClaim(withDisplay(0.9985, '99.8%'))).toThrow(RangeError)
-    expect(() => assessAccuracyClaim(withDisplay(0.9985, '99.9%'))).not.toThrow()
+  it('never rejects a figure for the double\'s own representation error', () => {
+    // Math.round(0.985 * 100) is 99 and 0.985 * 100 is 98.5 in doubles; the double
+    // 0.985 sits 1.3e-17 below the half-unit edge, which one ulp of allowance covers.
+    for (const [value, display] of [[0.985, '99%'], [0.985, '98%'], [0.9985, '99.8%'], [0.9985, '99.9%']] as const) {
+      expect(() => assessAccuracyClaim(withDisplay(value, display)), `${String(value)} ${display}`).not.toThrow()
+    }
+  })
+
+  it('allows exactly half a unit plus one ulp, and throws at two ulps', () => {
+    // 0.125 is exactly half a unit (0.005) from both 12% and 13%.
+    const ulp = 2 ** -55 // spacing of doubles in [0.125, 0.25)
+    expect(() => assessAccuracyClaim(withDisplay(0.125, '12%'))).not.toThrow()
+    expect(() => assessAccuracyClaim(withDisplay(0.125, '13%'))).not.toThrow()
+    expect(() => assessAccuracyClaim(withDisplay(0.125 + ulp, '12%'))).not.toThrow() // half + 1 ulp
+    expect(() => assessAccuracyClaim(withDisplay(0.125 + 2 * ulp, '12%'))).toThrow(RangeError) // half + 2 ulps
+    const below = 2 ** -56 // spacing of doubles in [0.0625, 0.125)
+    expect(() => assessAccuracyClaim(withDisplay(0.125 - below, '13%'))).not.toThrow()
+    expect(() => assessAccuracyClaim(withDisplay(0.125 - 2 * below, '13%'))).toThrow(RangeError)
   })
 })
 
