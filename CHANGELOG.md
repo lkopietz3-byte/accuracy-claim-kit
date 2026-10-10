@@ -13,3 +13,9 @@
 - `zForConfidence` keeps its digits for tiny confidence levels (computed from the displacement `c/2`).
 - Formatted bounds are rounded exactly outward; an all-correct sample of 1e14 no longer prints 100%.
 - Confidence labels round down and never print 100%.
+
+### Final review round
+- A display is compared with `value` exactly (BigInt, half a unit of the display's last digit); `COMPARISON_TOLERANCE` no longer softens that check.
+- A display above 100% or with a sign is rejected from its decimal digits before conversion.
+- A refused result reports the selected `assessedValue`.
+- `zForConfidence` returns `c * sqrt(pi/2)` below 1e-9, so `Number.MIN_VALUE` gives `Number.MIN_VALUE`, not 0.
