@@ -358,6 +358,31 @@ describe('agreement input validation', () => {
   })
 })
 
+describe('confidence levels near the bottom of the double range', () => {
+  it('z for Number.MIN_VALUE is Number.MIN_VALUE, not 0', () => {
+    expect(zForConfidence(Number.MIN_VALUE)).toBe(Number.MIN_VALUE)
+  })
+
+  it('z for 1e-300 and 1e-100 follow sqrt(pi/2) * c', () => {
+    expect(relErr(zForConfidence(1e-300), 1.2533141373155e-300)).toBeLessThan(1e-12)
+    expect(relErr(zForConfidence(1e-100), 1.2533141373155e-100)).toBeLessThan(1e-12)
+  })
+
+  it('the interval stays finite and ordered at the smallest confidence', () => {
+    const r = wilsonInterval(3, 30, { confidence: Number.MIN_VALUE })
+    expect(Number.isFinite(r.low) && Number.isFinite(r.high)).toBe(true)
+    expect(r.low).toBeLessThanOrEqual(r.point)
+    expect(r.high).toBeGreaterThanOrEqual(r.point)
+  })
+
+  it('is continuous where the formula switches near c = 1e-9', () => {
+    const below = zForConfidence(0.999999e-9)
+    const above = zForConfidence(1.000001e-9)
+    expect(relErr(above, below)).toBeLessThan(2.1e-6)
+    expect(relErr(zForConfidence(1e-9), 1.2533141373155004e-9)).toBeLessThan(1e-14)
+  })
+})
+
 describe('very small confidence levels keep their digits', () => {
   it('z for 1e-16 is sqrt(pi/2) * 1e-16, not 0', () => {
     const z = zForConfidence(1e-16)

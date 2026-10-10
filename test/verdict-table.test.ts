@@ -1106,3 +1106,73 @@ describe('confidence labels', () => {
     expect(label(0.6827)).toBe('68.27%')
   })
 })
+
+// ---- final review round (e2c5be2) ------------------------------------------
+
+describe('display agreement with the value is exact, with no tolerance', () => {
+  const withDisplay = (value: number, display: string): AccuracyClaimInput => ({
+    ...B,
+    claim: { metric: 'accuracy', value, display },
+  })
+
+  it('rejects a display that is off by more than half a unit of its last digit, however slightly', () => {
+    for (const display of ['98.00000000009%', '98.0000000001%', '97.9999999999%']) {
+      expect(() => assessAccuracyClaim(withDisplay(0.98, display)), display).toThrow(RangeError)
+    }
+    // the same gap at a coarser digit is inside the allowance
+    expect(assessAccuracyClaim(withDisplay(0.98, '98%')).verdict).toBe('supported')
+    expect(() => assessAccuracyClaim(withDisplay(0.98, '98.0%'))).not.toThrow()
+  })
+
+  it('compares against the exact value of the double', () => {
+    // the double nearest 0.985 is a hair below it, so "99%" is just over half a unit away
+    expect(() => assessAccuracyClaim(withDisplay(0.985, '99%'))).toThrow(RangeError)
+    expect(() => assessAccuracyClaim(withDisplay(0.985, '98%'))).not.toThrow()
+    // ...and the double nearest 0.9985 is a hair above it, so "99.8%" is just over half a unit away
+    expect(() => assessAccuracyClaim(withDisplay(0.9985, '99.8%'))).toThrow(RangeError)
+    expect(() => assessAccuracyClaim(withDisplay(0.9985, '99.9%'))).not.toThrow()
+  })
+})
+
+describe('a display must be a percent from 0 to 100, checked on its digits', () => {
+  it('rejects anything above 100% or below 0%', () => {
+    for (const display of [
+      '100.00000000001%', '100.000000000000001%', '100.1%', '101%', '999%', '-0%', '-1%', '+5%', '-0.0%',
+    ]) {
+      const value = display.startsWith('100.0') ? 1 : 0.5
+      expect(() => assessAccuracyClaim({ ...B, claim: { metric: 'accuracy', value, display } }), display).toThrow(RangeError)
+    }
+  })
+
+  it('accepts exactly 100% and 0%, in any spelling of zeros', () => {
+    for (const display of ['100%', '100.0%', '100.000000000000000%']) {
+      const r = assessAccuracyClaim({ ...B, claim: { metric: 'accuracy', value: 1, display }, sample: { n: 1000, correct: 1000 } })
+      expect(r.assessedValue).toBe(1)
+    }
+    const r = assessAccuracyClaim({ ...B, claim: { metric: 'error-rate', value: 0, display: '0.0%' }, sample: { n: 1000, errors: 0 } })
+    expect(r.assessedValue).toBe(0)
+  })
+})
+
+describe('a refusal reports the figure that would have been judged', () => {
+  it('accuracy: value 0.996 printed as 100% gives assessedValue 1', () => {
+    const r = assessAccuracyClaim({
+      ...B,
+      claim: { metric: 'accuracy', value: 0.996, display: '100%' },
+      sampling: 'convenience',
+    })
+    expect(r.verdict).toBe('refused')
+    expect(r.claimed).toBe(0.996)
+    expect(r.assessedValue).toBe(1)
+  })
+
+  it('error rate: value 0.004 printed as 0% gives assessedValue 0', () => {
+    const r = assessAccuracyClaim({
+      ...B,
+      claim: { metric: 'error-rate', value: 0.004, display: '0%' },
+      provenance: { source: 'model' },
+    })
+    expect(r.verdict).toBe('refused')
+    expect(r.assessedValue).toBe(0)
+  })
+})
