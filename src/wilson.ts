@@ -3,6 +3,9 @@ import { readCount, readOpenUnit } from './validate.js'
 
 export const DEFAULT_CONFIDENCE = 0.95
 
+const TINY_CONFIDENCE = 1e-9
+const SQRT_HALF_PI = Math.sqrt(Math.PI / 2)
+
 export interface WilsonInterval {
   /** Lower limit, in [0, point]. Exactly 0 when successes is 0. */
   low: number
@@ -32,6 +35,10 @@ export function zForConfidence(confidence: number): number {
   // Use whichever form keeps the small quantity exact. Up to 0.5 the displacement
   // c / 2 from the median is solved for directly (0.5 + c / 2 would round away
   // the digits of a tiny c); above 0.5 the tail (1 - c) / 2 is exact.
+  // Below 1e-9 the first series term is the answer to double precision
+  // (the next one is smaller by a factor of about 0.26 * c^2), and unlike c / 2
+  // the product cannot underflow to 0 for denormal c.
+  if (c < TINY_CONFIDENCE) return c * SQRT_HALF_PI
   return c <= 0.5 ? centralQuantile(c / 2) : zForTail((1 - c) / 2)
 }
 

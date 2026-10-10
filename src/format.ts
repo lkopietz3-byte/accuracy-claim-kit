@@ -1,3 +1,5 @@
+import { splitDouble } from './exact.js'
+
 // Number formatting for statements. Bounds are rounded in the direction that
 // never makes the evidence look better than it is: a lower limit is floored,
 // an upper limit is ceiled. The rounding is exact: the double is split into its
@@ -5,16 +7,9 @@
 // with BigInt arithmetic, so a printed figure can never sit on the wrong side
 // of the number it describes (no fixed slack, no floating-point multiply).
 
-const SCRATCH = new DataView(new ArrayBuffer(8))
-
 /** floor or ceil of x * 100 * 10^decimals for a finite x >= 0, exactly. */
 function scaledUnits(x: number, decimals: number, mode: 'floor' | 'ceil'): bigint {
-  SCRATCH.setFloat64(0, x)
-  const bits = SCRATCH.getBigUint64(0)
-  const biased = Number((bits >> 52n) & 0x7ffn)
-  const fraction = bits & ((1n << 52n) - 1n)
-  const mantissa = biased === 0 ? fraction : fraction | (1n << 52n)
-  const exponent = (biased === 0 ? 1 : biased) - 1075 // x = mantissa * 2^exponent
+  const { mantissa, exponent } = splitDouble(x)
   const numerator = mantissa * 100n * 10n ** BigInt(decimals)
   if (exponent >= 0) return numerator << BigInt(exponent)
   const denominator = 1n << BigInt(-exponent)

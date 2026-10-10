@@ -1,4 +1,5 @@
 import type { AgreementStatistic } from './agreement.js'
+import { withinHalfUnit } from './exact.js'
 import { confidenceLabel, maxDisplayDecimals, pctCeil, pctFloor, pctNearest } from './format.js'
 import type {
   AccuracyAssessment,
@@ -86,8 +87,20 @@ function readCounts(raw: unknown, name: string): Counts {
 
 const DISPLAY = /^\s*(\d{1,3})(?:\.(\d{1,15}))?\s*%\s*$/
 
-/** Parses a percent string such as "99.8%" into its value (as a percent) and decimals. */
-function parseDisplay(display: unknown): { percent: number; proportion: number; decimals: number } {
+interface ParsedDisplay {
+  /** The figure as a proportion, correctly rounded from its decimal digits. */
+  proportion: number
+  /** All digits of the percent figure as one integer (whole and fraction). */
+  digits: bigint
+  decimals: number
+}
+
+/**
+ * Parses a percent string such as "99.8%". The decimal digits are checked
+ * against 0..100 before anything is converted to a double, so "100.000000000000001%"
+ * cannot round its way to a valid 100%. A sign is not part of the format.
+ */
+function parseDisplay(display: unknown): ParsedDisplay {
   if (typeof display !== 'string') throw new TypeError('claim.display must be a string')
   if (display.length > 64) throw new RangeError('claim.display is too long to be a percent figure')
   const match = DISPLAY.exec(display)
@@ -96,9 +109,12 @@ function parseDisplay(display: unknown): { percent: number; proportion: number; 
   }
   const whole = match[1] as string
   const frac = match[2] ?? ''
+  if (Number(whole) > 100 || (Number(whole) === 100 && /[1-9]/.test(frac))) {
+    throw new RangeError(`claim.display must be between 0% and 100%; got "${clip(display)}"`)
+  }
   const text = frac === '' ? whole : `${whole}.${frac}`
   // Parsing "99.8e-2" is correctly rounded; dividing 99.8 by 100 is not always.
-  return { percent: Number(text), proportion: Number(`${text}e-2`), decimals: frac.length }
+  return { proportion: Number(`${text}e-2`), digits: BigInt(`${whole}${frac}`), decimals: frac.length }
 }
 
 interface Agreement {
@@ -225,8 +241,9 @@ export function assessAccuracyClaim(
     const parsed = parseDisplay(displayRaw)
     displayDecimals = parsed.decimals
     displayProportion = parsed.proportion
-    const halfUnit = 0.5 * 10 ** -(parsed.decimals + 2)
-    if (Math.abs(parsed.percent / 100 - claimed) > halfUnit * (1 + 1e-9) + COMPARISON_TOLERANCE) {
+    // Exact: the value must be within half a unit of the printed last digit,
+    // judged on the double's exact value. No tolerance is involved.
+    if (!withinHalfUnit(claimed, parsed.digits, parsed.decimals + 2, parsed.decimals + 2)) {
       throw new RangeError('claim.display does not match claim.value')
     }
   }
@@ -270,6 +287,19 @@ export function assessAccuracyClaim(
     retractionsIncluded = includedRaw
     if (retractionsIncluded && retractionCount > n) {
       throw new RangeError('retractions.count is larger than the sample, so it cannot all be included')
+    }
+  }
+
+  // Readers see the printed figure, so the more favorable of the value and the
+  // parsed display is what gets judged. A display that disagrees with the value
+  // by more than its own rounding already threw above.
+  let assessed = claimed
+  let fromDisplay = false
+  if (displayProportion !== undefined) {
+    const displayWins = metric === 'accuracy' ? displayProportion > claimed : displayProportion < claimed
+    if (displayWins) {
+      assessed = displayProportion
+      fromDisplay = true
     }
   }
 
@@ -360,7 +390,7 @@ export function assessAccuracyClaim(
       explanation: notes,
       metric,
       claimed,
-      assessedValue: claimed,
+      assessedValue: assessed,
       n,
       interval: null,
       conservativeBound: null,
@@ -375,19 +405,6 @@ export function assessAccuracyClaim(
   const conservativeBound = metric === 'accuracy' ? w.low : w.high
   const cl = confidenceLabel(confidence)
   const tol = COMPARISON_TOLERANCE
-
-  // Readers see the printed figure, so the more favorable of the value and the
-  // parsed display is what gets judged. A display that disagrees with the value
-  // by more than its own rounding already threw above.
-  let assessed = claimed
-  let fromDisplay = false
-  if (displayProportion !== undefined) {
-    const displayWins = metric === 'accuracy' ? displayProportion > claimed : displayProportion < claimed
-    if (displayWins) {
-      assessed = displayProportion
-      fromDisplay = true
-    }
-  }
 
   let verdict: AccuracyVerdict
   const reasons: ReasonCode[] = []
