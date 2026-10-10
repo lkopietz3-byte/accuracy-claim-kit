@@ -52,36 +52,38 @@ function erfcPositive(y: number): number {
   return y < 1 ? 1 - erfSeries(y) : erfcContinuedFraction(y)
 }
 
-/** Initial guess for p in (0, 0.5]. */
-function acklamLower(p: number): number {
-  if (p < P_LOW) {
-    const q = Math.sqrt(-2 * Math.log(p))
-    return (
-      (((((C[0] * q + C[1]) * q + C[2]) * q + C[3]) * q + C[4]) * q + C[5]) /
-      ((((D[0] * q + D[1]) * q + D[2]) * q + D[3]) * q + 1)
-    )
-  }
-  const q = p - 0.5
-  const r = q * q
+/** Acklam's tail approximation for p in (0, P_LOW). */
+function acklamTail(p: number): number {
+  const q = Math.sqrt(-2 * Math.log(p))
   return (
+    (((((C[0] * q + C[1]) * q + C[2]) * q + C[3]) * q + C[4]) * q + C[5]) /
+    ((((D[0] * q + D[1]) * q + D[2]) * q + D[3]) * q + 1)
+  )
+}
+
+/**
+ * x with Phi(x) = 0.5 + q, for |q| <= 0.47575, from the displacement q itself.
+ * Taking q directly (not p = 0.5 + q) matters: for tiny q the sum 0.5 + q
+ * rounds away every digit of q. The refinement compares 0.5 * erf(x / sqrt 2)
+ * with q, so both sides keep full relative accuracy.
+ */
+export function centralQuantile(q: number): number {
+  if (q === 0) return 0
+  const r = q * q
+  let x =
     ((((((A[0] * r + A[1]) * r + A[2]) * r + A[3]) * r + A[4]) * r + A[5]) * q) /
     (((((B[0] * r + B[1]) * r + B[2]) * r + B[3]) * r + B[4]) * r + 1)
-  )
+  const e = 0.5 * erfSeries(Math.abs(x) / SQRT_2) * (x < 0 ? -1 : 1) - q
+  const u = e * SQRT_2PI * Math.exp((x * x) / 2)
+  if (Number.isFinite(u)) x = x - u / (1 + (x * u) / 2)
+  return x
 }
 
 /** Quantile for p in (0, 0.5]; p = 0.5 gives exactly 0. */
 function quantileLower(p: number): number {
-  if (p === 0.5) return 0
-  let x = acklamLower(p)
-  // e = Phi(x) - p, computed so it stays accurate near 0.5 and in the tail.
-  let e: number
-  if (p >= P_LOW) {
-    const y = Math.abs(x) / SQRT_2
-    const half = 0.5 * erfSeries(y) * (x < 0 ? -1 : 1) // Phi(x) - 0.5
-    e = half - (p - 0.5)
-  } else {
-    e = 0.5 * erfcPositive(-x / SQRT_2) - p
-  }
+  if (p >= P_LOW) return centralQuantile(p - 0.5)
+  let x = acklamTail(p)
+  const e = 0.5 * erfcPositive(-x / SQRT_2) - p // Phi(x) - p, accurate in the tail
   const u = e * SQRT_2PI * Math.exp((x * x) / 2)
   if (Number.isFinite(u)) {
     x = x - u / (1 + (x * u) / 2)

@@ -1,4 +1,4 @@
-import { normalQuantile } from './normal.js'
+import { centralQuantile, normalQuantile } from './normal.js'
 import { readCount, readOpenUnit } from './validate.js'
 
 export const DEFAULT_CONFIDENCE = 0.95
@@ -29,9 +29,10 @@ export interface WilsonOptions {
  */
 export function zForConfidence(confidence: number): number {
   const c = readOpenUnit(confidence, 'confidence')
-  // Use whichever form keeps the small probability exact: near 1 the tail
-  // (1 - c) / 2 is exact enough, near 0 the central form 0.5 + c / 2 is.
-  return c <= 0.5 ? normalQuantile(0.5 + c / 2) : zForTail((1 - c) / 2)
+  // Use whichever form keeps the small quantity exact. Up to 0.5 the displacement
+  // c / 2 from the median is solved for directly (0.5 + c / 2 would round away
+  // the digits of a tiny c); above 0.5 the tail (1 - c) / 2 is exact.
+  return c <= 0.5 ? centralQuantile(c / 2) : zForTail((1 - c) / 2)
 }
 
 /** z such that a standard normal has probability `tail` above it; 0 < tail < 0.5. */

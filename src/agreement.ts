@@ -1,4 +1,4 @@
-import { isRecord, readCount } from './validate.js'
+import { isRecord, readCount, readLength } from './validate.js'
 
 /** A categorical label. Compared exactly: 1 and "1" are different labels. */
 export type Label = string | number | boolean
@@ -69,7 +69,7 @@ function tally(pairs: unknown): Tally {
   if (!Array.isArray(pairs)) {
     throw new TypeError('pairs must be an array of [labelA, labelB] pairs')
   }
-  const length = (pairs as unknown[]).length
+  const length = readLength((pairs as unknown[]).length, 'pairs')
   const byLabel = new Map<Label, [number, number]>()
   let agreements = 0
   for (let i = 0; i < length; i++) {
@@ -78,7 +78,7 @@ function tally(pairs: unknown): Tally {
       throw new TypeError(`pairs[${i}] must be a [labelA, labelB] array`)
     }
     const slots = pair as unknown[]
-    if (slots.length !== 2) {
+    if (readLength(slots.length, `pairs[${i}]`) !== 2) {
       throw new RangeError(`pairs[${i}] must have exactly 2 labels`)
     }
     const a = readLabel(slots[0], `pairs[${i}][0]`)

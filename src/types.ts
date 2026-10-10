@@ -99,7 +99,14 @@ export interface AccuracyAssessment {
   /** One plain sentence per reason, in the same order. */
   explanation: string[]
   metric: ClaimMetric
+  /** The claim's `value` as supplied. */
   claimed: number
+  /**
+   * The figure that was judged: the more favorable of `value` and the parsed
+   * `display` (the higher for accuracy, the lower for error rate). Equal to
+   * `claimed` when there is no display or the value is already the more favorable.
+   */
+  assessedValue: number
   n: number
   /** Wilson interval for the claimed metric (accuracy, or error rate). Null when refused. */
   interval: WilsonInterval | null

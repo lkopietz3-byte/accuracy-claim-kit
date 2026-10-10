@@ -1,28 +1,75 @@
 // Number formatting for statements. Bounds are rounded in the direction that
 // never makes the evidence look better than it is: a lower limit is floored,
-// an upper limit is ceiled. A tiny slack (1e-7 of the last printed unit)
-// keeps a bound like 0.98 from printing as 97.9 because of binary noise.
+// an upper limit is ceiled. The rounding is exact: the double is split into its
+// integer mantissa and power of two and the scaled value is floored or ceiled
+// with BigInt arithmetic, so a printed figure can never sit on the wrong side
+// of the number it describes (no fixed slack, no floating-point multiply).
 
-const SLACK = 1e-7
+const SCRATCH = new DataView(new ArrayBuffer(8))
 
+/** floor or ceil of x * 100 * 10^decimals for a finite x >= 0, exactly. */
+function scaledUnits(x: number, decimals: number, mode: 'floor' | 'ceil'): bigint {
+  SCRATCH.setFloat64(0, x)
+  const bits = SCRATCH.getBigUint64(0)
+  const biased = Number((bits >> 52n) & 0x7ffn)
+  const fraction = bits & ((1n << 52n) - 1n)
+  const mantissa = biased === 0 ? fraction : fraction | (1n << 52n)
+  const exponent = (biased === 0 ? 1 : biased) - 1075 // x = mantissa * 2^exponent
+  const numerator = mantissa * 100n * 10n ** BigInt(decimals)
+  if (exponent >= 0) return numerator << BigInt(exponent)
+  const denominator = 1n << BigInt(-exponent)
+  const quotient = numerator / denominator
+  return mode === 'ceil' && numerator % denominator !== 0n ? quotient + 1n : quotient
+}
+
+function render(units: bigint, decimals: number): string {
+  if (decimals === 0) return `${String(units)}%`
+  const scale = 10n ** BigInt(decimals)
+  const whole = units / scale
+  const fraction = String(units % scale).padStart(decimals, '0')
+  return `${String(whole)}.${fraction}%`
+}
+
+function checkProportion(x: number, decimals: number): void {
+  if (typeof x !== 'number' || !Number.isFinite(x) || x < 0 || x > 1) {
+    throw new RangeError(`proportion must be a finite number from 0 to 1, got ${String(x)}`)
+  }
+  if (!Number.isInteger(decimals) || decimals < 0 || decimals > 20) {
+    throw new RangeError('decimals must be a whole number from 0 to 20')
+  }
+}
+
+/** A proportion as a percent, rounded down to `decimals` places. */
 export function pctFloor(proportion: number, decimals: number): string {
-  const scale = 10 ** decimals
-  const units = Math.floor(proportion * 100 * scale + SLACK)
-  return `${(Math.max(0, units) / scale).toFixed(decimals)}%`
+  checkProportion(proportion, decimals)
+  return render(scaledUnits(proportion, decimals, 'floor'), decimals)
 }
 
+/** A proportion as a percent, rounded up to `decimals` places. */
 export function pctCeil(proportion: number, decimals: number): string {
-  const scale = 10 ** decimals
-  const units = Math.ceil(proportion * 100 * scale - SLACK)
-  return `${(Math.min(100 * scale, units) / scale).toFixed(decimals)}%`
+  checkProportion(proportion, decimals)
+  return render(scaledUnits(proportion, decimals, 'ceil'), decimals)
 }
 
+/** Nearest, for figures that are not bounds (the claim itself, a width). */
 export function pctNearest(proportion: number, decimals: number): string {
   return `${(proportion * 100).toFixed(decimals)}%`
 }
 
+/**
+ * A confidence level as a percent label, rounded down to at most 9 decimals
+ * and never 100%. It works on the shortest decimal text of the number (0.95
+ * reads "95%", not "94.999999999%"), so a level a person typed keeps the
+ * digits they typed.
+ */
 export function confidenceLabel(confidence: number): string {
-  return `${String(Number((confidence * 100).toPrecision(10)))}%`
+  let text = String(confidence)
+  if (text.includes('e')) text = confidence.toFixed(30)
+  const digits = text.slice(2) // after "0."
+  const whole = Number(digits.slice(0, 2).padEnd(2, '0')) // percent, integer part
+  const fraction = digits.slice(2, 11).replace(/0+$/, '')
+  if (whole === 0 && fraction === '') return 'under 0.000000001%'
+  return `${String(whole)}${fraction === '' ? '' : `.${fraction}`}%`
 }
 
 const LEVELS = [1, 0.1, 0.01, 0.001, 0.0001, 0.00001, 0.000001, 1e-7, 1e-8, 1e-9, 1e-10, 1e-11, 1e-12, 1e-13, 1e-14, 1e-15]

@@ -4,6 +4,13 @@
 
 export const MAX_COUNT = Number.MAX_SAFE_INTEGER
 
+/**
+ * Most elements read from one caller-supplied array (pairs or strata). A
+ * Proxy can claim any length, and a loop that trusts it can run for as long as
+ * the caller likes, so a length is checked before it is used.
+ */
+export const MAX_ITEMS = 10_000_000
+
 export function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
@@ -27,6 +34,17 @@ export function readCount(value: unknown, name: string, min = 0): number {
     throw new RangeError(`${name} must be between ${min} and ${MAX_COUNT}, got ${String(value)}`)
   }
   return value + 0 // turns -0 into 0
+}
+
+/** Validates a captured `.length`: a whole number from 0 to MAX_ITEMS. */
+export function readLength(value: unknown, name: string): number {
+  if (typeof value !== 'number') {
+    throw new TypeError(`${name}.length must be a number`)
+  }
+  if (!Number.isInteger(value) || value < 0 || value > MAX_ITEMS) {
+    throw new RangeError(`${name}.length must be a whole number from 0 to ${MAX_ITEMS}, got ${String(value)}`)
+  }
+  return value + 0
 }
 
 /** Reads a finite number in [min, max], inclusive. Normalizes -0 to 0. */

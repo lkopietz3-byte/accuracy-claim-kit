@@ -15,6 +15,7 @@ import {
   isRecord,
   readCount,
   readFiniteInRange,
+  readLength,
   readOpenUnit,
   requireRecord,
 } from './validate.js'
@@ -86,7 +87,7 @@ function readCounts(raw: unknown, name: string): Counts {
 const DISPLAY = /^\s*(\d{1,3})(?:\.(\d{1,15}))?\s*%\s*$/
 
 /** Parses a percent string such as "99.8%" into its value (as a percent) and decimals. */
-function parseDisplay(display: unknown): { percent: number; decimals: number } {
+function parseDisplay(display: unknown): { percent: number; proportion: number; decimals: number } {
   if (typeof display !== 'string') throw new TypeError('claim.display must be a string')
   if (display.length > 64) throw new RangeError('claim.display is too long to be a percent figure')
   const match = DISPLAY.exec(display)
@@ -95,7 +96,9 @@ function parseDisplay(display: unknown): { percent: number; decimals: number } {
   }
   const whole = match[1] as string
   const frac = match[2] ?? ''
-  return { percent: Number(frac === '' ? whole : `${whole}.${frac}`), decimals: frac.length }
+  const text = frac === '' ? whole : `${whole}.${frac}`
+  // Parsing "99.8e-2" is correctly rounded; dividing 99.8 by 100 is not always.
+  return { percent: Number(text), proportion: Number(`${text}e-2`), decimals: frac.length }
 }
 
 interface Agreement {
@@ -112,7 +115,15 @@ function readAgreement(raw: unknown): Agreement {
   if (statusRaw !== undefined && statusRaw !== 'defined' && statusRaw !== 'undefined') {
     throw new RangeError('provenance.agreement.status must be "defined" or "undefined"')
   }
-  if (statusRaw === 'undefined') return { statistic, value: null }
+  if (statusRaw === 'undefined') {
+    // A statistic that has no value must say so with null; NaN, 0 or text in
+    // its place is malformed input, not "cannot tell".
+    if (valueRaw !== null) {
+      const message = 'provenance.agreement.value must be null when status is "undefined"'
+      throw typeof valueRaw === 'number' ? new RangeError(message) : new TypeError(message)
+    }
+    return { statistic, value: null }
+  }
   return { statistic, value: readFiniteInRange(valueRaw, 'provenance.agreement.value', -1, 1) }
 }
 
@@ -124,7 +135,7 @@ interface Stratum {
 
 function readStrata(raw: unknown): Stratum[] {
   if (!Array.isArray(raw)) throw new TypeError('strata must be an array')
-  const length = (raw as unknown[]).length
+  const length = readLength((raw as unknown[]).length, 'strata')
   if (length === 0) throw new RangeError('strata must not be empty; leave it out if there are none')
   const out: Stratum[] = []
   const names = new Set<string>()
@@ -209,9 +220,11 @@ export function assessAccuracyClaim(
   const metric = readEnum(metricRaw, METRICS, 'claim.metric')
   const claimed = readFiniteInRange(valueRaw, 'claim.value', 0, 1)
   let displayDecimals: number | undefined
+  let displayProportion: number | undefined
   if (displayRaw !== undefined) {
     const parsed = parseDisplay(displayRaw)
     displayDecimals = parsed.decimals
+    displayProportion = parsed.proportion
     const halfUnit = 0.5 * 10 ** -(parsed.decimals + 2)
     if (Math.abs(parsed.percent / 100 - claimed) > halfUnit * (1 + 1e-9) + COMPARISON_TOLERANCE) {
       throw new RangeError('claim.display does not match claim.value')
@@ -347,6 +360,7 @@ export function assessAccuracyClaim(
       explanation: notes,
       metric,
       claimed,
+      assessedValue: claimed,
       n,
       interval: null,
       conservativeBound: null,
@@ -362,37 +376,55 @@ export function assessAccuracyClaim(
   const cl = confidenceLabel(confidence)
   const tol = COMPARISON_TOLERANCE
 
+  // Readers see the printed figure, so the more favorable of the value and the
+  // parsed display is what gets judged. A display that disagrees with the value
+  // by more than its own rounding already threw above.
+  let assessed = claimed
+  let fromDisplay = false
+  if (displayProportion !== undefined) {
+    const displayWins = metric === 'accuracy' ? displayProportion > claimed : displayProportion < claimed
+    if (displayWins) {
+      assessed = displayProportion
+      fromDisplay = true
+    }
+  }
+
   let verdict: AccuracyVerdict
   const reasons: ReasonCode[] = []
   const explanation: string[] = []
-  const claimedText = pctNearest(claimed, 3)
+  const claimedText = pctNearest(assessed, 3)
+  const subject = fromDisplay
+    ? `The printed figure ${claimedText} (more favorable than the claim value ${pctNearest(claimed, 3)})`
+    : `The claimed ${claimedText}`
 
+  const top = pctCeil(w.high, 3)
+  const bottom = pctFloor(w.low, 3)
   if (metric === 'accuracy') {
-    if (claimed > w.high + tol) {
+    if (assessed > w.high + tol) {
       verdict = 'contradicted'
       reasons.push('claim-outside-interval')
-      explanation.push(`The claimed ${claimedText} is above the top of the ${cl} Wilson interval (${pctNearest(w.high, 3)}).`)
-    } else if (claimed > w.low + tol) {
+      explanation.push(`${subject} is above the top of the ${cl} Wilson interval (${top}).`)
+    } else if (assessed > w.low + tol) {
       verdict = 'overstated'
       reasons.push('claim-beyond-conservative-bound')
-      explanation.push(`The claimed ${claimedText} is inside the ${cl} Wilson interval but above its lower end (${pctNearest(w.low, 3)}), which is the most the evidence supports.`)
+      explanation.push(`${subject} is inside the ${cl} Wilson interval but above its lower end (${bottom}), which is the most the evidence supports.`)
     } else {
       verdict = 'supported'
       reasons.push('claim-within-bound')
-      explanation.push(`The claimed ${claimedText} is no higher than the lower end of the ${cl} Wilson interval (${pctNearest(w.low, 3)}).`)
+      explanation.push(`${subject} is no higher than the lower end of the ${cl} Wilson interval (${bottom}).`)
     }
-  } else if (claimed < w.low - tol) {
+  } else if (assessed < w.low - tol) {
     verdict = 'contradicted'
     reasons.push('claim-outside-interval')
-    explanation.push(`The claimed ${claimedText} error rate is below the bottom of the ${cl} Wilson interval (${pctNearest(w.low, 3)}).`)
-  } else if (claimed < w.high - tol) {
+    explanation.push(`${subject} error rate is below the bottom of the ${cl} Wilson interval (${bottom}).`)
+  } else if (assessed < w.high - tol) {
     verdict = 'overstated'
     reasons.push('claim-beyond-conservative-bound')
-    explanation.push(`The claimed ${claimedText} error rate is inside the ${cl} Wilson interval but below its upper end (${pctNearest(w.high, 3)}), which is the least the evidence supports.`)
+    explanation.push(`${subject} error rate is inside the ${cl} Wilson interval but below its upper end (${top}), which is the least the evidence supports.`)
   } else {
     verdict = 'supported'
     reasons.push('claim-within-bound')
-    explanation.push(`The claimed ${claimedText} error rate is no lower than the upper end of the ${cl} Wilson interval (${pctNearest(w.high, 3)}).`)
+    explanation.push(`${subject} error rate is no lower than the upper end of the ${cl} Wilson interval (${top}).`)
   }
 
   if (displayDecimals !== undefined) {
@@ -432,6 +464,7 @@ export function assessAccuracyClaim(
     explanation,
     metric,
     claimed,
+    assessedValue: assessed,
     n,
     interval,
     conservativeBound,
