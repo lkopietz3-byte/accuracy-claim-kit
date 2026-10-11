@@ -8,6 +8,7 @@ import {
   wilsonInterval,
 } from '../src/index.js'
 import type {
+  AccuracyAssessment,
   AccuracyClaimInput,
   AccuracyVerdict,
   AssessOptions,
@@ -236,7 +237,7 @@ const rows: Row[] = [
     name: '499/500 claimed as "99.8%": inside the interval and printed too finely',
     input: input({ claim: accuracy(0.998, '99.8%'), sample: { n: 500, correct: 499 } }),
     verdict: 'overstated',
-    reasons: ['claim-beyond-conservative-bound', 'precision-too-fine'],
+    reasons: ['precision-too-fine'],
   },
   {
     name: '499/500 claimed as 99% (above the 98.88% lower end)',
@@ -257,10 +258,10 @@ const rows: Row[] = [
     reasons: ['claim-beyond-conservative-bound'],
   },
   {
-    name: 'error rate 1/500 claimed as 0.2%',
+    name: 'error rate 1/500 claimed as 0.2% (the observed rate, printed too finely)',
     input: input({ claim: errorRate(0.002, '0.2%'), sample: { n: 500, errors: 1 } }),
     verdict: 'overstated',
-    reasons: ['claim-beyond-conservative-bound', 'precision-too-fine'],
+    reasons: ['precision-too-fine'],
   },
   {
     name: 'error rate 0/100 claimed as 0%',
@@ -537,14 +538,15 @@ describe('hostile inputs', () => {
     for (const bad of [null, undefined, 5, 'x', [], true]) {
       expect(() => assessAccuracyClaim(bad as unknown as AccuracyClaimInput)).toThrow(TypeError)
       throwsFor({ claim: bad as unknown as AccuracyClaimInput['claim'] }, TypeError)
-      throwsFor({ sample: bad as unknown as AccuracyClaimInput['sample'] }, TypeError)
+      if (bad !== undefined) throwsFor({ sample: bad as unknown as AccuracyClaimInput['sample'] }, TypeError)
       throwsFor({ provenance: bad as unknown as AccuracyClaimInput['provenance'] }, TypeError)
     }
-    throwsFor({ sample: new Number(5) as unknown as AccuracyClaimInput['sample'] }, TypeError)
+    // an object with no counts at all is an undisclosed sample, which is a refusal, not a throw
+    expect(assessAccuracyClaim(input({ sample: new Number(5) as unknown as AccuracyClaimInput['sample'] })).reasons).toEqual(['n-undisclosed'])
   })
 
   it('rejects unknown or wrongly cased enum values', () => {
-    throwsFor({ claim: { metric: 'precision' as 'accuracy', value: 0.9 } }, RangeError)
+    throwsFor({ claim: { metric: 'precison' as 'accuracy', value: 0.9 } }, RangeError)
     throwsFor({ provenance: { source: 'Human' as 'human' } }, RangeError)
     throwsFor({ sampling: 'Random' as 'random' }, RangeError)
     throwsFor({ sampling: undefined as unknown as 'random' }, TypeError)
@@ -830,7 +832,7 @@ describe('seeded fuzz: only TypeError, RangeError or a well-formed result', () =
         expect(['supported', 'overstated', 'contradicted', 'refused']).toContain(r.verdict)
         expect(r.reasons.length).toBeGreaterThan(0)
         expect(r.explanation).toHaveLength(r.reasons.length)
-        expect(Number.isFinite(r.claimed) && Number.isFinite(r.n)).toBe(true)
+        expect(Number.isFinite(r.claimed) && (r.n === null || Number.isFinite(r.n))).toBe(true)
         expect(r.suggestedStatement).not.toMatch(/NaN|Infinity|undefined|\[object/)
         if (r.verdict === 'refused') expect(r.interval).toBeNull()
         else expect((r.interval?.low as number) <= (r.interval?.high as number)).toBe(true)
@@ -1082,7 +1084,7 @@ describe('formatted bounds never cross the bound', () => {
   })
 
   it('every explanation figure for a limit is rounded outward too', () => {
-    const r = assessAccuracyClaim({ ...B, claim: { metric: 'accuracy', value: 0.998, display: '99.8%' }, sample: { n: 500, correct: 499 } })
+    const r = assessAccuracyClaim({ ...B, claim: { metric: 'accuracy', value: 0.99, display: '99%' }, sample: { n: 500, correct: 499 } })
     expect(r.explanation[0]).toContain('(98.875%)') // limit is 98.8759...%
   })
 })
@@ -1535,5 +1537,271 @@ describe('complete-set comparison against exact rational references (python grid
       const label = `${JSON.stringify(g.value)} ${g.display ?? ''} ${String(g.k)}/${String(g.n)}`
       expect(r.verdict, label).toBe(g.expected)
     }
+  })
+})
+
+// ---- usability round (8ef5454): prevalence-audit findings ---------------------
+
+const U = {
+  provenance: { source: 'human' },
+  sampling: 'random',
+} as const
+
+const claimOf = (metric: string, value: number, display?: string): Record<string, unknown> =>
+  display === undefined ? { metric, value } : { metric, value, display }
+
+const assessU = (claim: Record<string, unknown>, sample: Record<string, unknown> | undefined, extra: Record<string, unknown> = {}, options?: AssessOptions): AccuracyAssessment =>
+  assessAccuracyClaim(({ ...U, claim, ...(sample === undefined ? {} : { sample }), ...extra }) as unknown as AccuracyClaimInput, options)
+
+describe('an undisclosed n is a refusal, never a throw', () => {
+  it('a missing sample or missing counts refuses with n-undisclosed', () => {
+    for (const sample of [undefined, {}]) {
+      const r = assessU(claimOf('accuracy', 0.99, '99%'), sample)
+      expect(r.verdict).toBe('refused')
+      expect(r.reasons).toEqual(['n-undisclosed'])
+      expect(r.n).toBeNull()
+      expect(r.interval).toBeNull()
+      expect(r.suggestedStatement).not.toMatch(/\d/)
+    }
+  })
+
+  it('lists every other failed precondition beside it', () => {
+    const r = assessU(claimOf('accuracy', 0.99), undefined, { provenance: { source: 'unknown' }, sampling: 'convenience' })
+    expect(r.reasons).toEqual(['unknown-label-source', 'convenience-sample', 'n-undisclosed'])
+  })
+
+  it('also works for a complete-set claim and for an unsupported metric', () => {
+    const r = assessAccuracyClaim(bench({ sample: undefined }))
+    expect(r.reasons).toEqual(['n-undisclosed'])
+    expect(assessU(claimOf('f1', 0.9), undefined).reasons).toEqual(['metric-not-supported', 'n-undisclosed'])
+  })
+
+  it('strata without a sample are still shape-checked', () => {
+    expect(assessU(claimOf('accuracy', 0.9), undefined, { strata: [{ name: 'a', n: 10, correct: 9 }] }).reasons).toEqual(['n-undisclosed'])
+    expect(() => assessU(claimOf('accuracy', 0.9), undefined, { strata: [] })).toThrow(RangeError)
+  })
+
+  it('half-given or malformed counts still throw', () => {
+    expect(() => assessU(claimOf('accuracy', 0.9), { correct: 5 })).toThrow(TypeError)
+    expect(() => assessU(claimOf('accuracy', 0.9), { n: 100 })).toThrow(TypeError)
+    expect(() => assessU(claimOf('accuracy', 0.9), { n: 'x', correct: 1 })).toThrow(TypeError)
+    expect(() => assessU(claimOf('accuracy', 0.9), { n: 10, correct: 11 })).toThrow(RangeError)
+    expect(() => assessU(claimOf('accuracy', 0.9), null as never)).toThrow(TypeError)
+  })
+})
+
+describe('more metrics, each with a stated meaning of n', () => {
+  it('precision: n is the predicted positives, correct the true positives', () => {
+    const r = assessU(claimOf('precision', 0.95, '95%'), { n: 200, correct: 190 })
+    expect(r.verdict).toBe('supported')
+    expect(r.suggestedStatement).toMatch(/^At least \d+\.\d+% precision \(/)
+    expect(assessU(claimOf('precision', 0.99), { n: 200, correct: 190 }).verdict).toBe('contradicted')
+  })
+
+  it('recall: n is the actual positives, correct the ones found', () => {
+    const r = assessU(claimOf('recall', 0.9), { n: 400, correct: 380 })
+    expect(r.verdict).toBe('supported')
+    expect(r.suggestedStatement).toMatch(/^At least \d+\.\d+% recall \(/)
+  })
+
+  it('false-positive-rate and false-negative-rate: n is the actual negatives / positives, errors the misses', () => {
+    const fpr = assessU(claimOf('false-positive-rate', 0.003, '0.3%'), { n: 4000, errors: 12 })
+    expect(fpr.verdict).toBe('supported')
+    expect(fpr.suggestedStatement).toMatch(/^At most \d+\.\d+% false-positive rate \(/)
+    const fnr = assessU(claimOf('false-negative-rate', 0.02), { n: 500, errors: 40 })
+    expect(fnr.verdict).toBe('contradicted')
+    expect(fnr.suggestedStatement).toMatch(/false-negative rate/)
+  })
+
+  it('other metrics refuse instead of throwing', () => {
+    for (const metric of ['f1', 'auc', 'wer', 'bleu', 'other']) {
+      const r = assessU(claimOf(metric, 0.9), { n: 1000, correct: 900 })
+      expect(r.verdict, metric).toBe('refused')
+      expect(r.reasons).toEqual(['metric-not-supported'])
+      expect(r.explanation[0]).toContain('accuracy, error-rate, precision, recall')
+    }
+    // a word error rate can exceed 1, so its value is not range-checked
+    expect(assessU(claimOf('wer', 1.2), { n: 1000, correct: 900 }).reasons).toEqual(['metric-not-supported'])
+  })
+
+  it('a misspelled metric still throws', () => {
+    expect(() => assessU(claimOf('acuracy', 0.9), { n: 1000, correct: 900 })).toThrow(RangeError)
+    expect(() => assessU(claimOf('Accuracy', 0.9), { n: 1000, correct: 900 })).toThrow(RangeError)
+  })
+})
+
+describe('real display forms are read as the figure a reader takes away', () => {
+  const acc = (value: number, display: string, n: number, correct: number): AccuracyAssessment =>
+    assessU(claimOf('accuracy', value, display), { n, correct })
+  const err = (value: number, display: string, n: number, errors: number): AccuracyAssessment =>
+    assessU(claimOf('error-rate', value, display), { n, errors })
+
+  it('a floor ("99%+", "over 99%", ">= 99%") is judged at 0.99 as a floor', () => {
+    for (const display of ['99%+', '99+%', 'over 99%', 'Above 99%', '≥99%', '>=99%', '> 99%', 'at least 99%', 'more than 99%']) {
+      const ok = acc(0.99, display, 1000, 998)
+      expect(ok.verdict, display).toBe('supported')
+      expect(ok.reasons).toEqual(['claim-within-bound'])
+      expect(ok.parsedDisplay).toEqual({ form: 'floor', figure: 0.99, decimals: 0 })
+      expect(acc(0.99, display, 1000, 990).verdict, display).toBe('overstated') // lower end is 98.17%
+      expect(acc(0.99, display, 1000, 900).verdict, display).toBe('contradicted')
+    }
+  })
+
+  it('a ceiling ("<1%", "no more than 1%") is judged at 0.01 as a ceiling', () => {
+    for (const display of ['<1%', '< 1%', '≤1%', '<=1%', 'under 1%', 'below 1%', 'less than 1%', 'at most 1%', 'no more than 1%', 'up to 1%']) {
+      const ok = err(0.01, display, 27_743, 0)
+      expect(ok.verdict, display).toBe('supported')
+      expect(ok.parsedDisplay).toEqual({ form: 'ceiling', figure: 0.01, decimals: 0 })
+      expect(err(0.01, display, 1000, 10).verdict, display).toBe('overstated') // upper end is 1.84%
+      expect(err(0.01, display, 1000, 50).verdict, display).toBe('contradicted')
+    }
+  })
+
+  it('a bound is never excused by matching the observed rate', () => {
+    // observed 99.0% on 990/1000: "99%+" matches it but the lower end is 98.17%
+    expect(acc(0.99, '99%+', 1000, 990).verdict).toBe('overstated')
+  })
+
+  it('approximate words keep the stated precision', () => {
+    for (const display of ['~95%', '≈95%', 'about 95%', 'approximately 95%', 'around 95%', 'roughly 95%', '~ 95%']) {
+      const r = acc(0.95, display, 1000, 950)
+      expect(r.verdict, display).toBe('supported')
+      expect(r.reasons).toEqual(['matches-observed-rate'])
+      expect(r.parsedDisplay).toEqual({ form: 'approx', figure: 0.95, decimals: 0 })
+    }
+    expect(() => acc(0.9, '~95%', 1000, 950)).toThrow(RangeError)
+  })
+
+  it('a range is judged at its favorable end', () => {
+    for (const display of ['95-98%', '95 - 98%', '95–98%', '95% - 98%', '95 to 98%', '95% to 98%']) {
+      const hi = acc(0.98, display, 1000, 980)
+      expect(hi.verdict, display).toBe('supported')
+      expect(hi.parsedDisplay).toEqual({ form: 'range', figure: 0.98, decimals: 0 })
+      expect(hi.assessedValue).toBe(0.98)
+      expect(acc(0.97, display, 1000, 980).assessedValue, display).toBe(0.98)
+    }
+    // for an error rate the favorable end is the low one
+    const e = err(0.01, '1-2%', 5000, 50)
+    expect(e.parsedDisplay).toEqual({ form: 'range', figure: 0.01, decimals: 0 })
+    expect(e.verdict).toBe('supported')
+    // a value outside the range, or an inverted range, is malformed
+    expect(() => acc(0.9, '95-98%', 1000, 980)).toThrow(RangeError)
+    expect(() => acc(0.97, '98-95%', 1000, 980)).toThrow(RangeError)
+  })
+
+  it('"1 in N" is 1/N at the precision of N', () => {
+    const r = assessU(claimOf('false-positive-rate', 0.0001, '1 in 10,000'), { n: 10_000, errors: 1 })
+    expect(r.verdict).toBe('supported')
+    expect(r.parsedDisplay).toEqual({ form: 'one-in-n', figure: 0.0001, decimals: null })
+    expect(assessU(claimOf('false-positive-rate', 0.0001, '1 in 10000'), { n: 10_000, errors: 0 }).verdict).toBe('overstated')
+    expect(assessU(claimOf('false-positive-rate', 0.00005, '1 in 20,000'), { n: 10_000, errors: 1 }).verdict).toBe('overstated')
+    for (const display of ['1 in 1,00', '1 in ', '1 in 0', '2 in 10,000', '1 in 1.5', '1 in 10,0000']) {
+      expect(() => assessU(claimOf('false-positive-rate', 0.0001, display), { n: 10_000, errors: 1 }), display).toThrow(RangeError)
+    }
+  })
+
+  it('records the plain percent form too', () => {
+    expect(acc(0.98, '98%', 1000, 990).parsedDisplay).toEqual({ form: 'percent', figure: 0.98, decimals: 0 })
+    expect(assessU(claimOf('accuracy', 0.98), { n: 1000, correct: 990 }).parsedDisplay).toBeNull()
+  })
+
+  it('text that is still not a figure throws', () => {
+    for (const display of ['lots%', '99 percent', '95-98', '≥≥99%', '99%++', 'over over 99%', '<', '', 'about', '99%-', '-99%', '99%+%', 'over 99.%']) {
+      expect(() => acc(0.99, display, 1000, 990), display).toThrow(RangeError)
+    }
+    // a bound pointing the wrong way for the metric
+    expect(() => acc(0.99, '<99%', 1000, 990)).toThrow(RangeError)
+    expect(() => err(0.01, '>1%', 1000, 10)).toThrow(RangeError)
+    // the value must agree with the figure
+    expect(() => acc(0.5, '99%+', 1000, 990)).toThrow(RangeError)
+  })
+})
+
+describe('an honest report of the observed rate is supported by default', () => {
+  it('matches-observed-rate: the claim equals the count to its printed precision', () => {
+    const r = assessU(claimOf('accuracy', 0.95, '95%'), { n: 1000, correct: 950 })
+    expect(r.verdict).toBe('supported')
+    expect(r.reasons).toEqual(['matches-observed-rate'])
+    expect(r.explanation[0]).toContain('matches the observed rate')
+    expect(r.suggestedStatement).toMatch(/^At least 93\.\d+% accurate \(95% Wilson interval/) // the interval is still given
+    expect(r.interval).not.toBeNull()
+  })
+
+  it('works for error rates, for a value with no display, and at the printed precision', () => {
+    expect(assessU(claimOf('error-rate', 0.01, '1%'), { n: 1000, errors: 10 }).reasons).toEqual(['matches-observed-rate'])
+    expect(assessU(claimOf('accuracy', 0.95), { n: 1000, correct: 950 }).reasons).toEqual(['matches-observed-rate'])
+    expect(assessU(claimOf('accuracy', 0.951), { n: 1000, correct: 950 }).verdict).toBe('overstated')
+    expect(assessU(claimOf('accuracy', 0.9505, '95.05%'), { n: 10_000_000, correct: 9_505_000 }).reasons).toEqual(['matches-observed-rate'])
+  })
+
+  it('a claim above the observed rate, even inside the interval, is still overstated', () => {
+    const r = assessU(claimOf('accuracy', 0.96, '96%'), { n: 1000, correct: 950 })
+    expect(r.verdict).toBe('overstated')
+    expect(r.reasons).toEqual(['claim-beyond-conservative-bound'])
+  })
+
+  it('too-fine precision stays overstated, now with only the precision reason', () => {
+    const r = assessU(claimOf('accuracy', 0.998, '99.8%'), { n: 500, correct: 499 })
+    expect(r.verdict).toBe('overstated')
+    expect(r.reasons).toEqual(['precision-too-fine'])
+  })
+
+  it('absolute claims (0 and 1, 0% and 100%) never ride the observed-rate allowance', () => {
+    expect(assessU(claimOf('accuracy', 1, '100%'), { n: 500, correct: 500 }).verdict).toBe('overstated')
+    expect(assessU(claimOf('accuracy', 1), { n: 500, correct: 500 }).verdict).toBe('overstated')
+    expect(assessU(claimOf('error-rate', 0, '0%'), { n: 100, errors: 0 }).verdict).toBe('overstated')
+  })
+
+  it('a figure outside the interval is still contradicted', () => {
+    expect(assessU(claimOf('accuracy', 0.95), { n: 1000, correct: 900 }).verdict).toBe('contradicted')
+  })
+
+  it('options.conservative restores the old rule: supported only at or below the lower end', () => {
+    const r = assessU(claimOf('accuracy', 0.95, '95%'), { n: 1000, correct: 950 }, {}, { conservative: true })
+    expect(r.verdict).toBe('overstated')
+    expect(r.reasons).toEqual(['claim-beyond-conservative-bound'])
+    const ok = assessU(claimOf('accuracy', 0.93, '93%'), { n: 1000, correct: 950 }, {}, { conservative: true })
+    expect(ok.verdict).toBe('supported')
+    expect(() => assessU(claimOf('accuracy', 0.9), { n: 1000, correct: 900 }, {}, { conservative: 'yes' as never })).toThrow(TypeError)
+  })
+})
+
+describe('more label sources and samplings', () => {
+  it('by-construction labels are accepted like human labels and named', () => {
+    const r = assessU(claimOf('accuracy', 0.9), { n: 1000, correct: 990 }, { provenance: { source: 'by-construction' } })
+    expect(r.verdict).toBe('supported')
+    expect(r.suggestedStatement).toContain('labels fixed by construction')
+  })
+
+  it('a held-out split goes down the complete-set path when it is named and the claim is scoped', () => {
+    const r = assessU(
+      { metric: 'accuracy', value: 0.913, display: '91.3%', text: '91.3% accuracy on the Maple dev split' },
+      { n: 872, correct: 796 },
+      { sampling: 'held-out-split', benchmark: { name: 'Maple dev split' } },
+    )
+    expect(r.verdict).toBe('supported')
+    expect(r.basis).toBe('census')
+    expect(r.suggestedStatement).toContain('held-out split')
+    expect(r.suggestedStatement).not.toContain('complete set')
+  })
+
+  it('a held-out split without its name or scoped wording is refused', () => {
+    const claim = { metric: 'accuracy', value: 0.913, display: '91.3%', text: '91.3% accurate' }
+    const sample = { n: 872, correct: 796 }
+    expect(assessU(claim, sample, { sampling: 'held-out-split' }).reasons).toEqual(['benchmark-unnamed'])
+    expect(assessU(claim, sample, { sampling: 'held-out-split', benchmark: { name: 'Maple dev split' } }).reasons).toEqual(['claim-not-scoped-to-benchmark'])
+  })
+
+  it('cross-validation is judged like a random sample and says so', () => {
+    const cv = assessU(claimOf('accuracy', 0.9), { n: 1000, correct: 990 }, { sampling: 'cross-validation' })
+    const rnd = assessU(claimOf('accuracy', 0.9), { n: 1000, correct: 990 })
+    expect(cv.verdict).toBe(rnd.verdict)
+    expect(cv.interval).toEqual(rnd.interval)
+    expect(cv.suggestedStatement).toContain('cross-validation')
+    expect(cv.suggestedStatement).not.toContain('random sample')
+  })
+
+  it('benchmark metadata is allowed with a held-out split only besides complete', () => {
+    expect(() => assessU(claimOf('accuracy', 0.9), { n: 1000, correct: 990 }, { sampling: 'random', benchmark: { name: 'x' } })).toThrow(RangeError)
   })
 })
