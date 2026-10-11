@@ -159,7 +159,7 @@ Real claims come as prose. Pull out these declarations first, and write "unknown
 | who decided what was right (people, a test suite, a model) | `provenance.source`: `human`, `automated`, `model`, `mixed`, `unknown` |
 | how items were chosen (all of a named set, a random draw, by score, whatever was handy) | `sampling`: `complete`, `random`, `stratified`, `ranked`, `convenience`, `unknown` |
 
-`display` accepts only a plain percent such as `99.8%`. Approximate and range prose (`~5%`, `<2%`, `30-50%`, `1.8.`, a bare `1.8`) must be cleaned before it goes in, or `display` left out; leaving it out skips the precision check, and the claim is judged on `value` alone. The kit throws on a display it cannot read rather than guessing.
+Pass `display` exactly as printed whenever it is one of the forms in the display table above (plain, approximate, floor, ceiling, range or `1 in N`). Do not drop or rewrite a bound or range: leaving out `<2%` turns a ceiling into a rounded point claim, which can change the verdict from `contradicted` to `supported`. Only prose the kit cannot read (a bare `1.8`, text around the figure) needs cleaning first; the kit throws on a display it cannot read rather than guessing.
 
 ## Install
 
