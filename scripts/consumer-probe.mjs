@@ -55,7 +55,7 @@ const supported = assessAccuracyClaim({
   sample: { n: 1000, correct: 990 },
 });
 assert.equal(supported.verdict, 'supported');
-assert.match(supported.suggestedStatement, /^At least 98\.1% accurate \(95% Wilson interval /);
+assert.match(supported.suggestedStatement, /^At least 98\.16% accurate \(95% Wilson interval /);
 
 const overstated = assessAccuracyClaim({
   ...base,
@@ -81,6 +81,30 @@ const refused = assessAccuracyClaim({
 assert.equal(refused.verdict, 'refused');
 assert.deepEqual(refused.reasons, ['no-human-labels']);
 assert.equal(refused.interval, null);
+
+// A whole fixed set is compared with the exact count, not an interval.
+const census = assessAccuracyClaim({
+  claim: { metric: 'accuracy', value: 0.799, display: '79.9%', text: 'Reaches 79.9% on the Ridgeview set' },
+  sample: { n: 50000, correct: 39950 },
+  provenance: { source: 'human' },
+  sampling: 'complete',
+  benchmark: { name: 'Ridgeview set' },
+});
+assert.equal(census.verdict, 'supported');
+assert.equal(census.basis, 'census');
+assert.equal(census.interval, null);
+// Stratified without strata, and a stale evaluation, are refused.
+assert.deepEqual(
+  assessAccuracyClaim({ ...base, sampling: 'stratified', claim: { metric: 'accuracy', value: 0.9 }, sample: { n: 1000, correct: 990 } }).reasons,
+  ['stratified-without-strata'],
+);
+assert.deepEqual(
+  assessAccuracyClaim(
+    { ...base, claim: { metric: 'accuracy', value: 0.9 }, sample: { n: 1000, correct: 990 }, evaluatedAt: '2024-01-01' },
+    { maxAgeDays: 365, now: '2026-10-10' },
+  ).reasons,
+  ['evaluation-stale'],
+);
 
 // Malformed input throws; it never returns a verdict.
 assert.throws(

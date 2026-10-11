@@ -11,6 +11,8 @@ import {
   type AccuracyAssessment,
   type AccuracyClaimInput,
   type AccuracyVerdict,
+  type Benchmark,
+  type PopulationScope,
   type AgreementResult,
   type ReasonCode,
   type WilsonInterval,
@@ -49,6 +51,19 @@ const input: AccuracyClaimInput = {
 };
 const out: AccuracyAssessment = assessAccuracyClaim(input, { confidence: 0.95, minN: 30, minAgreement: 0.1 });
 const verdict: AccuracyVerdict = out.verdict;
+const benchmark: Benchmark = { name: 'Ridgeview set' };
+const scope: PopulationScope = { claimed: 'support emails', evaluated: 'support emails' };
+const scoped: AccuracyAssessment = assessAccuracyClaim({
+  claim: { metric: 'accuracy', value: 0.9, text: 'Ridgeview set' },
+  sample: { n: 100, correct: 90 },
+  provenance: { source: 'automated' },
+  sampling: 'complete',
+  benchmark,
+  population: scope,
+  evaluatedAt: '2026-10-01',
+}, { maxAgeDays: 30, now: '2026-10-10', requireScope: true });
+const basis: 'wilson-interval' | 'census' | 'none' = scoped.basis;
+assertEqual(basis, 'census', 'basis');
 const codes: ReasonCode[] = out.reasons;
 assertEqual(typeof verdict, 'string', 'verdict type');
 assertEqual(codes.length > 0, true, 'reasons');

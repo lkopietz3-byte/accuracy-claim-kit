@@ -19,3 +19,13 @@
 - A display above 100% or with a sign is rejected from its decimal digits before conversion.
 - A refused result reports the selected `assessedValue`.
 - `zForConfidence` returns `c * sqrt(pi/2)` below 1e-9, so `Number.MIN_VALUE` gives `Number.MIN_VALUE`, not 0.
+
+### Learning-driven round (field-trial findings)
+- `sampling: 'stratified'` without `strata` is refused (`stratified-without-strata`); it used to pass as a simple random sample.
+- `sampling: 'complete'` with `benchmark.name` and `claim.text`: a claim about a whole fixed set is compared with the exact count (`census-matches-count`, `claim-differs-from-count`), and refused when its wording does not name the set. `basis` reports `census`, `wilson-interval` or `none`.
+- `claim-worse-than-counts` (informational) flags figures far less favorable than the counts, the stale-number pattern. Verdicts are unchanged; it appears in `reasons`.
+- `options.maxAgeDays` with `options.now` and `evaluatedAt` refuse stale evaluations; no clock is read.
+- `population: { claimed, evaluated }` and `options.requireScope` refuse scope mismatches.
+- `provenance.source: 'automated'` for deterministic ground truth (test suites, exact search).
+- The suggested statement uses one precision for the headline bound and the interval it quotes (it used to print 1.3% beside 1.22%). Existing statements change accordingly.
+- README opening rewritten; added "Claims about a fixed benchmark", "Age and scope" and "Preparing a real claim".

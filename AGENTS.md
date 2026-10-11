@@ -30,4 +30,5 @@ Does this accuracy or error-rate number have the evidence to carry it? Wilson in
 - Validate every captured array length before looping, and judge the printed display as well as the value.
 - Read every caller property once; never list keys, call `toJSON` or `then`.
 - Statements describe evidence only. They must never say the system is accurate, and bounds round in the cautious direction.
+- A figure for a whole fixed set is compared with the exact count, never an interval; `automated` labels mean a deterministic procedure, never a model.
 - Do not add legal, regulatory or compliance claims anywhere in docs or output.
