@@ -29,3 +29,10 @@
 - `provenance.source: 'automated'` for deterministic ground truth (test suites, exact search).
 - The suggested statement uses one precision for the headline bound and the interval it quotes (it used to print 1.3% beside 1.22%). Existing statements change accordingly.
 - README opening rewritten; added "Claims about a fixed benchmark", "Age and scope" and "Preparing a real claim".
+
+### Complete-set review fixes
+- A complete-set claim must match the count in both its `value` and its `display` (a more favorable value no longer hides behind a display that rounds correctly).
+- 0 and 1 (and `0%` / `100%`) are exact claims on a complete set; no rounding allowance.
+- Claim digits come from the shortest round-trip text (mantissa and exponent), never from `toFixed`; `5e-7` on 5 of 10,000,000 is supported.
+- A value computed as `correct / n` matches its own count (one ulp of allowance).
+- Added a 1,050-row grid of values (exponent forms, 0, 1, thirds) and counts checked against exact rational references from the Python generator.
