@@ -3,7 +3,7 @@
 // favorable reading, and answers the exact questions the verdict needs.
 
 import { matchesCount } from './census.js'
-import { splitDouble, withinHalfUnit } from './exact.js'
+import { atLeastDecimal, atMostDecimal, splitDouble, withinHalfUnit } from './exact.js'
 import { foldText } from './text.js'
 import { clip } from './validate.js'
 
@@ -22,11 +22,17 @@ export interface DisplayFigure {
   info: ParsedDisplayInfo
   /** "floor" for "99%+" style claims, "ceiling" for "<1%", else null. */
   bound: 'floor' | 'ceiling' | null
+  /** True for "over 99%" / "<1%": the bound itself does not satisfy the claim. */
+  strict: boolean
   /** True when the printed value agrees with `value` to its rounding (plus one ulp). */
   consistentWith(value: number): boolean
   /** True when the observed rate k / n equals the figure to its printed precision. */
   matchesObserved(k: number, n: number): boolean
-  /** Census check: the exact count k / n satisfies the printed figure (a bound as an inequality). */
+  /**
+   * Census check of the printed figure against the exact count k / n: a bound as
+   * an inequality (strict ones exclude equality), a point, range end or "1 in N"
+   * as a match to its printed precision.
+   */
   satisfiedBy(k: number, n: number): boolean
 }
 
@@ -43,34 +49,34 @@ const SINGLE = new RegExp(`^${NUM} ?%$`)
 const PLUS_BEFORE_PERCENT = new RegExp(`^${NUM}\\+ ?%$`)
 const ONE_IN_N = /^1 in ((?:[1-9]\d{0,2}(?:,\d{3})+)|(?:[1-9]\d{0,14}))$/
 
-const PREFIXES: readonly (readonly [string, 'floor' | 'ceiling' | 'approx', boolean])[] = [
-  // [text, kind, needs a space after]
-  ['>=', 'floor', false],
-  ['≥', 'floor', false],
-  ['>', 'floor', false],
-  ['<=', 'ceiling', false],
-  ['≤', 'ceiling', false],
-  ['<', 'ceiling', false],
-  ['≈', 'approx', false],
-  ['~', 'approx', false],
-  ['at least', 'floor', true],
-  ['more than', 'floor', true],
-  ['greater than', 'floor', true],
-  ['over', 'floor', true],
-  ['above', 'floor', true],
-  ['at most', 'ceiling', true],
-  ['no more than', 'ceiling', true],
-  ['less than', 'ceiling', true],
-  ['fewer than', 'ceiling', true],
-  ['up to', 'ceiling', true],
-  ['under', 'ceiling', true],
-  ['below', 'ceiling', true],
-  ['approximately', 'approx', true],
-  ['approx.', 'approx', true],
-  ['approx', 'approx', true],
-  ['about', 'approx', true],
-  ['around', 'approx', true],
-  ['roughly', 'approx', true],
+const PREFIXES: readonly (readonly [string, 'floor' | 'ceiling' | 'approx', boolean, boolean])[] = [
+  // [text, kind, needs a space after, strict]
+  ['>=', 'floor', false, false],
+  ['≥', 'floor', false, false],
+  ['>', 'floor', false, true],
+  ['<=', 'ceiling', false, false],
+  ['≤', 'ceiling', false, false],
+  ['<', 'ceiling', false, true],
+  ['≈', 'approx', false, false],
+  ['~', 'approx', false, false],
+  ['at least', 'floor', true, false],
+  ['more than', 'floor', true, true],
+  ['greater than', 'floor', true, true],
+  ['over', 'floor', true, true],
+  ['above', 'floor', true, true],
+  ['at most', 'ceiling', true, false],
+  ['no more than', 'ceiling', true, false],
+  ['less than', 'ceiling', true, true],
+  ['fewer than', 'ceiling', true, true],
+  ['up to', 'ceiling', true, false],
+  ['under', 'ceiling', true, true],
+  ['below', 'ceiling', true, true],
+  ['approximately', 'approx', true, false],
+  ['approx.', 'approx', true, false],
+  ['approx', 'approx', true, false],
+  ['about', 'approx', true, false],
+  ['around', 'approx', true, false],
+  ['roughly', 'approx', true, false],
 ]
 
 function bad(display: string): RangeError {
@@ -121,6 +127,7 @@ export function parseDisplayFigure(display: unknown, higherIsBetter: boolean): D
     return {
       info: { form: 'one-in-n', figure, decimals: null },
       bound: null,
+      strict: false,
       consistentWith(value: number): boolean {
         // 1/(N + h) <= value <= 1/(N - h), with one ulp of slack each way
         const { mantissa, exponent } = splitDouble(value)
@@ -134,7 +141,8 @@ export function parseDisplayFigure(display: unknown, higherIsBetter: boolean): D
   }
 
   let kind: 'percent' | 'floor' | 'ceiling' | 'approx' = 'percent'
-  for (const [prefix, prefixKind, needsSpace] of PREFIXES) {
+  let strict = false
+  for (const [prefix, prefixKind, needsSpace, prefixStrict] of PREFIXES) {
     if (t.startsWith(prefix)) {
       let rest = t.slice(prefix.length)
       if (needsSpace) {
@@ -144,6 +152,7 @@ export function parseDisplayFigure(display: unknown, higherIsBetter: boolean): D
         rest = rest.slice(1)
       }
       kind = prefixKind
+      strict = prefixStrict
       t = rest
       break
     }
@@ -159,28 +168,14 @@ export function parseDisplayFigure(display: unknown, higherIsBetter: boolean): D
       return {
         info: { form: 'range', figure: proportionOf(end), decimals: end.decimals },
         bound: null,
+        strict: false,
         consistentWith(value: number): boolean {
-          const lo = proportionOf(low)
-          const hi = proportionOf(high)
-          return (
-            (value > lo && value < hi) ||
-            withinHalfUnit(value, low.digits, low.decimals + 2, low.decimals + 2) ||
-            withinHalfUnit(value, high.digits, high.decimals + 2, high.decimals + 2)
-          )
+          // inside the range, with only one ulp of representation error at each end
+          return atLeastDecimal(value, low.digits, low.decimals + 2) && atMostDecimal(value, high.digits, high.decimals + 2)
         },
         matchesObserved: (k, n) => matchesCount(end.digits, end.decimals + 2, k, n),
-        satisfiedBy(k, n): boolean {
-          // the exact count lies in the range, widened by half a unit at each end
-          const s = Math.max(low.decimals, high.decimals) + 2
-          const scale = 10n ** BigInt(s)
-          const kk = BigInt(k) * 2n * scale
-          const nn = BigInt(n)
-          const loScaled = low.digits * 10n ** BigInt(s - low.decimals - 2) // in units of 10^-s proportion
-          const hiScaled = high.digits * 10n ** BigInt(s - high.decimals - 2)
-          const halfLo = 10n ** BigInt(s - low.decimals - 2)
-          const halfHi = 10n ** BigInt(s - high.decimals - 2)
-          return kk >= (2n * loScaled - halfLo) * nn && kk <= (2n * hiScaled + halfHi) * nn
-        },
+        // a range is judged at its favorable end, as a point
+        satisfiedBy: (k, n) => matchesCount(end.digits, end.decimals + 2, k, n),
       }
     }
     // "99+%" is "99%+"
@@ -201,15 +196,21 @@ export function parseDisplayFigure(display: unknown, higherIsBetter: boolean): D
   if (form === 'floor' && !higherIsBetter) throw new RangeError(`claim.display "${clip(display)}" is a lower bound, which does not fit a metric where lower is better`)
   if (form === 'ceiling' && higherIsBetter) throw new RangeError(`claim.display "${clip(display)}" is an upper bound, which does not fit a metric where higher is better`)
   const scale = num.decimals + 2
+  const isBound = form === 'floor' || form === 'ceiling'
+  if (isBound && strict && ((form === 'floor' && num.digits === 10n ** BigInt(scale)) || (form === 'ceiling' && num.digits === 0n))) {
+    // nothing is above 100% or below 0%
+    throw new RangeError(`claim.display "${clip(display)}" asks for more than 100% or less than 0%, which is impossible`)
+  }
   return {
     info: { form, figure: proportionOf(num), decimals: num.decimals },
-    bound: form === 'floor' || form === 'ceiling' ? form : null,
+    bound: isBound ? form : null,
+    strict: isBound && strict,
     consistentWith: (value) => withinHalfUnit(value, num.digits, scale, scale),
     matchesObserved: (k, n) => matchesCount(num.digits, scale, k, n),
     satisfiedBy(k, n): boolean {
       const lhs = num.digits * BigInt(n) - BigInt(k) * 10n ** BigInt(scale)
-      if (form === 'floor') return lhs <= 0n // figure <= k/n
-      if (form === 'ceiling') return lhs >= 0n // figure >= k/n
+      if (form === 'floor') return strict ? lhs < 0n : lhs <= 0n // figure < or <= k/n
+      if (form === 'ceiling') return strict ? lhs > 0n : lhs >= 0n // figure > or >= k/n
       return matchesCount(num.digits, scale, k, n)
     },
   }

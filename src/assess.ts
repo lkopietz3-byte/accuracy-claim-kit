@@ -562,14 +562,21 @@ export function assessAccuracyClaim(
     let censusVerdict: AccuracyVerdict
     const shown = Math.min(countDecimals(n), 2)
     const exactText = pctNearest(k / n, shown)
-    // Every figure the reader can see must match the count. A bound, a range
-    // and "1 in N" are checked as what they say (an inequality, a span, a
-    // precision band); a plain percent or a bare value must match to its digits.
+    // Every figure the reader can see is judged according to its form: a point
+    // or approximate figure must match the count to its digits; a bound is an
+    // inequality (strict ones exclude equality); a range and "1 in N" are judged
+    // at their favorable end / precision band. The value is judged as a point
+    // too whenever it is more favorable than the printed figure, or when the
+    // printed figure is itself a point figure. 0 and 1 stay exact.
     const form = figure?.info.form
+    const pointDisplay = form === 'percent' || form === 'approx'
+    const valueMoreFavorable =
+      figure !== undefined && (higherIsBetter ? claimed > figure.info.figure : claimed < figure.info.figure)
+    const displayOk = figure === undefined || figure.satisfiedBy(k, n)
+    const valueOk =
+      figure === undefined || valueMoreFavorable || pointDisplay ? matchesValue(claimed, k, n) : true
     const printedOnly = form === 'floor' || form === 'ceiling' || form === 'range' || form === 'one-in-n'
-    const ok = figure !== undefined && printedOnly
-      ? figure.satisfiedBy(k, n)
-      : matchesValue(claimed, k, n) && (figure === undefined || figure.satisfiedBy(k, n))
+    const ok = displayOk && valueOk
     if (ok) {
       censusVerdict = 'supported'
       censusReasons.push('census-matches-count')
@@ -640,44 +647,47 @@ export function assessAccuracyClaim(
   const top = pctCeil(w.high, 3)
   const bottom = pctFloor(w.low, 3)
   const observedText = `${String(successes)} of ${String(n)}`
-  if (higherIsBetter) {
-    if (assessed > w.high + tol) {
-      verdict = 'contradicted'
-      reasons.push('claim-outside-interval')
-      explanation.push(`${subject} is above the top of the ${cl} Wilson interval (${top}).`)
-    } else if (assessed > w.low + tol) {
-      if (matchesObserved) {
-        verdict = 'supported'
-        reasons.push('matches-observed-rate')
-        explanation.push(`${subject} matches the observed rate (${observedText}) to its printed precision. The ${cl} Wilson interval is ${bottom} to ${top}.`)
-      } else {
-        verdict = 'overstated'
-        reasons.push('claim-beyond-conservative-bound')
-        explanation.push(`${subject} is inside the ${cl} Wilson interval but above its lower end (${bottom}), which is the most the evidence supports.`)
-      }
-    } else {
-      verdict = 'supported'
-      reasons.push('claim-within-bound')
-      explanation.push(`${subject} is no higher than the lower end of the ${cl} Wilson interval (${bottom}).`)
-    }
-  } else if (assessed < w.low - tol) {
-    verdict = 'contradicted'
-    reasons.push('claim-outside-interval')
-    explanation.push(`${subject}${qualifier} is below the bottom of the ${cl} Wilson interval (${bottom}).`)
-  } else if (assessed < w.high - tol) {
-    if (matchesObserved) {
-      verdict = 'supported'
-      reasons.push('matches-observed-rate')
-      explanation.push(`${subject}${qualifier} matches the observed rate (${observedText}) to its printed precision. The ${cl} Wilson interval is ${bottom} to ${top}.`)
-    } else {
-      verdict = 'overstated'
-      reasons.push('claim-beyond-conservative-bound')
-      explanation.push(`${subject}${qualifier} is inside the ${cl} Wilson interval but below its upper end (${top}), which is the least the evidence supports.`)
-    }
-  } else {
+  const strictBound = figure !== undefined && figure.strict
+  // A bound claim is supported when it sits on the cautious side of the
+  // interval's conservative end; a strict one ("over 99%") needs to clear it.
+  const withinBound = higherIsBetter
+    ? strictBound
+      ? assessed < w.low - tol
+      : assessed <= w.low + tol
+    : strictBound
+      ? assessed > w.high + tol
+      : assessed >= w.high - tol
+  const matchesText = `matches the observed rate (${observedText}) to its printed precision. The ${cl} Wilson interval is ${bottom} to ${top}.`
+  if (withinBound) {
     verdict = 'supported'
     reasons.push('claim-within-bound')
-    explanation.push(`${subject}${qualifier} is no lower than the upper end of the ${cl} Wilson interval (${top}).`)
+    explanation.push(
+      higherIsBetter
+        ? `${subject} is ${strictBound ? 'below' : 'no higher than'} the lower end of the ${cl} Wilson interval (${bottom}).`
+        : `${subject}${qualifier} is ${strictBound ? 'above' : 'no lower than'} the upper end of the ${cl} Wilson interval (${top}).`,
+    )
+  } else if (matchesObserved) {
+    // An honest report of the observed rate comes first: a rounded figure can
+    // land just outside the interval it was rounded from.
+    verdict = 'supported'
+    reasons.push('matches-observed-rate')
+    explanation.push(`${subject}${qualifier} ${matchesText}`)
+  } else if (higherIsBetter ? assessed > w.high + tol : assessed < w.low - tol) {
+    verdict = 'contradicted'
+    reasons.push('claim-outside-interval')
+    explanation.push(
+      higherIsBetter
+        ? `${subject} is above the top of the ${cl} Wilson interval (${top}).`
+        : `${subject}${qualifier} is below the bottom of the ${cl} Wilson interval (${bottom}).`,
+    )
+  } else {
+    verdict = 'overstated'
+    reasons.push('claim-beyond-conservative-bound')
+    explanation.push(
+      higherIsBetter
+        ? `${subject} is inside the ${cl} Wilson interval but above its lower end (${bottom}), which is the most the evidence supports.`
+        : `${subject}${qualifier} is inside the ${cl} Wilson interval but below its upper end (${top}), which is the least the evidence supports.`,
+    )
   }
 
   let precisionNote = ''

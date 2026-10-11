@@ -39,3 +39,20 @@ export function withinHalfUnit(x: number, digits: bigint, scale: number, places:
   const lhs = 2n * mantissa * ten - 2n * digits * s
   return (lhs < 0n ? -lhs : lhs) <= half * s + 2n * ten
 }
+
+/** True when x + 1 ulp >= digits / 10^scale (x is at or above the decimal, up to representation error). */
+export function atLeastDecimal(x: number, digits: bigint, scale: number): boolean {
+  const { mantissa, exponent } = splitDouble(x)
+  const ten = 10n ** BigInt(scale)
+  if (exponent >= 0) return ((mantissa + 1n) << BigInt(exponent)) * ten >= digits
+  return (mantissa + 1n) * ten >= digits * (1n << BigInt(-exponent))
+}
+
+/** True when x - 1 ulp <= digits / 10^scale (x is at or below the decimal, up to representation error). */
+export function atMostDecimal(x: number, digits: bigint, scale: number): boolean {
+  const { mantissa, exponent } = splitDouble(x)
+  const ten = 10n ** BigInt(scale)
+  if (mantissa === 0n) return true
+  if (exponent >= 0) return ((mantissa - 1n) << BigInt(exponent)) * ten <= digits
+  return (mantissa - 1n) * ten <= digits * (1n << BigInt(-exponent))
+}
