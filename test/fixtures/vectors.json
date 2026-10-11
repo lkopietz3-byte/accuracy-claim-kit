@@ -17540,47 +17540,54 @@
    "value": 0.0,
    "k": 0,
    "n": 3,
-   "expected": "supported"
+   "expected": "supported",
+   "expectedStrict": "supported"
   },
   {
    "value": 0.0,
    "k": 0,
    "n": 3,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "0%"
   },
   {
    "value": 0.0,
    "k": 0,
    "n": 3,
-   "expected": "overstated",
+   "expected": "supported",
+   "expectedStrict": "overstated",
    "display": "0.0%"
   },
   {
    "value": 0.0,
    "k": 0,
    "n": 3,
-   "expected": "overstated",
+   "expected": "supported",
+   "expectedStrict": "overstated",
    "display": "0.00%"
   },
   {
    "value": 0.0,
    "k": 0,
    "n": 3,
-   "expected": "overstated",
+   "expected": "supported",
+   "expectedStrict": "overstated",
    "display": "0.000%"
   },
   {
    "value": 0.0,
    "k": 1,
    "n": 3,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.0,
    "k": 1,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0%"
   },
   {
@@ -17588,6 +17595,7 @@
    "k": 1,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.0%"
   },
   {
@@ -17595,6 +17603,7 @@
    "k": 1,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.00%"
   },
   {
@@ -17602,19 +17611,22 @@
    "k": 1,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.000%"
   },
   {
    "value": 0.0,
    "k": 3,
    "n": 3,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.0,
    "k": 3,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0%"
   },
   {
@@ -17622,6 +17634,7 @@
    "k": 3,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.0%"
   },
   {
@@ -17629,6 +17642,7 @@
    "k": 3,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.00%"
   },
   {
@@ -17636,53 +17650,61 @@
    "k": 3,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.000%"
-  },
-  {
-   "value": 0.0,
-   "k": 0,
-   "n": 10,
-   "expected": "supported"
   },
   {
    "value": 0.0,
    "k": 0,
    "n": 10,
    "expected": "supported",
+   "expectedStrict": "supported"
+  },
+  {
+   "value": 0.0,
+   "k": 0,
+   "n": 10,
+   "expected": "supported",
+   "expectedStrict": "supported",
    "display": "0%"
   },
   {
    "value": 0.0,
    "k": 0,
    "n": 10,
-   "expected": "overstated",
+   "expected": "supported",
+   "expectedStrict": "overstated",
    "display": "0.0%"
   },
   {
    "value": 0.0,
    "k": 0,
    "n": 10,
-   "expected": "overstated",
+   "expected": "supported",
+   "expectedStrict": "overstated",
    "display": "0.00%"
   },
   {
    "value": 0.0,
    "k": 0,
    "n": 10,
-   "expected": "overstated",
+   "expected": "supported",
+   "expectedStrict": "overstated",
    "display": "0.000%"
   },
   {
    "value": 0.0,
    "k": 1,
    "n": 10,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.0,
    "k": 1,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0%"
   },
   {
@@ -17690,6 +17712,7 @@
    "k": 1,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.0%"
   },
   {
@@ -17697,6 +17720,7 @@
    "k": 1,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.00%"
   },
   {
@@ -17704,19 +17728,22 @@
    "k": 1,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.000%"
   },
   {
    "value": 0.0,
    "k": 10,
    "n": 10,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.0,
    "k": 10,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0%"
   },
   {
@@ -17724,6 +17751,7 @@
    "k": 10,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.0%"
   },
   {
@@ -17731,6 +17759,7 @@
    "k": 10,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.00%"
   },
   {
@@ -17738,19 +17767,22 @@
    "k": 10,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.000%"
   },
   {
    "value": 0.0,
    "k": 0,
    "n": 100,
-   "expected": "supported"
+   "expected": "supported",
+   "expectedStrict": "supported"
   },
   {
    "value": 0.0,
    "k": 0,
    "n": 100,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "0%"
   },
   {
@@ -17758,33 +17790,38 @@
    "k": 0,
    "n": 100,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "0.0%"
   },
   {
    "value": 0.0,
    "k": 0,
    "n": 100,
-   "expected": "overstated",
+   "expected": "supported",
+   "expectedStrict": "overstated",
    "display": "0.00%"
   },
   {
    "value": 0.0,
    "k": 0,
    "n": 100,
-   "expected": "overstated",
+   "expected": "supported",
+   "expectedStrict": "overstated",
    "display": "0.000%"
   },
   {
    "value": 0.0,
    "k": 1,
    "n": 100,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.0,
    "k": 1,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0%"
   },
   {
@@ -17792,6 +17829,7 @@
    "k": 1,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.0%"
   },
   {
@@ -17799,6 +17837,7 @@
    "k": 1,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.00%"
   },
   {
@@ -17806,19 +17845,22 @@
    "k": 1,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.000%"
   },
   {
    "value": 0.0,
    "k": 100,
    "n": 100,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.0,
    "k": 100,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0%"
   },
   {
@@ -17826,6 +17868,7 @@
    "k": 100,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.0%"
   },
   {
@@ -17833,6 +17876,7 @@
    "k": 100,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.00%"
   },
   {
@@ -17840,19 +17884,22 @@
    "k": 100,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.000%"
   },
   {
    "value": 0.0,
    "k": 0,
    "n": 464,
-   "expected": "supported"
+   "expected": "supported",
+   "expectedStrict": "supported"
   },
   {
    "value": 0.0,
    "k": 0,
    "n": 464,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "0%"
   },
   {
@@ -17860,33 +17907,38 @@
    "k": 0,
    "n": 464,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "0.0%"
   },
   {
    "value": 0.0,
    "k": 0,
    "n": 464,
-   "expected": "overstated",
+   "expected": "supported",
+   "expectedStrict": "overstated",
    "display": "0.00%"
   },
   {
    "value": 0.0,
    "k": 0,
    "n": 464,
-   "expected": "overstated",
+   "expected": "supported",
+   "expectedStrict": "overstated",
    "display": "0.000%"
   },
   {
    "value": 0.0,
    "k": 1,
    "n": 464,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.0,
    "k": 1,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0%"
   },
   {
@@ -17894,6 +17946,7 @@
    "k": 1,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.0%"
   },
   {
@@ -17901,6 +17954,7 @@
    "k": 1,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.00%"
   },
   {
@@ -17908,19 +17962,22 @@
    "k": 1,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.000%"
   },
   {
    "value": 0.0,
    "k": 464,
    "n": 464,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.0,
    "k": 464,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0%"
   },
   {
@@ -17928,6 +17985,7 @@
    "k": 464,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.0%"
   },
   {
@@ -17935,6 +17993,7 @@
    "k": 464,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.00%"
   },
   {
@@ -17942,19 +18001,22 @@
    "k": 464,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.000%"
   },
   {
    "value": 0.0,
    "k": 0,
    "n": 1000,
-   "expected": "supported"
+   "expected": "supported",
+   "expectedStrict": "supported"
   },
   {
    "value": 0.0,
    "k": 0,
    "n": 1000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "0%"
   },
   {
@@ -17962,6 +18024,7 @@
    "k": 0,
    "n": 1000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "0.0%"
   },
   {
@@ -17969,26 +18032,30 @@
    "k": 0,
    "n": 1000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "0.00%"
   },
   {
    "value": 0.0,
    "k": 0,
    "n": 1000,
-   "expected": "overstated",
+   "expected": "supported",
+   "expectedStrict": "overstated",
    "display": "0.000%"
   },
   {
    "value": 0.0,
    "k": 1,
    "n": 1000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.0,
    "k": 1,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0%"
   },
   {
@@ -17996,6 +18063,7 @@
    "k": 1,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.0%"
   },
   {
@@ -18003,6 +18071,7 @@
    "k": 1,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.00%"
   },
   {
@@ -18010,19 +18079,22 @@
    "k": 1,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.000%"
   },
   {
    "value": 0.0,
    "k": 1000,
    "n": 1000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.0,
    "k": 1000,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0%"
   },
   {
@@ -18030,6 +18102,7 @@
    "k": 1000,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.0%"
   },
   {
@@ -18037,6 +18110,7 @@
    "k": 1000,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.00%"
   },
   {
@@ -18044,19 +18118,22 @@
    "k": 1000,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.000%"
   },
   {
    "value": 0.0,
    "k": 0,
    "n": 2294,
-   "expected": "supported"
+   "expected": "supported",
+   "expectedStrict": "supported"
   },
   {
    "value": 0.0,
    "k": 0,
    "n": 2294,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "0%"
   },
   {
@@ -18064,6 +18141,7 @@
    "k": 0,
    "n": 2294,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "0.0%"
   },
   {
@@ -18071,26 +18149,30 @@
    "k": 0,
    "n": 2294,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "0.00%"
   },
   {
    "value": 0.0,
    "k": 0,
    "n": 2294,
-   "expected": "overstated",
+   "expected": "supported",
+   "expectedStrict": "overstated",
    "display": "0.000%"
   },
   {
    "value": 0.0,
    "k": 1,
    "n": 2294,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.0,
    "k": 1,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0%"
   },
   {
@@ -18098,6 +18180,7 @@
    "k": 1,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.0%"
   },
   {
@@ -18105,6 +18188,7 @@
    "k": 1,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.00%"
   },
   {
@@ -18112,19 +18196,22 @@
    "k": 1,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.000%"
   },
   {
    "value": 0.0,
    "k": 2294,
    "n": 2294,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.0,
    "k": 2294,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0%"
   },
   {
@@ -18132,6 +18219,7 @@
    "k": 2294,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.0%"
   },
   {
@@ -18139,6 +18227,7 @@
    "k": 2294,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.00%"
   },
   {
@@ -18146,19 +18235,22 @@
    "k": 2294,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.000%"
   },
   {
    "value": 0.0,
    "k": 0,
    "n": 50000,
-   "expected": "supported"
+   "expected": "supported",
+   "expectedStrict": "supported"
   },
   {
    "value": 0.0,
    "k": 0,
    "n": 50000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "0%"
   },
   {
@@ -18166,6 +18258,7 @@
    "k": 0,
    "n": 50000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "0.0%"
   },
   {
@@ -18173,6 +18266,7 @@
    "k": 0,
    "n": 50000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "0.00%"
   },
   {
@@ -18180,19 +18274,22 @@
    "k": 0,
    "n": 50000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "0.000%"
   },
   {
    "value": 0.0,
    "k": 1,
    "n": 50000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.0,
    "k": 1,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0%"
   },
   {
@@ -18200,6 +18297,7 @@
    "k": 1,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.0%"
   },
   {
@@ -18207,6 +18305,7 @@
    "k": 1,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.00%"
   },
   {
@@ -18214,19 +18313,22 @@
    "k": 1,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.000%"
   },
   {
    "value": 0.0,
    "k": 50000,
    "n": 50000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.0,
    "k": 50000,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0%"
   },
   {
@@ -18234,6 +18336,7 @@
    "k": 50000,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.0%"
   },
   {
@@ -18241,6 +18344,7 @@
    "k": 50000,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.00%"
   },
   {
@@ -18248,19 +18352,22 @@
    "k": 50000,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.000%"
   },
   {
    "value": 0.0,
    "k": 0,
    "n": 10000000,
-   "expected": "supported"
+   "expected": "supported",
+   "expectedStrict": "supported"
   },
   {
    "value": 0.0,
    "k": 0,
    "n": 10000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "0%"
   },
   {
@@ -18268,6 +18375,7 @@
    "k": 0,
    "n": 10000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "0.0%"
   },
   {
@@ -18275,6 +18383,7 @@
    "k": 0,
    "n": 10000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "0.00%"
   },
   {
@@ -18282,19 +18391,22 @@
    "k": 0,
    "n": 10000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "0.000%"
   },
   {
    "value": 0.0,
    "k": 1,
    "n": 10000000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.0,
    "k": 1,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0%"
   },
   {
@@ -18302,6 +18414,7 @@
    "k": 1,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.0%"
   },
   {
@@ -18309,6 +18422,7 @@
    "k": 1,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.00%"
   },
   {
@@ -18316,19 +18430,22 @@
    "k": 1,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.000%"
   },
   {
    "value": 0.0,
    "k": 10000000,
    "n": 10000000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.0,
    "k": 10000000,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0%"
   },
   {
@@ -18336,6 +18453,7 @@
    "k": 10000000,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.0%"
   },
   {
@@ -18343,6 +18461,7 @@
    "k": 10000000,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.00%"
   },
   {
@@ -18350,19 +18469,22 @@
    "k": 10000000,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.000%"
   },
   {
    "value": 0.0,
    "k": 0,
    "n": 1000000000,
-   "expected": "supported"
+   "expected": "supported",
+   "expectedStrict": "supported"
   },
   {
    "value": 0.0,
    "k": 0,
    "n": 1000000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "0%"
   },
   {
@@ -18370,6 +18492,7 @@
    "k": 0,
    "n": 1000000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "0.0%"
   },
   {
@@ -18377,6 +18500,7 @@
    "k": 0,
    "n": 1000000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "0.00%"
   },
   {
@@ -18384,19 +18508,22 @@
    "k": 0,
    "n": 1000000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "0.000%"
   },
   {
    "value": 0.0,
    "k": 1,
    "n": 1000000000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.0,
    "k": 1,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0%"
   },
   {
@@ -18404,6 +18531,7 @@
    "k": 1,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.0%"
   },
   {
@@ -18411,6 +18539,7 @@
    "k": 1,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.00%"
   },
   {
@@ -18418,19 +18547,22 @@
    "k": 1,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.000%"
   },
   {
    "value": 0.0,
    "k": 1000000000,
    "n": 1000000000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.0,
    "k": 1000000000,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0%"
   },
   {
@@ -18438,6 +18570,7 @@
    "k": 1000000000,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.0%"
   },
   {
@@ -18445,6 +18578,7 @@
    "k": 1000000000,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.00%"
   },
   {
@@ -18452,19 +18586,22 @@
    "k": 1000000000,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.000%"
   },
   {
    "value": 1.0,
    "k": 0,
    "n": 3,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 1.0,
    "k": 0,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "100%"
   },
   {
@@ -18472,6 +18609,7 @@
    "k": 0,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "100.0%"
   },
   {
@@ -18479,6 +18617,7 @@
    "k": 0,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "100.00%"
   },
   {
@@ -18486,19 +18625,22 @@
    "k": 0,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "100.000%"
   },
   {
    "value": 1.0,
    "k": 2,
    "n": 3,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 1.0,
    "k": 2,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "100%"
   },
   {
@@ -18506,6 +18648,7 @@
    "k": 2,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "100.0%"
   },
   {
@@ -18513,6 +18656,7 @@
    "k": 2,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "100.00%"
   },
   {
@@ -18520,40 +18664,46 @@
    "k": 2,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "100.000%"
   },
   {
    "value": 1.0,
    "k": 3,
    "n": 3,
-   "expected": "supported"
+   "expected": "supported",
+   "expectedStrict": "supported"
   },
   {
    "value": 1.0,
    "k": 3,
    "n": 3,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "100%"
   },
   {
    "value": 1.0,
    "k": 3,
    "n": 3,
-   "expected": "overstated",
+   "expected": "supported",
+   "expectedStrict": "overstated",
    "display": "100.0%"
   },
   {
    "value": 1.0,
    "k": 3,
    "n": 3,
-   "expected": "overstated",
+   "expected": "supported",
+   "expectedStrict": "overstated",
    "display": "100.00%"
   },
   {
    "value": 1.0,
    "k": 3,
    "n": 3,
-   "expected": "overstated",
+   "expected": "supported",
+   "expectedStrict": "overstated",
    "display": "100.000%"
   },
   {
@@ -18561,6 +18711,7 @@
    "k": 1,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "29.6%"
   },
   {
@@ -18568,6 +18719,7 @@
    "k": 49499,
    "n": 50000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "99.0%"
   },
   {
@@ -18575,6 +18727,7 @@
    "k": 0,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.0%"
   },
   {
@@ -18582,6 +18735,7 @@
    "k": 2,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "7%"
   },
   {
@@ -18589,6 +18743,7 @@
    "k": 10,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0%"
   },
   {
@@ -18596,6 +18751,7 @@
    "k": 100,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.4%"
   },
   {
@@ -18603,6 +18759,7 @@
    "k": 2,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "30.0%"
   },
   {
@@ -18610,19 +18767,22 @@
    "k": 464,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.293%"
   },
   {
    "value": 0.99,
    "k": 989,
    "n": 1000,
-   "expected": "supported"
+   "expected": "supported",
+   "expectedStrict": "supported"
   },
   {
    "value": 1e-05,
    "k": 0,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0%"
   },
   {
@@ -18630,6 +18790,7 @@
    "k": 300000001,
    "n": 1000000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "30.000%"
   },
   {
@@ -18637,6 +18798,7 @@
    "k": 10000000,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.333%"
   },
   {
@@ -18644,19 +18806,22 @@
    "k": 33,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.3%"
   },
   {
    "value": 5e-07,
    "k": 4,
    "n": 10000000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.12292938099389712,
    "k": 0,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.3%"
   },
   {
@@ -18664,6 +18829,7 @@
    "k": 458,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "99.000%"
   },
   {
@@ -18671,6 +18837,7 @@
    "k": 10,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.000%"
   },
   {
@@ -18678,19 +18845,22 @@
    "k": 39999,
    "n": 10000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "0.400%"
   },
   {
    "value": 0.3333333333333333,
    "k": 3333334,
    "n": 10000000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.976,
    "k": 0,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "98%"
   },
   {
@@ -18698,6 +18868,7 @@
    "k": 989,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "99.0%"
   },
   {
@@ -18705,19 +18876,22 @@
    "k": 1000,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "10.0%"
   },
   {
    "value": 0.9,
    "k": 9,
    "n": 10,
-   "expected": "supported"
+   "expected": "supported",
+   "expectedStrict": "supported"
   },
   {
    "value": 1e-09,
    "k": 1,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.00%"
   },
   {
@@ -18725,6 +18899,7 @@
    "k": 50000,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "99.900%"
   },
   {
@@ -18732,19 +18907,22 @@
    "k": 6666667,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "67%"
   },
   {
    "value": 1.5e-07,
    "k": 50000,
    "n": 50000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.3333333333333333,
    "k": 1000000000,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.3%"
   },
   {
@@ -18752,6 +18930,7 @@
    "k": 25000,
    "n": 50000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "50.000%"
   },
   {
@@ -18759,6 +18938,7 @@
    "k": 0,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33%"
   },
   {
@@ -18766,6 +18946,7 @@
    "k": 9849001,
    "n": 10000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "98.5%"
   },
   {
@@ -18773,13 +18954,15 @@
    "k": 9849000,
    "n": 10000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "98.49%"
   },
   {
    "value": 0.12293,
    "k": 282,
    "n": 2294,
-   "expected": "overstated",
+   "expected": "supported",
+   "expectedStrict": "overstated",
    "display": "12.293%"
   },
   {
@@ -18787,6 +18970,7 @@
    "k": 50000,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.3%"
   },
   {
@@ -18794,6 +18978,7 @@
    "k": 333300001,
    "n": 1000000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "33.33%"
   },
   {
@@ -18801,6 +18986,7 @@
    "k": 3,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "10.000%"
   },
   {
@@ -18808,25 +18994,29 @@
    "k": 9,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "10.00%"
   },
   {
    "value": 0.6667,
    "k": 6667001,
    "n": 10000000,
-   "expected": "supported"
+   "expected": "supported",
+   "expectedStrict": "supported"
   },
   {
    "value": 0.9,
    "k": 0,
    "n": 10,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.6666666666666666,
    "k": 0,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "66.67%"
   },
   {
@@ -18834,6 +19024,7 @@
    "k": 66,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "66.67%"
   },
   {
@@ -18841,6 +19032,7 @@
    "k": 10,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "99.990%"
   },
   {
@@ -18848,6 +19040,7 @@
    "k": 0,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.290%"
   },
   {
@@ -18855,6 +19048,7 @@
    "k": 0,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "66.670%"
   },
   {
@@ -18862,6 +19056,7 @@
    "k": 2294,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.4%"
   },
   {
@@ -18869,19 +19064,22 @@
    "k": 1,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.0%"
   },
   {
    "value": 0.2963,
    "k": 3,
    "n": 10,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.6667,
    "k": 0,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "66.7%"
   },
   {
@@ -18889,6 +19087,7 @@
    "k": 6666666,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "66.67%"
   },
   {
@@ -18896,6 +19095,7 @@
    "k": 2,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "7.0%"
   },
   {
@@ -18903,6 +19103,7 @@
    "k": 309,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "66.7%"
   },
   {
@@ -18910,6 +19111,7 @@
    "k": 0,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.000%"
   },
   {
@@ -18917,6 +19119,7 @@
    "k": 49996,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "100.0%"
   },
   {
@@ -18924,6 +19127,7 @@
    "k": 1000001,
    "n": 10000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "10%"
   },
   {
@@ -18931,6 +19135,7 @@
    "k": 1,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.00%"
   },
   {
@@ -18938,6 +19143,7 @@
    "k": 3,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.00%"
   },
   {
@@ -18945,6 +19151,7 @@
    "k": 0,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "66.667%"
   },
   {
@@ -18952,6 +19159,7 @@
    "k": 332,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.33%"
   },
   {
@@ -18959,6 +19167,7 @@
    "k": 0,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "100%"
   },
   {
@@ -18966,6 +19175,7 @@
    "k": 499,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "50.00%"
   },
   {
@@ -18973,6 +19183,7 @@
    "k": 0,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "79.90%"
   },
   {
@@ -18980,19 +19191,22 @@
    "k": 9999000,
    "n": 10000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "99.99%"
   },
   {
    "value": 0.9849,
    "k": 100,
    "n": 100,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.976,
    "k": 2239,
    "n": 2294,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "98%"
   },
   {
@@ -19000,6 +19214,7 @@
    "k": 2,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "10.0%"
   },
   {
@@ -19007,6 +19222,7 @@
    "k": 976000001,
    "n": 1000000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "97.6%"
   },
   {
@@ -19014,6 +19230,7 @@
    "k": 1,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.00%"
   },
   {
@@ -19021,6 +19238,7 @@
    "k": 699999,
    "n": 10000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "7.0%"
   },
   {
@@ -19028,19 +19246,22 @@
    "k": 79,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "79.90%"
   },
   {
    "value": 0.5,
    "k": 501,
    "n": 1000,
-   "expected": "supported"
+   "expected": "supported",
+   "expectedStrict": "supported"
   },
   {
    "value": 0.1229,
    "k": 10,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.290%"
   },
   {
@@ -19048,6 +19269,7 @@
    "k": 0,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "80%"
   },
   {
@@ -19055,6 +19277,7 @@
    "k": 0,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.3%"
   },
   {
@@ -19062,19 +19285,22 @@
    "k": 1000000000,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.29%"
   },
   {
    "value": 0.07,
    "k": 33,
    "n": 464,
-   "expected": "supported"
+   "expected": "supported",
+   "expectedStrict": "supported"
   },
   {
    "value": 0.1229,
    "k": 464,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12%"
   },
   {
@@ -19082,6 +19308,7 @@
    "k": 666666666,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "66.67%"
   },
   {
@@ -19089,6 +19316,7 @@
    "k": 0,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "79.9%"
   },
   {
@@ -19096,6 +19324,7 @@
    "k": 6145,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12%"
   },
   {
@@ -19103,6 +19332,7 @@
    "k": 3499,
    "n": 50000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "7.0%"
   },
   {
@@ -19110,6 +19340,7 @@
    "k": 1529,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "66.7%"
   },
   {
@@ -19117,6 +19348,7 @@
    "k": 6,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "50%"
   },
   {
@@ -19124,6 +19356,7 @@
    "k": 49500,
    "n": 50000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "99.00%"
   },
   {
@@ -19131,6 +19364,7 @@
    "k": 0,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "10.0%"
   },
   {
@@ -19138,6 +19372,7 @@
    "k": 799000001,
    "n": 1000000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "79.900%"
   },
   {
@@ -19145,6 +19380,7 @@
    "k": 1,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0%"
   },
   {
@@ -19152,6 +19388,7 @@
    "k": 5000,
    "n": 50000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "10.00%"
   },
   {
@@ -19159,6 +19396,7 @@
    "k": 0,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.2%"
   },
   {
@@ -19166,6 +19404,7 @@
    "k": 0,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0%"
   },
   {
@@ -19173,6 +19412,7 @@
    "k": 0,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.000%"
   },
   {
@@ -19180,6 +19420,7 @@
    "k": 501,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.00%"
   },
   {
@@ -19187,6 +19428,7 @@
    "k": 100,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "97.600%"
   },
   {
@@ -19194,6 +19436,7 @@
    "k": 46,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "10.000%"
   },
   {
@@ -19201,6 +19444,7 @@
    "k": 0,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.293%"
   },
   {
@@ -19208,6 +19452,7 @@
    "k": 0,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "30.0%"
   },
   {
@@ -19215,6 +19460,7 @@
    "k": 0,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "66.7%"
   },
   {
@@ -19222,6 +19468,7 @@
    "k": 2,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "29.630%"
   },
   {
@@ -19229,25 +19476,29 @@
    "k": 308,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "66.670%"
   },
   {
    "value": 0.3333,
    "k": 333,
    "n": 1000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.99,
    "k": 458,
    "n": 464,
-   "expected": "supported"
+   "expected": "supported",
+   "expectedStrict": "supported"
   },
   {
    "value": 0.12292938099389712,
    "k": 100,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12%"
   },
   {
@@ -19255,6 +19506,7 @@
    "k": 799,
    "n": 1000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "80%"
   },
   {
@@ -19262,6 +19514,7 @@
    "k": 99,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "100.00%"
   },
   {
@@ -19269,6 +19522,7 @@
    "k": 10000000,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "80%"
   },
   {
@@ -19276,32 +19530,37 @@
    "k": 1000000000,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "100.00%"
   },
   {
    "value": 0.99,
    "k": 1000,
    "n": 1000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.12292938099389712,
    "k": 0,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12%"
   },
   {
    "value": 0.3333,
    "k": 3,
    "n": 3,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.976,
    "k": 48801,
    "n": 50000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "98%"
   },
   {
@@ -19309,6 +19568,7 @@
    "k": 1000,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.00%"
   },
   {
@@ -19316,19 +19576,22 @@
    "k": 2293,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "99.99%"
   },
   {
    "value": 0.3,
    "k": 464,
    "n": 464,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.12293,
    "k": 2,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12%"
   },
   {
@@ -19336,6 +19599,7 @@
    "k": 0,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33%"
   },
   {
@@ -19343,6 +19607,7 @@
    "k": 6666999,
    "n": 10000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "66.7%"
   },
   {
@@ -19350,6 +19615,7 @@
    "k": 370,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "80%"
   },
   {
@@ -19357,6 +19623,7 @@
    "k": 100,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "100%"
   },
   {
@@ -19364,19 +19631,22 @@
    "k": 2258,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "98.49%"
   },
   {
    "value": 5e-07,
    "k": 1,
    "n": 100,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.3333333333333333,
    "k": 0,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.333%"
   },
   {
@@ -19384,6 +19654,7 @@
    "k": 100,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "79.900%"
   },
   {
@@ -19391,25 +19662,29 @@
    "k": 2293,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "99.90%"
   },
   {
    "value": 0.07,
    "k": 162,
    "n": 2294,
-   "expected": "supported"
+   "expected": "supported",
+   "expectedStrict": "supported"
   },
   {
    "value": 0.004,
    "k": 10000000,
    "n": 10000000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.3333333333333333,
    "k": 332,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.333%"
   },
   {
@@ -19417,6 +19692,7 @@
    "k": 13,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.290%"
   },
   {
@@ -19424,19 +19700,22 @@
    "k": 25000,
    "n": 1000000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "0.003%"
   },
   {
    "value": 0.1229,
    "k": 122,
    "n": 1000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.1229,
    "k": 0,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.29%"
   },
   {
@@ -19444,19 +19723,22 @@
    "k": 2294,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "66.67%"
   },
   {
    "value": 0.5,
    "k": 500000001,
    "n": 1000000000,
-   "expected": "supported"
+   "expected": "supported",
+   "expectedStrict": "supported"
   },
   {
    "value": 0.2963,
    "k": 4,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "29.630%"
   },
   {
@@ -19464,19 +19746,22 @@
    "k": 764,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.333%"
   },
   {
    "value": 0.07,
    "k": 0,
    "n": 10,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.1229,
    "k": 2,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.29%"
   },
   {
@@ -19484,13 +19769,15 @@
    "k": 0,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "79.90%"
   },
   {
    "value": 0.6666666666666666,
    "k": 2,
    "n": 3,
-   "expected": "overstated",
+   "expected": "supported",
+   "expectedStrict": "overstated",
    "display": "66.67%"
   },
   {
@@ -19498,6 +19785,7 @@
    "k": 3000001,
    "n": 10000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "30.0%"
   },
   {
@@ -19505,57 +19793,66 @@
    "k": 2,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.33%"
   },
   {
    "value": 0.9849,
    "k": 0,
    "n": 100,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.004,
    "k": 0,
    "n": 1000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 1e-09,
    "k": 1,
    "n": 2294,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.3,
    "k": 29,
    "n": 100,
-   "expected": "supported"
+   "expected": "supported",
+   "expectedStrict": "supported"
   },
   {
    "value": 0.9,
    "k": 899999999,
    "n": 1000000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "90.000%"
   },
   {
    "value": 0.976,
    "k": 0,
    "n": 1000000000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.799,
    "k": 798,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "80%"
   },
   {
    "value": 0.99,
    "k": 990,
    "n": 1000,
-   "expected": "overstated",
+   "expected": "supported",
+   "expectedStrict": "overstated",
    "display": "99.000%"
   },
   {
@@ -19563,6 +19860,7 @@
    "k": 0,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.3%"
   },
   {
@@ -19570,19 +19868,22 @@
    "k": 0,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.0%"
   },
   {
    "value": 1e-12,
    "k": 1000,
    "n": 1000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.3333333333333333,
    "k": 332,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.3%"
   },
   {
@@ -19590,6 +19891,7 @@
    "k": 4,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "50%"
   },
   {
@@ -19597,13 +19899,15 @@
    "k": 680,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "29.630%"
   },
   {
    "value": 0.3,
    "k": 30,
    "n": 100,
-   "expected": "overstated",
+   "expected": "supported",
+   "expectedStrict": "overstated",
    "display": "30.00%"
   },
   {
@@ -19611,6 +19915,7 @@
    "k": 798,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "79.90%"
   },
   {
@@ -19618,6 +19923,7 @@
    "k": 0,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "79.9%"
   },
   {
@@ -19625,6 +19931,7 @@
    "k": 50000,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "67%"
   },
   {
@@ -19632,19 +19939,22 @@
    "k": 0,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.330%"
   },
   {
    "value": 0.0021551724137931034,
    "k": 108,
    "n": 50000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.3333,
    "k": 1000000000,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.3%"
   },
   {
@@ -19652,19 +19962,22 @@
    "k": 100,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "29.630%"
   },
   {
    "value": 1e-12,
    "k": 1,
    "n": 3,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.3333,
    "k": 0,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.33%"
   },
   {
@@ -19672,6 +19985,7 @@
    "k": 0,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "66.7%"
   },
   {
@@ -19679,19 +19993,22 @@
    "k": 0,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.293%"
   },
   {
    "value": 5e-07,
    "k": 6,
    "n": 10000000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.3333333333333333,
    "k": 765,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.3%"
   },
   {
@@ -19699,25 +20016,29 @@
    "k": 49,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "50%"
   },
   {
    "value": 1e-12,
    "k": 0,
    "n": 1000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.9999,
    "k": 0,
    "n": 2294,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.3333333333333333,
    "k": 100,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33%"
   },
   {
@@ -19725,6 +20046,7 @@
    "k": 122929999,
    "n": 1000000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "12.3%"
   },
   {
@@ -19732,6 +20054,7 @@
    "k": 984900000,
    "n": 1000000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "98.5%"
   },
   {
@@ -19739,6 +20062,7 @@
    "k": 308,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "67%"
   },
   {
@@ -19746,19 +20070,22 @@
    "k": 10000000,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "100.0%"
   },
   {
    "value": 0.12293,
    "k": 122930000,
    "n": 1000000000,
-   "expected": "supported"
+   "expected": "supported",
+   "expectedStrict": "supported"
   },
   {
    "value": 0.799,
    "k": 80,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "79.90%"
   },
   {
@@ -19766,6 +20093,7 @@
    "k": 3,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "7.0%"
   },
   {
@@ -19773,6 +20101,7 @@
    "k": 123,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.3%"
   },
   {
@@ -19780,6 +20109,7 @@
    "k": 122929380,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.293%"
   },
   {
@@ -19787,6 +20117,7 @@
    "k": 0,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "99.900%"
   },
   {
@@ -19794,32 +20125,37 @@
    "k": 100,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "99.990%"
   },
   {
    "value": 0.12292938099389712,
    "k": 282,
    "n": 2294,
-   "expected": "supported"
+   "expected": "supported",
+   "expectedStrict": "supported"
   },
   {
    "value": 1e-09,
    "k": 0,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.0%"
   },
   {
    "value": 0.3333333333333333,
    "k": 334,
    "n": 1000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.3333,
    "k": 32,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.3%"
   },
   {
@@ -19827,6 +20163,7 @@
    "k": 1000000000,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.00%"
   },
   {
@@ -19834,6 +20171,7 @@
    "k": 2,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0%"
   },
   {
@@ -19841,6 +20179,7 @@
    "k": 33333,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "66.667%"
   },
   {
@@ -19848,63 +20187,73 @@
    "k": 10,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "30%"
   },
   {
    "value": 0.799,
    "k": 39949,
    "n": 50000,
-   "expected": "supported"
+   "expected": "supported",
+   "expectedStrict": "supported"
   },
   {
    "value": 0.799,
    "k": 80,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "79.9%"
   },
   {
    "value": 0.6666666666666666,
    "k": 50000,
    "n": 50000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.3333333333333333,
    "k": 155,
    "n": 464,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.799,
    "k": 372,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "79.900%"
   },
   {
    "value": 0.999,
    "k": 999,
    "n": 1000,
-   "expected": "supported"
+   "expected": "supported",
+   "expectedStrict": "supported"
   },
   {
    "value": 0.999999999,
    "k": 0,
    "n": 1000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.004,
    "k": 1000000000,
    "n": 1000000000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.799,
    "k": 7989999,
    "n": 10000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "79.900%"
   },
   {
@@ -19912,6 +20261,7 @@
    "k": 1,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.000%"
   },
   {
@@ -19919,6 +20269,7 @@
    "k": 233,
    "n": 464,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "50%"
   },
   {
@@ -19926,19 +20277,22 @@
    "k": 0,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "79.90%"
   },
   {
    "value": 0.07,
    "k": 0,
    "n": 464,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.976,
    "k": 2294,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "97.6%"
   },
   {
@@ -19946,6 +20300,7 @@
    "k": 101,
    "n": 10000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "0.001%"
   },
   {
@@ -19953,6 +20308,7 @@
    "k": 0,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "30%"
   },
   {
@@ -19960,6 +20316,7 @@
    "k": 1000000000,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "99.990%"
   },
   {
@@ -19967,6 +20324,7 @@
    "k": 100,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.0%"
   },
   {
@@ -19974,6 +20332,7 @@
    "k": 1000,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0%"
   },
   {
@@ -19981,6 +20340,7 @@
    "k": 3499,
    "n": 50000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "7%"
   },
   {
@@ -19988,19 +20348,22 @@
    "k": 0,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.003%"
   },
   {
    "value": 0.999,
    "k": 9990000,
    "n": 10000000,
-   "expected": "supported"
+   "expected": "supported",
+   "expectedStrict": "supported"
   },
   {
    "value": 0.799,
    "k": 9,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "79.90%"
   },
   {
@@ -20008,6 +20371,7 @@
    "k": 2,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "99.900%"
   },
   {
@@ -20015,6 +20379,7 @@
    "k": 2,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "7.000%"
   },
   {
@@ -20022,19 +20387,22 @@
    "k": 999,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "100.0%"
   },
   {
    "value": 0.799,
    "k": 0,
    "n": 464,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 1e-05,
    "k": 1,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.0%"
   },
   {
@@ -20042,6 +20410,7 @@
    "k": 33332,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "66.67%"
   },
   {
@@ -20049,6 +20418,7 @@
    "k": 454,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "98%"
   },
   {
@@ -20056,25 +20426,29 @@
    "k": 99,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "10.000%"
   },
   {
    "value": 0.12292938099389712,
    "k": 50000,
    "n": 50000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.004,
    "k": 4000000,
    "n": 1000000000,
-   "expected": "supported"
+   "expected": "supported",
+   "expectedStrict": "supported"
   },
   {
    "value": 0.99,
    "k": 991,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "99.00%"
   },
   {
@@ -20082,6 +20456,7 @@
    "k": 0,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.290%"
   },
   {
@@ -20089,6 +20464,7 @@
    "k": 0,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.0%"
   },
   {
@@ -20096,6 +20472,7 @@
    "k": 0,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "99.9%"
   },
   {
@@ -20103,6 +20480,7 @@
    "k": 0,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.3%"
   },
   {
@@ -20110,6 +20488,7 @@
    "k": 10,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "100%"
   },
   {
@@ -20117,6 +20496,7 @@
    "k": 39950,
    "n": 50000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "79.90%"
   },
   {
@@ -20124,6 +20504,7 @@
    "k": 296300000,
    "n": 1000000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "29.63%"
   },
   {
@@ -20131,6 +20512,7 @@
    "k": 0,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.00%"
   },
   {
@@ -20138,6 +20520,7 @@
    "k": 799000000,
    "n": 1000000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "80%"
   },
   {
@@ -20145,6 +20528,7 @@
    "k": 1833,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "79.900%"
   },
   {
@@ -20152,6 +20536,7 @@
    "k": 0,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "99.90%"
   },
   {
@@ -20159,6 +20544,7 @@
    "k": 2963000,
    "n": 10000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "30%"
   },
   {
@@ -20166,6 +20552,7 @@
    "k": 1000,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "80%"
   },
   {
@@ -20173,6 +20560,7 @@
    "k": 50000,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0%"
   },
   {
@@ -20180,6 +20568,7 @@
    "k": 39949,
    "n": 50000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "79.9%"
   },
   {
@@ -20187,6 +20576,7 @@
    "k": 666,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "66.7%"
   },
   {
@@ -20194,6 +20584,7 @@
    "k": 1,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "7.00%"
   },
   {
@@ -20201,6 +20592,7 @@
    "k": 0,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.293%"
   },
   {
@@ -20208,6 +20600,7 @@
    "k": 0,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.000%"
   },
   {
@@ -20215,6 +20608,7 @@
    "k": 0,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "79.90%"
   },
   {
@@ -20222,6 +20616,7 @@
    "k": 2293,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "100.000%"
   },
   {
@@ -20229,6 +20624,7 @@
    "k": 0,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.3%"
   },
   {
@@ -20236,6 +20632,7 @@
    "k": 1,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0%"
   },
   {
@@ -20243,6 +20640,7 @@
    "k": 66,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "67%"
   },
   {
@@ -20250,19 +20648,22 @@
    "k": 0,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "66.7%"
   },
   {
    "value": 5e-07,
    "k": 0,
    "n": 100,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.12292938099389712,
    "k": 1229295,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.293%"
   },
   {
@@ -20270,6 +20671,7 @@
    "k": 0,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "99.9%"
   },
   {
@@ -20277,25 +20679,29 @@
    "k": 10,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "7.000%"
   },
   {
    "value": 0.5,
    "k": 1000000000,
    "n": 1000000000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 2.5e-05,
    "k": 10,
    "n": 10,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 1e-12,
    "k": 10,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.00%"
   },
   {
@@ -20303,6 +20709,7 @@
    "k": 0,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "66.7%"
   },
   {
@@ -20310,6 +20717,7 @@
    "k": 9848999,
    "n": 10000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "98.5%"
   },
   {
@@ -20317,19 +20725,22 @@
    "k": 454,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "97.60%"
   },
   {
    "value": 0.999999999,
    "k": 1000,
    "n": 1000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 1e-05,
    "k": 9999,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.0%"
   },
   {
@@ -20337,6 +20748,7 @@
    "k": 0,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.0%"
   },
   {
@@ -20344,6 +20756,7 @@
    "k": 10000000,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "99.990%"
   },
   {
@@ -20351,6 +20764,7 @@
    "k": 1,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0%"
   },
   {
@@ -20358,6 +20772,7 @@
    "k": 0,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "29.6%"
   },
   {
@@ -20365,6 +20780,7 @@
    "k": 464,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "99.9%"
   },
   {
@@ -20372,6 +20788,7 @@
    "k": 3,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "30%"
   },
   {
@@ -20379,19 +20796,22 @@
    "k": 0,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "66.7%"
   },
   {
    "value": 0.6666666666666666,
    "k": 0,
    "n": 3,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.976,
    "k": 2239,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "97.600%"
   },
   {
@@ -20399,6 +20819,7 @@
    "k": 122,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.29%"
   },
   {
@@ -20406,25 +20827,29 @@
    "k": 3,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "29.6%"
   },
   {
    "value": 1e-05,
    "k": 3,
    "n": 3,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.6666666666666666,
    "k": 0,
    "n": 10000000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.9,
    "k": 89,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "90.000%"
   },
   {
@@ -20432,6 +20857,7 @@
    "k": 50000,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "66.67%"
   },
   {
@@ -20439,6 +20865,7 @@
    "k": 0,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "29.63%"
   },
   {
@@ -20446,6 +20873,7 @@
    "k": 688,
    "n": 2294,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "30.0%"
   },
   {
@@ -20453,6 +20881,7 @@
    "k": 2294,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.29%"
   },
   {
@@ -20460,6 +20889,7 @@
    "k": 901,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "90.00%"
   },
   {
@@ -20467,6 +20897,7 @@
    "k": 0,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "66.7%"
   },
   {
@@ -20474,6 +20905,7 @@
    "k": 2,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "50.00%"
   },
   {
@@ -20481,6 +20913,7 @@
    "k": 0,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.33%"
   },
   {
@@ -20488,6 +20921,7 @@
    "k": 4,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.3%"
   },
   {
@@ -20495,6 +20929,7 @@
    "k": 122,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.290%"
   },
   {
@@ -20502,6 +20937,7 @@
    "k": 6666666,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "66.7%"
   },
   {
@@ -20509,6 +20945,7 @@
    "k": 2,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "79.90%"
   },
   {
@@ -20516,6 +20953,7 @@
    "k": 66,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "66.670%"
   },
   {
@@ -20523,6 +20961,7 @@
    "k": 1000000000,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0%"
   },
   {
@@ -20530,6 +20969,7 @@
    "k": 139,
    "n": 464,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "30.0%"
   },
   {
@@ -20537,6 +20977,7 @@
    "k": 0,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.00%"
   },
   {
@@ -20544,6 +20985,7 @@
    "k": 464,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12%"
   },
   {
@@ -20551,19 +20993,22 @@
    "k": 39951,
    "n": 50000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "80%"
   },
   {
    "value": 1.5e-07,
    "k": 10,
    "n": 10,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 1e-05,
    "k": 99,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.0%"
   },
   {
@@ -20571,6 +21016,7 @@
    "k": 2260,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "98%"
   },
   {
@@ -20578,6 +21024,7 @@
    "k": 48801,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "97.600%"
   },
   {
@@ -20585,6 +21032,7 @@
    "k": 2294,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "66.670%"
   },
   {
@@ -20592,6 +21040,7 @@
    "k": 900000000,
    "n": 1000000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "90.00%"
   },
   {
@@ -20599,32 +21048,37 @@
    "k": 10000000,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.00%"
   },
   {
    "value": 0.1,
    "k": 1,
    "n": 3,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.799,
    "k": 39950,
    "n": 50000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "80%"
   },
   {
    "value": 1e-09,
    "k": 0,
    "n": 2294,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.999,
    "k": 49951,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "100%"
   },
   {
@@ -20632,6 +21086,7 @@
    "k": 1,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.000%"
   },
   {
@@ -20639,6 +21094,7 @@
    "k": 0,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.3%"
   },
   {
@@ -20646,6 +21102,7 @@
    "k": 3,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "7.00%"
   },
   {
@@ -20653,6 +21110,7 @@
    "k": 4000000,
    "n": 1000000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "0.40%"
   },
   {
@@ -20660,25 +21118,29 @@
    "k": 10000000,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.0%"
   },
   {
    "value": 0.3,
    "k": 140,
    "n": 464,
-   "expected": "supported"
+   "expected": "supported",
+   "expectedStrict": "supported"
   },
   {
    "value": 0.0021551724137931034,
    "k": 3,
    "n": 3,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.9849,
    "k": 49244,
    "n": 50000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "98%"
   },
   {
@@ -20686,6 +21148,7 @@
    "k": 764,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33%"
   },
   {
@@ -20693,6 +21156,7 @@
    "k": 0,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "99.99%"
   },
   {
@@ -20700,6 +21164,7 @@
    "k": 10000000,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0%"
   },
   {
@@ -20707,32 +21172,37 @@
    "k": 99,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "100.000%"
   },
   {
    "value": 0.799,
    "k": 100,
    "n": 100,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.9999,
    "k": 0,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "100%"
   },
   {
    "value": 0.799,
    "k": 50000,
    "n": 50000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.3333,
    "k": 3333001,
    "n": 10000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "33.33%"
   },
   {
@@ -20740,6 +21210,7 @@
    "k": 0,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.00%"
   },
   {
@@ -20747,6 +21218,7 @@
    "k": 0,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.0%"
   },
   {
@@ -20754,6 +21226,7 @@
    "k": 107,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.216%"
   },
   {
@@ -20761,19 +21234,22 @@
    "k": 50000,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "30%"
   },
   {
    "value": 0.004,
    "k": 10,
    "n": 2294,
-   "expected": "supported"
+   "expected": "supported",
+   "expectedStrict": "supported"
   },
   {
    "value": 5e-07,
    "k": 0,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0%"
   },
   {
@@ -20781,6 +21257,7 @@
    "k": 123,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.293%"
   },
   {
@@ -20788,6 +21265,7 @@
    "k": 0,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.333%"
   },
   {
@@ -20795,19 +21273,22 @@
    "k": 976000001,
    "n": 1000000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "98%"
   },
   {
    "value": 1.5e-07,
    "k": 0,
    "n": 464,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.12292938099389712,
    "k": 1229295,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.3%"
   },
   {
@@ -20815,6 +21296,7 @@
    "k": 666,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "67%"
   },
   {
@@ -20822,32 +21304,37 @@
    "k": 1000000000,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.330%"
   },
   {
    "value": 0.9849,
    "k": 986,
    "n": 1000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.3333333333333333,
    "k": 464,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.333%"
   },
   {
    "value": 1e-05,
    "k": 0,
    "n": 10000000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.1,
    "k": 1,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "10.0%"
   },
   {
@@ -20855,6 +21342,7 @@
    "k": 1,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.00%"
   },
   {
@@ -20862,25 +21350,29 @@
    "k": 2,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.330%"
   },
   {
    "value": 0.1229,
    "k": 1228999,
    "n": 10000000,
-   "expected": "supported"
+   "expected": "supported",
+   "expectedStrict": "supported"
   },
   {
    "value": 0.0021551724137931034,
    "k": 0,
    "n": 10000000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.9849,
    "k": 49246,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "98.490%"
   },
   {
@@ -20888,6 +21380,7 @@
    "k": 2294,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.40%"
   },
   {
@@ -20895,6 +21388,7 @@
    "k": 34,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.3%"
   },
   {
@@ -20902,6 +21396,7 @@
    "k": 0,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12%"
   },
   {
@@ -20909,6 +21404,7 @@
    "k": 31,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "30%"
   },
   {
@@ -20916,6 +21412,7 @@
    "k": 108,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.2%"
   },
   {
@@ -20923,6 +21420,7 @@
    "k": 500,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.00%"
   },
   {
@@ -20930,6 +21428,7 @@
    "k": 1000000000,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0%"
   },
   {
@@ -20937,6 +21436,7 @@
    "k": 0,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12%"
   },
   {
@@ -20944,6 +21444,7 @@
    "k": 901,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "90.000%"
   },
   {
@@ -20951,6 +21452,7 @@
    "k": 798,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "79.9%"
   },
   {
@@ -20958,6 +21460,7 @@
    "k": 0,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "100.0%"
   },
   {
@@ -20965,6 +21468,7 @@
    "k": 122929381,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.29%"
   },
   {
@@ -20972,6 +21476,7 @@
    "k": 700000,
    "n": 10000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "7.0%"
   },
   {
@@ -20979,6 +21484,7 @@
    "k": 1,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0%"
   },
   {
@@ -20986,6 +21492,7 @@
    "k": 1,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.000%"
   },
   {
@@ -20993,19 +21500,22 @@
    "k": 333333334,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.3%"
   },
   {
    "value": 0.976,
    "k": 976000001,
    "n": 1000000000,
-   "expected": "supported"
+   "expected": "supported",
+   "expectedStrict": "supported"
   },
   {
    "value": 0.99,
    "k": 9900001,
    "n": 10000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "99.00%"
   },
   {
@@ -21013,19 +21523,22 @@
    "k": 9998999,
    "n": 10000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "99.990%"
   },
   {
    "value": 0.799,
    "k": 1832,
    "n": 2294,
-   "expected": "supported"
+   "expected": "supported",
+   "expectedStrict": "supported"
   },
   {
    "value": 0.99,
    "k": 1000,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "99%"
   },
   {
@@ -21033,6 +21546,7 @@
    "k": 0,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "10%"
   },
   {
@@ -21040,6 +21554,7 @@
    "k": 1000,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.290%"
   },
   {
@@ -21047,6 +21562,7 @@
    "k": 3,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.29%"
   },
   {
@@ -21054,6 +21570,7 @@
    "k": 372,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "79.90%"
   },
   {
@@ -21061,6 +21578,7 @@
    "k": 2,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "100%"
   },
   {
@@ -21068,6 +21586,7 @@
    "k": 155,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.33%"
   },
   {
@@ -21075,6 +21594,7 @@
    "k": 99999999,
    "n": 1000000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "10.000%"
   },
   {
@@ -21082,6 +21602,7 @@
    "k": 764,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.33%"
   },
   {
@@ -21089,6 +21610,7 @@
    "k": 0,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.0%"
   },
   {
@@ -21096,6 +21618,7 @@
    "k": 1000000000,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "98.5%"
   },
   {
@@ -21103,6 +21626,7 @@
    "k": 0,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.3%"
   },
   {
@@ -21110,6 +21634,7 @@
    "k": 0,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "99%"
   },
   {
@@ -21117,6 +21642,7 @@
    "k": 1000,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "30.0%"
   },
   {
@@ -21124,6 +21650,7 @@
    "k": 2,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.3%"
   },
   {
@@ -21131,6 +21658,7 @@
    "k": 3,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.000%"
   },
   {
@@ -21138,6 +21666,7 @@
    "k": 1000,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "10.00%"
   },
   {
@@ -21145,6 +21674,7 @@
    "k": 122929382,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.293%"
   },
   {
@@ -21152,19 +21682,22 @@
    "k": 3,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.4%"
   },
   {
    "value": 0.0021551724137931034,
    "k": 4,
    "n": 2294,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.99,
    "k": 0,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "99.000%"
   },
   {
@@ -21172,6 +21705,7 @@
    "k": 464,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "30%"
   },
   {
@@ -21179,19 +21713,22 @@
    "k": 0,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "99.0%"
   },
   {
    "value": 0.799,
    "k": 370,
    "n": 464,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.999,
    "k": 0,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "99.9%"
   },
   {
@@ -21199,19 +21736,22 @@
    "k": 3333332,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.3%"
   },
   {
    "value": 0.9999,
    "k": 0,
    "n": 3,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.799,
    "k": 464,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "79.9%"
   },
   {
@@ -21219,6 +21759,7 @@
    "k": 985,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "98%"
   },
   {
@@ -21226,19 +21767,22 @@
    "k": 50000,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.29%"
   },
   {
    "value": 0.999999999,
    "k": 2294,
    "n": 2294,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.2963,
    "k": 2963001,
    "n": 10000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "29.6%"
   },
   {
@@ -21246,6 +21790,7 @@
    "k": 0,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "98%"
   },
   {
@@ -21253,6 +21798,7 @@
    "k": 0,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.33%"
   },
   {
@@ -21260,6 +21806,7 @@
    "k": 2294,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "10.0%"
   },
   {
@@ -21267,6 +21814,7 @@
    "k": 16666,
    "n": 50000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "33.3%"
   },
   {
@@ -21274,6 +21822,7 @@
    "k": 9998999,
    "n": 10000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "99.99%"
   },
   {
@@ -21281,19 +21830,22 @@
    "k": 10000000,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "99.9%"
   },
   {
    "value": 0.07,
    "k": 700000,
    "n": 10000000,
-   "expected": "supported"
+   "expected": "supported",
+   "expectedStrict": "supported"
   },
   {
    "value": 0.799,
    "k": 9,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "79.90%"
   },
   {
@@ -21301,19 +21853,22 @@
    "k": 0,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "100%"
   },
   {
    "value": 0.004,
    "k": 100,
    "n": 100,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.3,
    "k": 1,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "30.00%"
   },
   {
@@ -21321,19 +21876,22 @@
    "k": 57,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.29%"
   },
   {
    "value": 0.799,
    "k": 39949,
    "n": 50000,
-   "expected": "supported"
+   "expected": "supported",
+   "expectedStrict": "supported"
   },
   {
    "value": 5e-07,
    "k": 1,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.0%"
   },
   {
@@ -21341,6 +21899,7 @@
    "k": 0,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.003%"
   },
   {
@@ -21348,26 +21907,30 @@
    "k": 50000,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "97.600%"
   },
   {
    "value": 0.3333,
    "k": 1000000000,
    "n": 1000000000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.3,
    "k": 140,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "30.00%"
   },
   {
    "value": 0.1,
    "k": 1,
    "n": 10,
-   "expected": "overstated",
+   "expected": "supported",
+   "expectedStrict": "overstated",
    "display": "10.00%"
   },
   {
@@ -21375,6 +21938,7 @@
    "k": 2270,
    "n": 2294,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "99.0%"
   },
   {
@@ -21382,6 +21946,7 @@
    "k": 1,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.2%"
   },
   {
@@ -21389,6 +21954,7 @@
    "k": 25000,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.0%"
   },
   {
@@ -21396,6 +21962,7 @@
    "k": 2,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33%"
   },
   {
@@ -21403,6 +21970,7 @@
    "k": 0,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "7%"
   },
   {
@@ -21410,6 +21978,7 @@
    "k": 10000000,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.400%"
   },
   {
@@ -21417,6 +21986,7 @@
    "k": 8,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "67%"
   },
   {
@@ -21424,6 +21994,7 @@
    "k": 228,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "10.000%"
   },
   {
@@ -21431,6 +22002,7 @@
    "k": 1000000000,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.000%"
   },
   {
@@ -21438,6 +22010,7 @@
    "k": 10000000,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.00%"
   },
   {
@@ -21445,19 +22018,22 @@
    "k": 975999999,
    "n": 1000000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "97.60%"
   },
   {
    "value": 0.976,
    "k": 0,
    "n": 100,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.07,
    "k": 3,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "7.000%"
   },
   {
@@ -21465,6 +22041,7 @@
    "k": 700000,
    "n": 10000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "7%"
   },
   {
@@ -21472,19 +22049,22 @@
    "k": 137,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "29.630%"
   },
   {
    "value": 1e-05,
    "k": 0,
    "n": 3,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.799,
    "k": 1,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "79.9%"
   },
   {
@@ -21492,6 +22072,7 @@
    "k": 1,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.0%"
   },
   {
@@ -21499,19 +22080,22 @@
    "k": 1229293,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.3%"
   },
   {
    "value": 1.5e-07,
    "k": 3,
    "n": 10000000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 2.5e-05,
    "k": 249,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.003%"
   },
   {
@@ -21519,6 +22103,7 @@
    "k": 2294,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "99.99%"
   },
   {
@@ -21526,6 +22111,7 @@
    "k": 58,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.293%"
   },
   {
@@ -21533,6 +22119,7 @@
    "k": 501,
    "n": 1000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "50%"
   },
   {
@@ -21540,6 +22127,7 @@
    "k": 999899999,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "100.0%"
   },
   {
@@ -21547,45 +22135,52 @@
    "k": 2,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "10%"
   },
   {
    "value": 0.12293,
    "k": 2,
    "n": 10,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.976,
    "k": 0,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "97.60%"
   },
   {
    "value": 0.9999,
    "k": 2,
    "n": 3,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.2963,
    "k": 1000000000,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "30%"
   },
   {
    "value": 0.12292938099389712,
    "k": 6145,
    "n": 50000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.1229,
    "k": 11,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.3%"
   },
   {
@@ -21593,32 +22188,37 @@
    "k": 154,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.33%"
   },
   {
    "value": 0.6666666666666666,
    "k": 0,
    "n": 100,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.12292938099389712,
    "k": 0,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.293%"
   },
   {
    "value": 0.07,
    "k": 31,
    "n": 464,
-   "expected": "supported"
+   "expected": "supported",
+   "expectedStrict": "supported"
   },
   {
    "value": 0.0021551724137931034,
    "k": 0,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.22%"
   },
   {
@@ -21626,6 +22226,7 @@
    "k": 1834,
    "n": 2294,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "79.9%"
   },
   {
@@ -21633,6 +22234,7 @@
    "k": 122900001,
    "n": 1000000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "12.290%"
   },
   {
@@ -21640,6 +22242,7 @@
    "k": 9,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0%"
   },
   {
@@ -21647,6 +22250,7 @@
    "k": 50000,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.3%"
   },
   {
@@ -21654,6 +22258,7 @@
    "k": 50000,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0%"
   },
   {
@@ -21661,25 +22266,29 @@
    "k": 2238,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "97.600%"
   },
   {
    "value": 0.004,
    "k": 201,
    "n": 50000,
-   "expected": "supported"
+   "expected": "supported",
+   "expectedStrict": "supported"
   },
   {
    "value": 0.5,
    "k": 1147,
    "n": 2294,
-   "expected": "supported"
+   "expected": "supported",
+   "expectedStrict": "supported"
   },
   {
    "value": 0.9,
    "k": 2294,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "90.000%"
   },
   {
@@ -21687,6 +22296,7 @@
    "k": 10,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "99.90%"
   },
   {
@@ -21694,19 +22304,22 @@
    "k": 0,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.3%"
   },
   {
    "value": 0.5,
    "k": 233,
    "n": 464,
-   "expected": "supported"
+   "expected": "supported",
+   "expectedStrict": "supported"
   },
   {
    "value": 1e-05,
    "k": 101,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0%"
   },
   {
@@ -21714,6 +22327,7 @@
    "k": 1000000000,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "10.000%"
   },
   {
@@ -21721,6 +22335,7 @@
    "k": 2,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "79.90%"
   },
   {
@@ -21728,6 +22343,7 @@
    "k": 1000000000,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.0%"
   },
   {
@@ -21735,6 +22351,7 @@
    "k": 1147,
    "n": 2294,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "50.0%"
   },
   {
@@ -21742,6 +22359,7 @@
    "k": 1000,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.000%"
   },
   {
@@ -21749,6 +22367,7 @@
    "k": 0,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "7.000%"
   },
   {
@@ -21756,38 +22375,44 @@
    "k": 0,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "80%"
   },
   {
    "value": 0.3,
    "k": 10000000,
    "n": 10000000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.3333,
    "k": 2294,
    "n": 2294,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.3333,
    "k": 765,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.3%"
   },
   {
    "value": 0.9,
    "k": 90,
    "n": 100,
-   "expected": "supported"
+   "expected": "supported",
+   "expectedStrict": "supported"
   },
   {
    "value": 0.9849,
    "k": 49245,
    "n": 50000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "98.490%"
   },
   {
@@ -21795,19 +22420,22 @@
    "k": 10000000,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "29.630%"
   },
   {
    "value": 0.3333,
    "k": 10,
    "n": 10,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.07,
    "k": 1000000000,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "7%"
   },
   {
@@ -21815,6 +22443,7 @@
    "k": 2,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.3%"
   },
   {
@@ -21822,6 +22451,7 @@
    "k": 464,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "100%"
   },
   {
@@ -21829,6 +22459,7 @@
    "k": 3501,
    "n": 50000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "7%"
   },
   {
@@ -21836,6 +22467,7 @@
    "k": 56,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.3%"
   },
   {
@@ -21843,6 +22475,7 @@
    "k": 766,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33%"
   },
   {
@@ -21850,6 +22483,7 @@
    "k": 6666668,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "66.667%"
   },
   {
@@ -21857,6 +22491,7 @@
    "k": 2258,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "98.5%"
   },
   {
@@ -21864,25 +22499,29 @@
    "k": 666666667,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "66.7%"
   },
   {
    "value": 0.6666666666666666,
    "k": 2,
    "n": 3,
-   "expected": "supported"
+   "expected": "supported",
+   "expectedStrict": "supported"
   },
   {
    "value": 0.5,
    "k": 0,
    "n": 2294,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.2963,
    "k": 0,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "29.63%"
   },
   {
@@ -21890,6 +22529,7 @@
    "k": 1000000000,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "67%"
   },
   {
@@ -21897,19 +22537,22 @@
    "k": 0,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "30%"
   },
   {
    "value": 0.0021551724137931034,
    "k": 2,
    "n": 464,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.3333,
    "k": 3,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33%"
   },
   {
@@ -21917,6 +22560,7 @@
    "k": 0,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.00%"
   },
   {
@@ -21924,6 +22568,7 @@
    "k": 0,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0%"
   },
   {
@@ -21931,6 +22576,7 @@
    "k": 0,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "99.9%"
   },
   {
@@ -21938,6 +22584,7 @@
    "k": 10,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "50%"
   },
   {
@@ -21945,6 +22592,7 @@
    "k": 2155173,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.22%"
   },
   {
@@ -21952,6 +22600,7 @@
    "k": 10,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "97.6%"
   },
   {
@@ -21959,6 +22608,7 @@
    "k": 0,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.330%"
   },
   {
@@ -21966,19 +22616,22 @@
    "k": 0,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.000%"
   },
   {
    "value": 0.3333333333333333,
    "k": 2,
    "n": 3,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.1,
    "k": 464,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "10%"
   },
   {
@@ -21986,6 +22639,7 @@
    "k": 0,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.333%"
   },
   {
@@ -21993,19 +22647,22 @@
    "k": 57,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12%"
   },
   {
    "value": 2.5e-05,
    "k": 25000,
    "n": 1000000000,
-   "expected": "supported"
+   "expected": "supported",
+   "expectedStrict": "supported"
   },
   {
    "value": 0.9849,
    "k": 10,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "98%"
   },
   {
@@ -22013,37 +22670,43 @@
    "k": 100,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "79.900%"
   },
   {
    "value": 0.799,
    "k": 0,
    "n": 464,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.799,
    "k": 7990000,
    "n": 10000000,
-   "expected": "supported"
+   "expected": "supported",
+   "expectedStrict": "supported"
   },
   {
    "value": 1e-05,
    "k": 0,
    "n": 1000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 5e-07,
    "k": 0,
    "n": 1000000000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.3333333333333333,
    "k": 10,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.3%"
   },
   {
@@ -22051,6 +22714,7 @@
    "k": 464,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "7.0%"
   },
   {
@@ -22058,6 +22722,7 @@
    "k": 1000,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "99.990%"
   },
   {
@@ -22065,6 +22730,7 @@
    "k": 0,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.3%"
   },
   {
@@ -22072,6 +22738,7 @@
    "k": 10000000,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.22%"
   },
   {
@@ -22079,6 +22746,7 @@
    "k": 136,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "30%"
   },
   {
@@ -22086,6 +22754,7 @@
    "k": 798999999,
    "n": 1000000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "79.90%"
   },
   {
@@ -22093,19 +22762,22 @@
    "k": 99,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "100.0%"
   },
   {
    "value": 0.0021551724137931034,
    "k": 1,
    "n": 464,
-   "expected": "supported"
+   "expected": "supported",
+   "expectedStrict": "supported"
   },
   {
    "value": 0.0021551724137931034,
    "k": 1,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.216%"
   },
   {
@@ -22113,6 +22785,7 @@
    "k": 984900001,
    "n": 1000000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "98%"
   },
   {
@@ -22120,6 +22793,7 @@
    "k": 100,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "90.0%"
   },
   {
@@ -22127,6 +22801,7 @@
    "k": 1000000000,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "99%"
   },
   {
@@ -22134,6 +22809,7 @@
    "k": 233,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "50.0%"
   },
   {
@@ -22141,19 +22817,22 @@
    "k": 1,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.216%"
   },
   {
    "value": 0.9,
    "k": 10000000,
    "n": 10000000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.99,
    "k": 2294,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "99.0%"
   },
   {
@@ -22161,50 +22840,58 @@
    "k": 998999999,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "100%"
   },
   {
    "value": 0.999999999,
    "k": 0,
    "n": 2294,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.3333333333333333,
    "k": 1,
    "n": 3,
-   "expected": "supported"
+   "expected": "supported",
+   "expectedStrict": "supported"
   },
   {
    "value": 0.9,
    "k": 9000000,
    "n": 10000000,
-   "expected": "supported"
+   "expected": "supported",
+   "expectedStrict": "supported"
   },
   {
    "value": 5e-07,
    "k": 0,
    "n": 10000000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.12293,
    "k": 122929999,
    "n": 1000000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "12.29%"
   },
   {
    "value": 1.5e-07,
    "k": 1,
    "n": 50000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.6666666666666666,
    "k": 33333,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "66.67%"
   },
   {
@@ -22212,6 +22899,7 @@
    "k": 333299999,
    "n": 1000000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "33.330%"
   },
   {
@@ -22219,19 +22907,22 @@
    "k": 5001,
    "n": 50000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "10.00%"
   },
   {
    "value": 1e-05,
    "k": 1,
    "n": 464,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.799,
    "k": 371,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "79.90%"
   },
   {
@@ -22239,19 +22930,22 @@
    "k": 0,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.33%"
   },
   {
    "value": 0.976,
    "k": 3,
    "n": 3,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 2.5e-05,
    "k": 0,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0%"
   },
   {
@@ -22259,6 +22953,7 @@
    "k": 139,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "30.000%"
   },
   {
@@ -22266,6 +22961,7 @@
    "k": 16664,
    "n": 50000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "33.3%"
   },
   {
@@ -22273,6 +22969,7 @@
    "k": 799000000,
    "n": 1000000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "79.90%"
   },
   {
@@ -22280,6 +22977,7 @@
    "k": 900000001,
    "n": 1000000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "90.000%"
   },
   {
@@ -22287,6 +22985,7 @@
    "k": 50000,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.00%"
   },
   {
@@ -22294,19 +22993,22 @@
    "k": 100,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.293%"
   },
   {
    "value": 0.12292938099389712,
    "k": 1000000000,
    "n": 1000000000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.1229,
    "k": 6144,
    "n": 50000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "12.29%"
   },
   {
@@ -22314,6 +23016,7 @@
    "k": 0,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.4%"
   },
   {
@@ -22321,38 +23024,44 @@
    "k": 3,
    "n": 10,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "30%"
   },
   {
    "value": 0.004,
    "k": 50000,
    "n": 50000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 1.5e-07,
    "k": 0,
    "n": 1000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.5,
    "k": 1,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "50.000%"
   },
   {
    "value": 0.3333333333333333,
    "k": 0,
    "n": 50000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 2.5e-05,
    "k": 50000,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.003%"
   },
   {
@@ -22360,19 +23069,22 @@
    "k": 419,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "90.0%"
   },
   {
    "value": 0.3333,
    "k": 155,
    "n": 464,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.3333333333333333,
    "k": 4,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33%"
   },
   {
@@ -22380,19 +23092,22 @@
    "k": 0,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.00%"
   },
   {
    "value": 0.799,
    "k": 372,
    "n": 464,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.6667,
    "k": 666699999,
    "n": 1000000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "66.7%"
   },
   {
@@ -22400,6 +23115,7 @@
    "k": 32,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.333%"
   },
   {
@@ -22407,6 +23123,7 @@
    "k": 160,
    "n": 2294,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "7%"
   },
   {
@@ -22414,6 +23131,7 @@
    "k": 0,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "29.63%"
   },
   {
@@ -22421,6 +23139,7 @@
    "k": 500,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.000%"
   },
   {
@@ -22428,32 +23147,37 @@
    "k": 7990001,
    "n": 10000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "79.9%"
   },
   {
    "value": 0.9,
    "k": 9000001,
    "n": 10000000,
-   "expected": "supported"
+   "expected": "supported",
+   "expectedStrict": "supported"
   },
   {
    "value": 0.9999,
    "k": 0,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "99.990%"
   },
   {
    "value": 0.799,
    "k": 3,
    "n": 3,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.9849,
    "k": 49244,
    "n": 50000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "98.5%"
   },
   {
@@ -22461,6 +23185,7 @@
    "k": 3500,
    "n": 50000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "7.00%"
   },
   {
@@ -22468,32 +23193,37 @@
    "k": 2294,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "80%"
   },
   {
    "value": 1.5e-07,
    "k": 1000,
    "n": 1000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 1.5e-07,
    "k": 1,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.0%"
   },
   {
    "value": 5e-07,
    "k": 0,
    "n": 3,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.2963,
    "k": 296300001,
    "n": 1000000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "29.6%"
   },
   {
@@ -22501,19 +23231,22 @@
    "k": 2293,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "99.990%"
   },
   {
    "value": 0.12293,
    "k": 10,
    "n": 10,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 5e-07,
    "k": 0,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.0%"
   },
   {
@@ -22521,6 +23254,7 @@
    "k": 0,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "100.000%"
   },
   {
@@ -22528,6 +23262,7 @@
    "k": 140,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "30.0%"
   },
   {
@@ -22535,6 +23270,7 @@
    "k": 9760000,
    "n": 10000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "97.600%"
   },
   {
@@ -22542,25 +23278,29 @@
    "k": 3,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "98%"
   },
   {
    "value": 0.9,
    "k": 3,
    "n": 3,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 1.5e-07,
    "k": 1000000000,
    "n": 1000000000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.5,
    "k": 233,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "50.00%"
   },
   {
@@ -22568,6 +23308,7 @@
    "k": 2294,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.333%"
   },
   {
@@ -22575,6 +23316,7 @@
    "k": 464,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "30.00%"
   },
   {
@@ -22582,6 +23324,7 @@
    "k": 31,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "30%"
   },
   {
@@ -22589,6 +23332,7 @@
    "k": 1000000000,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "67%"
   },
   {
@@ -22596,6 +23340,7 @@
    "k": 1528,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "66.67%"
   },
   {
@@ -22603,6 +23348,7 @@
    "k": 301,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "30.00%"
   },
   {
@@ -22610,32 +23356,37 @@
    "k": 0,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "79.900%"
   },
   {
    "value": 0.799,
    "k": 0,
    "n": 3,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 1e-05,
    "k": 50000,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0%"
   },
   {
    "value": 0.799,
    "k": 2294,
    "n": 2294,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.1,
    "k": 0,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "10.00%"
   },
   {
@@ -22643,6 +23394,7 @@
    "k": 1,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.0%"
   },
   {
@@ -22650,6 +23402,7 @@
    "k": 282,
    "n": 2294,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "12%"
   },
   {
@@ -22657,6 +23410,7 @@
    "k": 9998999,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "100.0%"
   },
   {
@@ -22664,6 +23418,7 @@
    "k": 0,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "98.490%"
   },
   {
@@ -22671,6 +23426,7 @@
    "k": 1,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0%"
   },
   {
@@ -22678,6 +23434,7 @@
    "k": 464,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.29%"
   },
   {
@@ -22685,6 +23442,7 @@
    "k": 13,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.29%"
   },
   {
@@ -22692,6 +23450,7 @@
    "k": 50000,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.3%"
   },
   {
@@ -22699,6 +23458,7 @@
    "k": 8,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "66.670%"
   },
   {
@@ -22706,6 +23466,7 @@
    "k": 1,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.0%"
   },
   {
@@ -22713,6 +23474,7 @@
    "k": 24999,
    "n": 50000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "50.00%"
   },
   {
@@ -22720,6 +23482,7 @@
    "k": 0,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.000%"
   },
   {
@@ -22727,6 +23490,7 @@
    "k": 1,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.000%"
   },
   {
@@ -22734,6 +23498,7 @@
    "k": 281,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.3%"
   },
   {
@@ -22741,6 +23506,7 @@
    "k": 16667,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33%"
   },
   {
@@ -22748,6 +23514,7 @@
    "k": 10,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.2%"
   },
   {
@@ -22755,6 +23522,7 @@
    "k": 2294,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "99%"
   },
   {
@@ -22762,6 +23530,7 @@
    "k": 3,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.33%"
   },
   {
@@ -22769,6 +23538,7 @@
    "k": 49949,
    "n": 50000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "99.9%"
   },
   {
@@ -22776,6 +23546,7 @@
    "k": 3,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "100%"
   },
   {
@@ -22783,6 +23554,7 @@
    "k": 0,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.003%"
   },
   {
@@ -22790,6 +23562,7 @@
    "k": 9000001,
    "n": 10000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "90%"
   },
   {
@@ -22797,6 +23570,7 @@
    "k": 1,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "79.90%"
   },
   {
@@ -22804,19 +23578,22 @@
    "k": 29,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "30.0%"
   },
   {
    "value": 0.799,
    "k": 799,
    "n": 1000,
-   "expected": "supported"
+   "expected": "supported",
+   "expectedStrict": "supported"
   },
   {
    "value": 5e-07,
    "k": 2294,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.0%"
   },
   {
@@ -22824,6 +23601,7 @@
    "k": 464,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.290%"
   },
   {
@@ -22831,6 +23609,7 @@
    "k": 49,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "50.0%"
   },
   {
@@ -22838,6 +23617,7 @@
    "k": 0,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "7.00%"
   },
   {
@@ -22845,6 +23625,7 @@
    "k": 1000001,
    "n": 10000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "10.00%"
   },
   {
@@ -22852,19 +23633,22 @@
    "k": 0,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.003%"
   },
   {
    "value": 0.12292938099389712,
    "k": 3,
    "n": 3,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.12292938099389712,
    "k": 2294,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.293%"
   },
   {
@@ -22872,19 +23656,22 @@
    "k": 3333334,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.3%"
   },
   {
    "value": 0.3333,
    "k": 0,
    "n": 1000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 2.5e-05,
    "k": 1,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0%"
   },
   {
@@ -22892,6 +23679,7 @@
    "k": 6146,
    "n": 50000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "12%"
   },
   {
@@ -22899,25 +23687,29 @@
    "k": 122930000,
    "n": 1000000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "12.29%"
   },
   {
    "value": 2.5e-05,
    "k": 464,
    "n": 464,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.99,
    "k": 2,
    "n": 3,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.6666666666666666,
    "k": 6,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "66.7%"
   },
   {
@@ -22925,6 +23717,7 @@
    "k": 31,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "30.000%"
   },
   {
@@ -22932,6 +23725,7 @@
    "k": 1000,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "67%"
   },
   {
@@ -22939,6 +23733,7 @@
    "k": 100000001,
    "n": 1000000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "10.000%"
   },
   {
@@ -22946,6 +23741,7 @@
    "k": 9,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "97.60%"
   },
   {
@@ -22953,6 +23749,7 @@
    "k": 0,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "90.00%"
   },
   {
@@ -22960,6 +23757,7 @@
    "k": 0,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.0%"
   },
   {
@@ -22967,19 +23765,22 @@
    "k": 9849000,
    "n": 10000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "98.490%"
   },
   {
    "value": 1e-09,
    "k": 100,
    "n": 100,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.07,
    "k": 50000,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "7.000%"
   },
   {
@@ -22987,6 +23788,7 @@
    "k": 0,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.00%"
   },
   {
@@ -22994,6 +23796,7 @@
    "k": 2,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.003%"
   },
   {
@@ -23001,6 +23804,7 @@
    "k": 12,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.290%"
   },
   {
@@ -23008,6 +23812,7 @@
    "k": 666666666,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "67%"
   },
   {
@@ -23015,6 +23820,7 @@
    "k": 124,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.293%"
   },
   {
@@ -23022,6 +23828,7 @@
    "k": 10,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0%"
   },
   {
@@ -23029,6 +23836,7 @@
    "k": 0,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "99.900%"
   },
   {
@@ -23036,6 +23844,7 @@
    "k": 1000,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "50.0%"
   },
   {
@@ -23043,19 +23852,22 @@
    "k": 6,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "66.67%"
   },
   {
    "value": 0.99,
    "k": 3,
    "n": 3,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.6666666666666666,
    "k": 1528,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "66.67%"
   },
   {
@@ -23063,32 +23875,37 @@
    "k": 1,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0%"
   },
   {
    "value": 0.6667,
    "k": 6667000,
    "n": 10000000,
-   "expected": "supported"
+   "expected": "supported",
+   "expectedStrict": "supported"
   },
   {
    "value": 0.3,
    "k": 0,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "30.000%"
   },
   {
    "value": 0.2963,
    "k": 0,
    "n": 1000000000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.9849,
    "k": 986,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "98%"
   },
   {
@@ -23096,6 +23913,7 @@
    "k": 1,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.3%"
   },
   {
@@ -23103,6 +23921,7 @@
    "k": 11,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "10%"
   },
   {
@@ -23110,6 +23929,7 @@
    "k": 13,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.293%"
   },
   {
@@ -23117,6 +23937,7 @@
    "k": 100,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "50.00%"
   },
   {
@@ -23124,6 +23945,7 @@
    "k": 122929999,
    "n": 1000000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "12%"
   },
   {
@@ -23131,25 +23953,29 @@
    "k": 0,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0%"
   },
   {
    "value": 1e-09,
    "k": 10000000,
    "n": 10000000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.6666666666666666,
    "k": 309,
    "n": 464,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.3,
    "k": 15000,
    "n": 50000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "30.00%"
   },
   {
@@ -23157,6 +23983,7 @@
    "k": 31,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "30.0%"
   },
   {
@@ -23164,6 +23991,7 @@
    "k": 1000000000,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.4%"
   },
   {
@@ -23171,19 +23999,22 @@
    "k": 0,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "100%"
   },
   {
    "value": 0.0021551724137931034,
    "k": 50000,
    "n": 50000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.3333333333333333,
    "k": 1000,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.33%"
   },
   {
@@ -23191,6 +24022,7 @@
    "k": 899999999,
    "n": 1000000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "90%"
   },
   {
@@ -23198,6 +24030,7 @@
    "k": 371,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "79.90%"
   },
   {
@@ -23205,25 +24038,29 @@
    "k": 332,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.33%"
   },
   {
    "value": 0.12292938099389712,
    "k": 2294,
    "n": 2294,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.5,
    "k": 2,
    "n": 3,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 2.5e-05,
    "k": 250,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.00%"
   },
   {
@@ -23231,6 +24068,7 @@
    "k": 2963000,
    "n": 10000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "29.6%"
   },
   {
@@ -23238,6 +24076,7 @@
    "k": 299999999,
    "n": 1000000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "30.00%"
   },
   {
@@ -23245,6 +24084,7 @@
    "k": 1833,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "79.900%"
   },
   {
@@ -23252,6 +24092,7 @@
    "k": 1,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.000%"
   },
   {
@@ -23259,6 +24100,7 @@
    "k": 51,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "50.0%"
   },
   {
@@ -23266,6 +24108,7 @@
    "k": 3000000,
    "n": 10000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "30.0%"
   },
   {
@@ -23273,6 +24116,7 @@
    "k": 0,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.00%"
   },
   {
@@ -23280,6 +24124,7 @@
    "k": 2294,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.3%"
   },
   {
@@ -23287,6 +24132,7 @@
    "k": 0,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12%"
   },
   {
@@ -23294,19 +24140,22 @@
    "k": 14814,
    "n": 50000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "30%"
   },
   {
    "value": 0.3,
    "k": 300000001,
    "n": 1000000000,
-   "expected": "supported"
+   "expected": "supported",
+   "expectedStrict": "supported"
   },
   {
    "value": 0.3,
    "k": 0,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "30.00%"
   },
   {
@@ -23314,6 +24163,7 @@
    "k": 68,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "66.67%"
   },
   {
@@ -23321,6 +24171,7 @@
    "k": 31,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "7.000%"
   },
   {
@@ -23328,6 +24179,7 @@
    "k": 2,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "100%"
   },
   {
@@ -23335,6 +24187,7 @@
    "k": 14814,
    "n": 50000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "29.6%"
   },
   {
@@ -23342,19 +24195,22 @@
    "k": 1,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0%"
   },
   {
    "value": 0.6667,
    "k": 2,
    "n": 3,
-   "expected": "supported"
+   "expected": "supported",
+   "expectedStrict": "supported"
   },
   {
    "value": 0.004,
    "k": 1,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.4%"
   },
   {
@@ -23362,6 +24218,7 @@
    "k": 0,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "90.000%"
   },
   {
@@ -23369,6 +24226,7 @@
    "k": 10,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33%"
   },
   {
@@ -23376,6 +24234,7 @@
    "k": 56,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12%"
   },
   {
@@ -23383,6 +24242,7 @@
    "k": 34,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33%"
   },
   {
@@ -23390,6 +24250,7 @@
    "k": 201,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.400%"
   },
   {
@@ -23397,6 +24258,7 @@
    "k": 3,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "67%"
   },
   {
@@ -23404,6 +24266,7 @@
    "k": 3,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "98%"
   },
   {
@@ -23411,6 +24274,7 @@
    "k": 5000001,
    "n": 10000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "50.0%"
   },
   {
@@ -23418,6 +24282,7 @@
    "k": 2,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "90%"
   },
   {
@@ -23425,6 +24290,7 @@
    "k": 0,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "29.630%"
   },
   {
@@ -23432,6 +24298,7 @@
    "k": 4999,
    "n": 50000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "10.0%"
   },
   {
@@ -23439,25 +24306,29 @@
    "k": 122,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.293%"
   },
   {
    "value": 0.004,
    "k": 0,
    "n": 50000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.799,
    "k": 0,
    "n": 100,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 1e-12,
    "k": 1,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0%"
   },
   {
@@ -23465,32 +24336,37 @@
    "k": 1000000000,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0%"
   },
   {
    "value": 5e-07,
    "k": 1000000000,
    "n": 1000000000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.999999999,
    "k": 10000000,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "100.00%"
   },
   {
    "value": 0.2963,
    "k": 2,
    "n": 10,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.1,
    "k": 101,
    "n": 1000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "10%"
   },
   {
@@ -23498,6 +24374,7 @@
    "k": 3,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.290%"
   },
   {
@@ -23505,6 +24382,7 @@
    "k": 3,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "7%"
   },
   {
@@ -23512,6 +24390,7 @@
    "k": 50000,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.29%"
   },
   {
@@ -23519,6 +24398,7 @@
    "k": 464,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "90.000%"
   },
   {
@@ -23526,6 +24406,7 @@
    "k": 0,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.2%"
   },
   {
@@ -23533,6 +24414,7 @@
    "k": 154,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.3%"
   },
   {
@@ -23540,6 +24422,7 @@
    "k": 12,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.29%"
   },
   {
@@ -23547,6 +24430,7 @@
    "k": 3,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "79.90%"
   },
   {
@@ -23554,6 +24438,7 @@
    "k": 100,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.3%"
   },
   {
@@ -23561,6 +24446,7 @@
    "k": 1000000000,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "99.00%"
   },
   {
@@ -23568,6 +24454,7 @@
    "k": 1,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.00%"
   },
   {
@@ -23575,6 +24462,7 @@
    "k": 100,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.29%"
   },
   {
@@ -23582,6 +24470,7 @@
    "k": 1000000000,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33%"
   },
   {
@@ -23589,6 +24478,7 @@
    "k": 10000000,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.33%"
   },
   {
@@ -23596,6 +24486,7 @@
    "k": 0,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.4%"
   },
   {
@@ -23603,32 +24494,37 @@
    "k": 0,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33%"
   },
   {
    "value": 0.99,
    "k": 100,
    "n": 100,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.07,
    "k": 464,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "7%"
   },
   {
    "value": 0.3333333333333333,
    "k": 10,
    "n": 10,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.976,
    "k": 98,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "98%"
   },
   {
@@ -23636,19 +24532,22 @@
    "k": 10000,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.00%"
   },
   {
    "value": 0.99,
    "k": 0,
    "n": 464,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.999,
    "k": 2293,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "99.900%"
   },
   {
@@ -23656,19 +24555,22 @@
    "k": 0,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "50.00%"
   },
   {
    "value": 0.799,
    "k": 0,
    "n": 1000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.07,
    "k": 1000,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "7.000%"
   },
   {
@@ -23676,6 +24578,7 @@
    "k": 0,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "99.0%"
   },
   {
@@ -23683,6 +24586,7 @@
    "k": 3000000,
    "n": 10000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "30.00%"
   },
   {
@@ -23690,6 +24594,7 @@
    "k": 2294,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "7.00%"
   },
   {
@@ -23697,6 +24602,7 @@
    "k": 667,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "66.7%"
   },
   {
@@ -23704,6 +24610,7 @@
    "k": 0,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "99.99%"
   },
   {
@@ -23711,6 +24618,7 @@
    "k": 10000000,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0%"
   },
   {
@@ -23718,6 +24626,7 @@
    "k": 16667,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.3%"
   },
   {
@@ -23725,25 +24634,29 @@
    "k": 25000,
    "n": 50000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "50.00%"
   },
   {
    "value": 0.0021551724137931034,
    "k": 464,
    "n": 464,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.1,
    "k": 0,
    "n": 3,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.9999,
    "k": 0,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "100.0%"
   },
   {
@@ -23751,6 +24664,7 @@
    "k": 100,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.00%"
   },
   {
@@ -23758,6 +24672,7 @@
    "k": 333300000,
    "n": 1000000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "33.3%"
   },
   {
@@ -23765,6 +24680,7 @@
    "k": 0,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "30%"
   },
   {
@@ -23772,19 +24688,22 @@
    "k": 124,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.3%"
   },
   {
    "value": 0.3333333333333333,
    "k": 156,
    "n": 464,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.07,
    "k": 0,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "7.0%"
   },
   {
@@ -23792,6 +24711,7 @@
    "k": 1,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.001%"
   },
   {
@@ -23799,6 +24719,7 @@
    "k": 2999999,
    "n": 10000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "30%"
   },
   {
@@ -23806,6 +24727,7 @@
    "k": 10000000,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.0%"
   },
   {
@@ -23813,6 +24735,7 @@
    "k": 0,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.3%"
   },
   {
@@ -23820,6 +24743,7 @@
    "k": 100,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.0%"
   },
   {
@@ -23827,6 +24751,7 @@
    "k": 6,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.22%"
   },
   {
@@ -23834,6 +24759,7 @@
    "k": 0,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33%"
   },
   {
@@ -23841,32 +24767,37 @@
    "k": 283,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12%"
   },
   {
    "value": 0.1229,
    "k": 1,
    "n": 3,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.6666666666666666,
    "k": 308,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "66.7%"
   },
   {
    "value": 0.3333333333333333,
    "k": 4,
    "n": 10,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.99,
    "k": 990000001,
    "n": 1000000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "99%"
   },
   {
@@ -23874,6 +24805,7 @@
    "k": 1,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0%"
   },
   {
@@ -23881,6 +24813,7 @@
    "k": 6144,
    "n": 50000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "12.3%"
   },
   {
@@ -23888,6 +24821,7 @@
    "k": 1000000000,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "99.90%"
   },
   {
@@ -23895,19 +24829,22 @@
    "k": 100,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "30.00%"
   },
   {
    "value": 0.5,
    "k": 464,
    "n": 464,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.004,
    "k": 50000,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.40%"
   },
   {
@@ -23915,6 +24852,7 @@
    "k": 0,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.216%"
   },
   {
@@ -23922,19 +24860,22 @@
    "k": 3,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "30.00%"
   },
   {
    "value": 0.3,
    "k": 3,
    "n": 3,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.3333,
    "k": 764,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33%"
   },
   {
@@ -23942,25 +24883,29 @@
    "k": 299999999,
    "n": 1000000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "30.000%"
   },
   {
    "value": 0.3333,
    "k": 0,
    "n": 1000000000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.799,
    "k": 799000001,
    "n": 1000000000,
-   "expected": "supported"
+   "expected": "supported",
+   "expectedStrict": "supported"
   },
   {
    "value": 0.12293,
    "k": 13,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12%"
   },
   {
@@ -23968,6 +24913,7 @@
    "k": 0,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "99.000%"
   },
   {
@@ -23975,6 +24921,7 @@
    "k": 2260,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "98.49%"
   },
   {
@@ -23982,6 +24929,7 @@
    "k": 0,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "10%"
   },
   {
@@ -23989,19 +24937,22 @@
    "k": 44999,
    "n": 50000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "90.00%"
   },
   {
    "value": 0.004,
    "k": 1,
    "n": 10,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 1e-12,
    "k": 1,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.00%"
   },
   {
@@ -24009,6 +24960,7 @@
    "k": 16665,
    "n": 50000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "33%"
   },
   {
@@ -24016,6 +24968,7 @@
    "k": 0,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.00%"
   },
   {
@@ -24023,6 +24976,7 @@
    "k": 1000,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "66.67%"
   },
   {
@@ -24030,6 +24984,7 @@
    "k": 122900001,
    "n": 1000000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "12%"
   },
   {
@@ -24037,6 +24992,7 @@
    "k": 1000000000,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "79.900%"
   },
   {
@@ -24044,6 +25000,7 @@
    "k": 1000,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "97.6%"
   },
   {
@@ -24051,6 +25008,7 @@
    "k": 0,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "98.5%"
   },
   {
@@ -24058,19 +25016,22 @@
    "k": 6,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "67%"
   },
   {
    "value": 0.3333333333333333,
    "k": 765,
    "n": 2294,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.999,
    "k": 99,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "100%"
   },
   {
@@ -24078,6 +25039,7 @@
    "k": 100,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.400%"
   },
   {
@@ -24085,6 +25047,7 @@
    "k": 458,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "98.49%"
   },
   {
@@ -24092,19 +25055,22 @@
    "k": 464,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "66.7%"
   },
   {
    "value": 0.2963,
    "k": 0,
    "n": 464,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.07,
    "k": 10000000,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "7%"
   },
   {
@@ -24112,19 +25078,22 @@
    "k": 156,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.333%"
   },
   {
    "value": 0.12293,
    "k": 0,
    "n": 50000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 1e-12,
    "k": 1000000000,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.00%"
   },
   {
@@ -24132,6 +25101,7 @@
    "k": 3,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "80%"
   },
   {
@@ -24139,19 +25109,22 @@
    "k": 122,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.3%"
   },
   {
    "value": 0.9,
    "k": 2065,
    "n": 2294,
-   "expected": "supported"
+   "expected": "supported",
+   "expectedStrict": "supported"
   },
   {
    "value": 0.12292938099389712,
    "k": 12,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12%"
   },
   {
@@ -24159,6 +25132,7 @@
    "k": 976000001,
    "n": 1000000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "97.600%"
   },
   {
@@ -24166,19 +25140,22 @@
    "k": 0,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12%"
   },
   {
    "value": 0.6666666666666666,
    "k": 0,
    "n": 1000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.12293,
    "k": 123,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12%"
   },
   {
@@ -24186,6 +25163,7 @@
    "k": 3000001,
    "n": 10000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "30%"
   },
   {
@@ -24193,19 +25171,22 @@
    "k": 0,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.0%"
   },
   {
    "value": 0.6666666666666666,
    "k": 1,
    "n": 3,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.004,
    "k": 3,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.40%"
   },
   {
@@ -24213,6 +25194,7 @@
    "k": 6146,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.3%"
   },
   {
@@ -24220,6 +25202,7 @@
    "k": 3,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "10.00%"
   },
   {
@@ -24227,6 +25210,7 @@
    "k": 0,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.33%"
   },
   {
@@ -24234,6 +25218,7 @@
    "k": 50000,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.330%"
   },
   {
@@ -24241,6 +25226,7 @@
    "k": 1,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0%"
   },
   {
@@ -24248,26 +25234,30 @@
    "k": 1000000000,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "30.00%"
   },
   {
    "value": 0.6667,
    "k": 0,
    "n": 10000000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.1,
    "k": 1,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "10.00%"
   },
   {
    "value": 0.3,
    "k": 30,
    "n": 100,
-   "expected": "overstated",
+   "expected": "supported",
+   "expectedStrict": "overstated",
    "display": "30.000%"
   },
   {
@@ -24275,19 +25265,22 @@
    "k": 10000000,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "90%"
   },
   {
    "value": 0.07,
    "k": 3500,
    "n": 50000,
-   "expected": "supported"
+   "expected": "supported",
+   "expectedStrict": "supported"
   },
   {
    "value": 1.5e-07,
    "k": 10000000,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.0%"
   },
   {
@@ -24295,6 +25288,7 @@
    "k": 57,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.3%"
   },
   {
@@ -24302,6 +25296,7 @@
    "k": 0,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "90%"
   },
   {
@@ -24309,6 +25304,7 @@
    "k": 1000,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "66.670%"
   },
   {
@@ -24316,6 +25312,7 @@
    "k": 0,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "99.900%"
   },
   {
@@ -24323,6 +25320,7 @@
    "k": 1000,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "66.7%"
   },
   {
@@ -24330,6 +25328,7 @@
    "k": 0,
    "n": 1000000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "99.990%"
   },
   {
@@ -24337,19 +25336,22 @@
    "k": 2294,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.2%"
   },
   {
    "value": 0.999999999,
    "k": 999,
    "n": 1000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.799,
    "k": 799000000,
    "n": 1000000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "79.900%"
   },
   {
@@ -24357,6 +25359,7 @@
    "k": 0,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "99.00%"
   },
   {
@@ -24364,6 +25367,7 @@
    "k": 1,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.00%"
   },
   {
@@ -24371,6 +25375,7 @@
    "k": 50000,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "80%"
   },
   {
@@ -24378,6 +25383,7 @@
    "k": 464,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "99.00%"
   },
   {
@@ -24385,6 +25391,7 @@
    "k": 100,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.0%"
   },
   {
@@ -24392,6 +25399,7 @@
    "k": 231,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "50.00%"
   },
   {
@@ -24399,13 +25407,15 @@
    "k": 9849001,
    "n": 10000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "98.49%"
   },
   {
    "value": 0.799,
    "k": 799,
    "n": 1000,
-   "expected": "overstated",
+   "expected": "supported",
+   "expectedStrict": "overstated",
    "display": "79.900%"
   },
   {
@@ -24413,45 +25423,52 @@
    "k": 1,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.00%"
   },
   {
    "value": 0.799,
    "k": 0,
    "n": 50000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.3333333333333333,
    "k": 155,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33%"
   },
   {
    "value": 0.3333333333333333,
    "k": 155,
    "n": 464,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.9,
    "k": 900000001,
    "n": 1000000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "90.0%"
   },
   {
    "value": 1.5e-07,
    "k": 1,
    "n": 100,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.3,
    "k": 0,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "30.000%"
   },
   {
@@ -24459,6 +25476,7 @@
    "k": 308,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "66.667%"
   },
   {
@@ -24466,6 +25484,7 @@
    "k": 1,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.0%"
   },
   {
@@ -24473,19 +25492,22 @@
    "k": 16667,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "33.33%"
   },
   {
    "value": 0.999,
    "k": 9990001,
    "n": 10000000,
-   "expected": "supported"
+   "expected": "supported",
+   "expectedStrict": "supported"
   },
   {
    "value": 0.6667,
    "k": 666,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "66.7%"
   },
   {
@@ -24493,6 +25515,7 @@
    "k": 6145,
    "n": 50000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "12.290%"
   },
   {
@@ -24500,6 +25523,7 @@
    "k": 1229295,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.29%"
   },
   {
@@ -24507,6 +25531,7 @@
    "k": 250,
    "n": 10000000,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "0.003%"
   },
   {
@@ -24514,6 +25539,7 @@
    "k": 0,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.4%"
   },
   {
@@ -24521,19 +25547,22 @@
    "k": 1,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "29.630%"
   },
   {
    "value": 0.6667,
    "k": 666,
    "n": 1000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.1,
    "k": 464,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "10.0%"
   },
   {
@@ -24541,13 +25570,15 @@
    "k": 0,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "100.0%"
   },
   {
    "value": 0.9849,
    "k": 457,
    "n": 464,
-   "expected": "overstated",
+   "expected": "supported",
+   "expectedStrict": "overstated",
    "display": "98.49%"
   },
   {
@@ -24555,6 +25586,7 @@
    "k": 2240,
    "n": 2294,
    "expected": "supported",
+   "expectedStrict": "supported",
    "display": "98%"
   },
   {
@@ -24562,6 +25594,7 @@
    "k": 1,
    "n": 50000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.0%"
   },
   {
@@ -24569,6 +25602,7 @@
    "k": 10000000,
    "n": 10000000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "10.0%"
   },
   {
@@ -24576,6 +25610,7 @@
    "k": 122,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12.29%"
   },
   {
@@ -24583,6 +25618,7 @@
    "k": 2,
    "n": 3,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "30%"
   },
   {
@@ -24590,6 +25626,7 @@
    "k": 0,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "98.490%"
   },
   {
@@ -24597,6 +25634,7 @@
    "k": 13,
    "n": 100,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "12%"
   },
   {
@@ -24604,6 +25642,7 @@
    "k": 0,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "100.0%"
   },
   {
@@ -24611,31 +25650,36 @@
    "k": 0,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0%"
   },
   {
    "value": 0.799,
    "k": 50000,
    "n": 50000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.12292938099389712,
    "k": 1229294,
    "n": 10000000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.004,
    "k": 0,
    "n": 1000000000,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.07,
    "k": 2294,
    "n": 2294,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "7%"
   },
   {
@@ -24643,6 +25687,7 @@
    "k": 1,
    "n": 10,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0.000%"
   },
   {
@@ -24650,32 +25695,37 @@
    "k": 452,
    "n": 464,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "98%"
   },
   {
    "value": 0.07,
    "k": 7,
    "n": 100,
-   "expected": "supported"
+   "expected": "supported",
+   "expectedStrict": "supported"
   },
   {
    "value": 0.0021551724137931034,
    "k": 1,
    "n": 1000,
    "expected": "contradicted",
+   "expectedStrict": "contradicted",
    "display": "0%"
   },
   {
    "value": 2.5e-05,
    "k": 1,
    "n": 10,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   },
   {
    "value": 0.5,
    "k": 0,
    "n": 464,
-   "expected": "contradicted"
+   "expected": "contradicted",
+   "expectedStrict": "contradicted"
   }
  ]
 }

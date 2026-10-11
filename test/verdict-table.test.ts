@@ -234,10 +234,17 @@ const rows: Row[] = [
 
   // ---- overstated ------------------------------------------------------
   {
-    name: '499/500 claimed as "99.8%": inside the interval and printed too finely',
+    name: '499/500 claimed as "99.8%" under strictPrecision: printed too finely',
     input: input({ claim: accuracy(0.998, '99.8%'), sample: { n: 500, correct: 499 } }),
+    options: { strictPrecision: true },
     verdict: 'overstated',
     reasons: ['precision-too-fine'],
+  },
+  {
+    name: '499/500 claimed as "99.8%" (observed rate, printed too finely): noted, not blocked',
+    input: input({ claim: accuracy(0.998, '99.8%'), sample: { n: 500, correct: 499 } }),
+    verdict: 'supported',
+    reasons: ['matches-observed-rate', 'precision-too-fine'],
   },
   {
     name: '499/500 claimed as 99% (above the 98.88% lower end)',
@@ -246,10 +253,17 @@ const rows: Row[] = [
     reasons: ['claim-beyond-conservative-bound'],
   },
   {
-    name: '499/500 claimed as "98.5%": the value is safe but the decimal is not',
+    name: '499/500 claimed as "98.5%" under strictPrecision: the value is safe but the decimal is not',
     input: input({ claim: accuracy(0.985, '98.5%'), sample: { n: 500, correct: 499 } }),
+    options: { strictPrecision: true },
     verdict: 'overstated',
     reasons: ['precision-too-fine'],
+  },
+  {
+    name: '499/500 claimed as "98.5%": a safe value with a fine decimal is supported, with a note',
+    input: input({ claim: accuracy(0.985, '98.5%'), sample: { n: 500, correct: 499 } }),
+    verdict: 'supported',
+    reasons: ['claim-within-bound', 'precision-too-fine'],
   },
   {
     name: '500/500 claimed as 100% (an interval never reaches certainty)',
@@ -258,10 +272,17 @@ const rows: Row[] = [
     reasons: ['claim-beyond-conservative-bound'],
   },
   {
-    name: 'error rate 1/500 claimed as 0.2% (the observed rate, printed too finely)',
+    name: 'error rate 1/500 claimed as 0.2% under strictPrecision (the observed rate, printed too finely)',
     input: input({ claim: errorRate(0.002, '0.2%'), sample: { n: 500, errors: 1 } }),
+    options: { strictPrecision: true },
     verdict: 'overstated',
     reasons: ['precision-too-fine'],
+  },
+  {
+    name: 'error rate 1/500 claimed as 0.2% (the observed rate, printed too finely): noted, not blocked',
+    input: input({ claim: errorRate(0.002, '0.2%'), sample: { n: 500, errors: 1 } }),
+    verdict: 'supported',
+    reasons: ['matches-observed-rate', 'precision-too-fine'],
   },
   {
     name: 'error rate 0/100 claimed as 0%',
@@ -328,7 +349,7 @@ describe('suggested statements', () => {
     const r = assessAccuracyClaim(input({ claim: accuracy(0.998, '99.8%'), sample: { n: 500, correct: 499 } }))
     // The lower limit is 98.8759...%, so it prints as 98.8, not 98.9.
     expect(r.suggestedStatement).toBe(
-      'At least 98.87% accurate (95% Wilson interval 98.87% to 99.97%, n = 500, human labels, random sample)',
+      'At least 98.87% accurate (95% Wilson interval 98.87% to 99.97%, n = 500, human labels, random sample); print it to at most 0 decimal place(s)',
     )
   })
 
@@ -468,7 +489,11 @@ describe('display precision', () => {
     const ok = assessAccuracyClaim(input({ claim: accuracy(0.996, '99.6%'), sample: { n: 10_000, correct: 9980 } }))
     expect(ok.verdict).toBe('supported')
     const tooFine = assessAccuracyClaim(input({ claim: accuracy(0.996, '99.60%'), sample: { n: 10_000, correct: 9980 } }))
-    expect(tooFine.reasons).toEqual(['precision-too-fine'])
+    expect(tooFine.verdict).toBe('supported') // precision is only noted by default
+    expect(tooFine.reasons).toEqual(['claim-within-bound', 'precision-too-fine'])
+    const strict = assessAccuracyClaim(input({ claim: accuracy(0.996, '99.60%'), sample: { n: 10_000, correct: 9980 } }), { strictPrecision: true })
+    expect(strict.verdict).toBe('overstated')
+    expect(strict.reasons).toEqual(['precision-too-fine'])
   })
 
   it('accepts spacing around the percent figure', () => {
@@ -1340,10 +1365,15 @@ describe('benchmark-scoped (complete-set) claims', () => {
     expect(assessAccuracyClaim(off).verdict).toBe('contradicted')
   })
 
-  it('digits beyond what the count resolves are over-precise', () => {
-    const r = assessAccuracyClaim(bench({ claim: { metric: 'accuracy', value: 0.799, display: '79.9000%', text: 'Ridgeview validation set 79.9000%' } }))
-    expect(r.verdict).toBe('overstated')
-    expect(r.reasons).toEqual(['precision-too-fine'])
+  it('digits beyond what the count resolves are noted, and block only under strictPrecision', () => {
+    const input = bench({ claim: { metric: 'accuracy', value: 0.799, display: '79.9000%', text: 'Ridgeview validation set 79.9000%' } })
+    const r = assessAccuracyClaim(input)
+    expect(r.verdict).toBe('supported')
+    expect(r.reasons).toEqual(['census-matches-count', 'precision-too-fine'])
+    expect(r.suggestedStatement).toMatch(/; print it to at most 3 decimal place\(s\)$/)
+    const strict = assessAccuracyClaim(input, { strictPrecision: true })
+    expect(strict.verdict).toBe('overstated')
+    expect(strict.reasons).toEqual(['precision-too-fine'])
   })
 
   it('without a display, the value is read at the precision it was written', () => {
@@ -1536,6 +1566,8 @@ describe('complete-set comparison against exact rational references (python grid
       const r = assessAccuracyClaim(bench({ claim, sample: { n: g.n, correct: g.k } }))
       const label = `${JSON.stringify(g.value)} ${g.display ?? ''} ${String(g.k)}/${String(g.n)}`
       expect(r.verdict, label).toBe(g.expected)
+      const strict = assessAccuracyClaim(bench({ claim, sample: { n: g.n, correct: g.k } }), { strictPrecision: true })
+      expect(strict.verdict, `strict ${label}`).toBe(g.expectedStrict)
     }
   })
 })
@@ -1740,10 +1772,28 @@ describe('an honest report of the observed rate is supported by default', () => 
     expect(r.reasons).toEqual(['claim-beyond-conservative-bound'])
   })
 
-  it('too-fine precision stays overstated, now with only the precision reason', () => {
-    const r = assessU(claimOf('accuracy', 0.998, '99.8%'), { n: 500, correct: 499 })
-    expect(r.verdict).toBe('overstated')
-    expect(r.reasons).toEqual(['precision-too-fine'])
+  it('too-fine precision is noted by default and blocks only under strictPrecision or conservative', () => {
+    const claim = claimOf('accuracy', 0.998, '99.8%')
+    const sample = { n: 500, correct: 499 }
+    const r = assessU(claim, sample)
+    expect(r.verdict).toBe('supported')
+    expect(r.reasons).toEqual(['matches-observed-rate', 'precision-too-fine'])
+    expect(r.explanation[1]).toContain('supports at most 0 decimal place(s)')
+    expect(r.suggestedStatement).toMatch(/; print it to at most 0 decimal place\(s\)$/)
+    const strict = assessU(claim, sample, {}, { strictPrecision: true })
+    expect(strict.verdict).toBe('overstated')
+    expect(strict.reasons).toEqual(['precision-too-fine'])
+    // conservative mode implies strict precision and also drops the observed-rate allowance
+    const conservative = assessU(claim, sample, {}, { conservative: true })
+    expect(conservative.verdict).toBe('overstated')
+    expect(conservative.reasons).toEqual(['claim-beyond-conservative-bound', 'precision-too-fine'])
+    expect(() => assessU(claim, sample, {}, { strictPrecision: 'yes' as never })).toThrow(TypeError)
+  })
+
+  it('a contradicted or overstated claim keeps its verdict whatever the precision', () => {
+    const r = assessU(claimOf('accuracy', 0.951, '95.1%'), { n: 1000, correct: 900 })
+    expect(r.verdict).toBe('contradicted')
+    expect(r.reasons).toEqual(['claim-outside-interval', 'precision-too-fine'])
   })
 
   it('absolute claims (0 and 1, 0% and 100%) never ride the observed-rate allowance', () => {

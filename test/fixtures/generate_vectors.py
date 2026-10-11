@@ -279,7 +279,8 @@ def main():
     #     SHORTEST round-trip text (repr), read from mantissa and exponent.
     # Every figure supplied (value, and display if any) must match. A matching
     # display with more decimals than the count resolves (10^(d+2) > 10 n) is
-    # 'overstated'; otherwise a match is 'supported' and a miss 'contradicted'.
+    # still 'supported' (the precision is only noted) and 'overstated' under
+    # strictPrecision; otherwise a match is 'supported' and a miss 'contradicted'.
     def shortest(x):
         r = repr(x)
         m, e = (r.split("e") + ["0"])[:2] if "e" in r else (r, "0")
@@ -345,12 +346,14 @@ def main():
             digits = int(body.replace(".", ""))
             ok = ok and match_display(digits, decimals, k, n)
         if not ok:
-            exp = "contradicted"
+            exp = strict = "contradicted"
         elif decimals is not None and decimals > count_decimals(n):
-            exp = "overstated"
+            # excess printed precision is informational by default, and turns a
+            # match into 'overstated' only with options.strictPrecision
+            exp, strict = "supported", "overstated"
         else:
-            exp = "supported"
-        rec = {"value": x, "k": k, "n": n, "expected": exp}
+            exp = strict = "supported"
+        rec = {"value": x, "k": k, "n": n, "expected": exp, "expectedStrict": strict}
         if disp is not None:
             rec["display"] = disp
         census.append(rec)

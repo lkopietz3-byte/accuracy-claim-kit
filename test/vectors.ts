@@ -43,6 +43,7 @@ export interface CensusVector {
   k: number
   n: number
   expected: 'supported' | 'overstated' | 'contradicted'
+  expectedStrict: 'supported' | 'overstated' | 'contradicted'
 }
 export interface Vectors {
   normalQuantile: [number, number][]
