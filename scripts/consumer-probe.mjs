@@ -62,8 +62,14 @@ const overstated = assessAccuracyClaim({
   claim: { metric: 'accuracy', value: 0.998, display: '99.8%' },
   sample: { n: 500, correct: 499 },
 });
-assert.equal(overstated.verdict, 'overstated');
-assert.deepEqual(overstated.reasons, ['precision-too-fine']);
+// An honest report of the observed rate, printed too finely: noted, and blocking only when asked.
+assert.equal(overstated.verdict, 'supported');
+assert.deepEqual(overstated.reasons, ['matches-observed-rate', 'precision-too-fine']);
+const strictFine = assessAccuracyClaim(
+  { ...base, claim: { metric: 'accuracy', value: 0.998, display: '99.8%' }, sample: { n: 500, correct: 499 } },
+  { strictPrecision: true },
+);
+assert.equal(strictFine.verdict, 'overstated');
 
 const contradicted = assessAccuracyClaim({
   ...base,

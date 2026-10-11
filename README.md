@@ -38,10 +38,10 @@ If nothing blocks it, the claim is compared with the Wilson interval (or, for a 
 | Verdict | Higher-is-better claim (accuracy, precision, recall) | Lower-is-better claim (error rate, FPR, FNR) |
 | --- | --- | --- |
 | `contradicted` | above the top of the interval | below the bottom of the interval |
-| `overstated` | inside the interval, more favorable than the observed rate; or printed with more decimals than the interval supports | the mirror image |
+| `overstated` | inside the interval, more favorable than the observed rate; or (only with `strictPrecision`) printed with more decimals than the interval supports | the mirror image |
 | `supported` | at or below the lower end (`claim-within-bound`), **or** equal to the observed rate to its printed precision (`matches-observed-rate`) | at or above the upper end, or equal to the observed rate |
 
-An honest report of what was measured ("95%" after 950 of 1000) is `supported` with `matches-observed-rate`, and the suggested statement still gives the interval. It does not ride this allowance if it is a bound ("99%+", "<1%"), is `0` or `1` (`0%` / `100%`: an interval never reaches certainty), or is printed finer than the interval supports. Pass `options.conservative: true` for the strict rule, where only a claim at or below the conservative bound is supported.
+An honest report of what was measured ("95%" after 950 of 1000) is `supported` with `matches-observed-rate`, and the suggested statement still gives the interval. It does not ride this allowance if it is a bound ("99%+", "<1%"), or is `0` or `1` (`0%` / `100%`: an interval never reaches certainty). Printing finer than the interval supports is noted (`precision-too-fine`) but does not change a `supported` verdict unless `strictPrecision` or `conservative` is set. Pass `options.conservative: true` for the strict rule, where only a claim at or below the conservative bound is supported.
 
 One more code never changes a verdict: `claim-worse-than-counts` is added when a figure is far *less* favorable than the counts support (outside the 99.9% interval on the pessimistic side). That pattern is what a stale or mistyped number looks like (a published 44% error rate against 56 errors in 189 items, which is 29.6%), so the explanation says it may be stale or wrong. The verdict stays `supported`, because an understated claim is not an overstatement.
 
@@ -61,16 +61,16 @@ const result = assessAccuracyClaim({
   sampling: 'random',
 })
 
-result.verdict // 'overstated'
-result.reasons // ['precision-too-fine']
-result.explanation[0]
+result.verdict // 'supported'
+result.reasons // ['matches-observed-rate', 'precision-too-fine']
+result.explanation[1]
 // 'The figure is printed to 1 decimal place(s), but the interval is 1.09 percentage points wide and supports at most 0 decimal place(s).'
 result.interval // { low: 0.98875..., high: 0.99964..., point: 0.998, confidence: 0.95, z: 1.95996..., successes: 499, n: 500 }
 result.suggestedStatement
-// 'At least 98.87% accurate (95% Wilson interval 98.87% to 99.97%, n = 500, human labels, random sample)'
+// 'At least 98.87% accurate (95% Wilson interval 98.87% to 99.97%, n = 500, human labels, random sample); print it to at most 0 decimal place(s)'
 ```
 
-The figure equals the observed rate (499 of 500), so it is not inflated, but a figure printed to a tenth of a percent implies far more precision than an interval 1.09 points wide supports, and the data cannot rule out that the true rate is as low as 98.87%. Printed as "99%" the claim would be inside the interval but above its lower end and above the observed rate, which is `overstated` with `claim-beyond-conservative-bound`. The suggested statement describes the evidence and rounds the lower end down (98.8759 prints as 98.87, never 98.88). The headline bound and the interval it quotes always use the same precision.
+The figure equals the observed rate (499 of 500), so it is an honest report and is `supported`. Printed to a tenth of a percent it implies more precision than an interval 1.09 points wide supports (the data cannot rule out a true rate as low as 98.87%), so the result says to print it to whole percents, and with `strictPrecision` that alone makes it `overstated`. Printed as "99%" the claim would be inside the interval but above its lower end and above the observed rate, which is `overstated` with `claim-beyond-conservative-bound`. The suggested statement describes the evidence and rounds the lower end down (98.8759 prints as 98.87, never 98.88). The headline bound and the interval it quotes always use the same precision.
 
 Other results from the same style of input:
 
@@ -219,7 +219,7 @@ assessAccuracyClaim({
   benchmark?: { name },                                            // required with 'complete', rejected otherwise
   population?: { claimed, evaluated },
   evaluatedAt?: 'YYYY-MM-DD',
-}, { confidence?, minN?, minAgreement?, maxAgeDays?, now?, requireScope?, conservative? })
+}, { confidence?, minN?, minAgreement?, maxAgeDays?, now?, requireScope?, conservative?, strictPrecision? })
 ```
 
 Returns `{ verdict, reasons, explanation, metric, claimed, assessedValue, n (null if undisclosed), basis, parsedDisplay, interval, conservativeBound, suggestedStatement }`. `reasons` has at least one code and `explanation` has one plain sentence per code. When refused, `interval` and `conservativeBound` are `null` so no number is there to quote, and `suggestedStatement` says why no figure can be given.
@@ -241,7 +241,7 @@ Comparisons between a claim and an interval limit use an absolute tolerance of `
 
 ### Precision of a displayed figure
 
-A figure printed with `D` decimals has a last digit worth `10^-D` percentage points. It is accepted while `10^-D` is at least one tenth of the interval width in percentage points; otherwise the last digits are noise and the result carries `precision-too-fine`. `maxDisplayDecimals(width)` returns the largest accepted `D` for an interval width given as a proportion. For 499 of 500 the width is 1.09 points, so only whole percents pass and "99.8%" is flagged. This is a rule of thumb stated here, not a standard. A claim that is otherwise supported becomes `overstated` when it is printed too finely; a contradicted claim stays contradicted and also lists the precision reason.
+A figure printed with `D` decimals has a last digit worth `10^-D` percentage points. It is accepted while `10^-D` is at least one tenth of the interval width in percentage points; otherwise the last digits are noise and the result carries `precision-too-fine`. `maxDisplayDecimals(width)` returns the largest accepted `D` for an interval width given as a proportion. For 499 of 500 the width is 1.09 points, so only whole percents pass and "99.8%" is flagged. This is a rule of thumb stated here, not a standard. By default this is informational: `precision-too-fine` is listed in `reasons` and `explanation`, the suggested statement ends with "; print it to at most N decimal place(s)", and the verdict is not changed, because excess printed precision is not evidence that the figure is wrong. Pass `options.strictPrecision: true` to make it turn a `supported` claim into `overstated` (`options.conservative` implies it). A contradicted claim stays contradicted either way.
 
 ### Suggested statements
 
