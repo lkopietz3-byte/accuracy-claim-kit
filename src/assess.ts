@@ -1,5 +1,5 @@
 import type { AgreementStatistic } from './agreement.js'
-import { countDecimals, matchesCount, valueDigits } from './census.js'
+import { countDecimals, matchesCount, matchesValue } from './census.js'
 import { dayNumber } from './dates.js'
 import { withinHalfUnit } from './exact.js'
 import { confidenceLabel, maxDisplayDecimals, pctCeil, pctFloor, pctNearest } from './format.js'
@@ -501,11 +501,12 @@ export function assessAccuracyClaim(
   // ---- complete set: compare with the exact count ---------------------------
   if (sampling === 'complete') {
     const k = metric === 'accuracy' ? correct : n - correct
-    const written =
-      displayDigits !== undefined && displayDecimals !== undefined
-        ? { digits: displayDigits, scale: displayDecimals + 2 }
-        : valueDigits(claimed)
-    const matches = matchesCount(written.digits, written.scale, k, n)
+    // Every figure the reader can see must match the count: the value, and the
+    // printed display when there is one (so a more favorable value cannot hide
+    // behind a display that happens to round correctly, or the reverse).
+    const matches =
+      matchesValue(claimed, k, n) &&
+      (displayDigits === undefined || displayDecimals === undefined || matchesCount(displayDigits, displayDecimals + 2, k, n))
     const censusReasons: ReasonCode[] = []
     const censusNotes: string[] = []
     let censusVerdict: AccuracyVerdict
