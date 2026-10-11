@@ -47,3 +47,10 @@
 ### Precision is informational by default
 - `precision-too-fine` no longer turns a `supported` claim into `overstated`. It stays in `reasons` and `explanation`, and the suggested statement ends with "; print it to at most N decimal place(s)". `options.strictPrecision: true` restores the old effect, and `options.conservative` implies it.
 - Changed verdicts (default mode): 499/500 claimed "99.8%" overstated -> supported (`matches-observed-rate`, `precision-too-fine`); 499/500 claimed "98.5%" overstated -> supported (`claim-within-bound`, `precision-too-fine`); error rate 1/500 claimed "0.2%" overstated -> supported (`matches-observed-rate`, `precision-too-fine`); 9,980/10,000 claimed "99.60%" overstated -> supported; a complete-set 79.9000% on 39,950 of 50,000 overstated -> supported. Each remains `overstated` with `strictPrecision: true`.
+
+### Printed-form review fixes
+- On complete sets and held-out splits, a range is judged at its favorable end and a value more favorable than the printed figure is judged as its own point figure; a value of 0.98 printed as "95-98%" on 950 of 1000 is now contradicted, as is 0.994 printed as "99%+" on 990 of 1000.
+- Strict bounds ("over", "above", "more than", ">", "under", "below", "less than", "fewer than", "<") exclude equality; inclusive ones ("at least", "at most", "no more than", "up to", "99%+", the "or equal" symbols) keep it. Counts are compared exactly. Impossible bounds (over 100%, under 0%) throw RangeError.
+- The observed-rate exception is applied before contradiction, so a rounded rate that lands just outside its own interval is `supported` (`matches-observed-rate`). Bounds, 0 and 1, and `conservative` mode are excluded.
+- A range requires the value inside it, with exact endpoint comparison and one ulp of slack.
+- A 1,800-row exact-rational grid covers floors, ceilings, ranges and "1 in N" on both paths.

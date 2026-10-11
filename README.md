@@ -41,7 +41,7 @@ If nothing blocks it, the claim is compared with the Wilson interval (or, for a 
 | `overstated` | inside the interval, more favorable than the observed rate; or (only with `strictPrecision`) printed with more decimals than the interval supports | the mirror image |
 | `supported` | at or below the lower end (`claim-within-bound`), **or** equal to the observed rate to its printed precision (`matches-observed-rate`) | at or above the upper end, or equal to the observed rate |
 
-An honest report of what was measured ("95%" after 950 of 1000) is `supported` with `matches-observed-rate`, and the suggested statement still gives the interval. It does not ride this allowance if it is a bound ("99%+", "<1%"), or is `0` or `1` (`0%` / `100%`: an interval never reaches certainty). Printing finer than the interval supports is noted (`precision-too-fine`) but does not change a `supported` verdict unless `strictPrecision` or `conservative` is set. Pass `options.conservative: true` for the strict rule, where only a claim at or below the conservative bound is supported.
+An honest report of what was measured ("95%" after 950 of 1000) is `supported` with `matches-observed-rate`, and the suggested statement still gives the interval. This check comes before `contradicted`, so a rounded figure that lands just outside the interval it was rounded from (98.9% printed as "99%" on 98,900 of 100,000) is still an honest report. It does not ride this allowance if it is a bound ("99%+", "<1%"), or is `0` or `1` (`0%` / `100%`: an interval never reaches certainty). Printing finer than the interval supports is noted (`precision-too-fine`) but does not change a `supported` verdict unless `strictPrecision` or `conservative` is set. Pass `options.conservative: true` for the strict rule, where only a claim at or below the conservative bound is supported.
 
 One more code never changes a verdict: `claim-worse-than-counts` is added when a figure is far *less* favorable than the counts support (outside the 99.9% interval on the pessimistic side). That pattern is what a stale or mistyped number looks like (a published 44% error rate against 56 errors in 189 items, which is 29.6%), so the explanation says it may be stale or wrong. The verdict stays `supported`, because an understated claim is not an overstatement.
 
@@ -104,12 +104,14 @@ If the source does not give counts, leave `sample` out (or give an object with n
 | --- | --- | --- |
 | `99.8%` | `percent` | the point figure, with the allowance and precision rule |
 | `~95%`, `about 95%`, `approximately`, `around`, `roughly`, `≈95%` | `approx` | the same as the plain figure (the stated precision is kept) |
-| `99%+`, `99+%`, `over 99%`, `above`, `at least`, `more than`, `≥`, `>=`, `>` | `floor` | "at least 99%" as a bound: checked against the conservative end, never excused by matching the observed rate. Higher-is-better metrics only |
-| `<1%`, `under`, `below`, `less than`, `fewer than`, `at most`, `no more than`, `up to`, `≤`, `<=` | `ceiling` | "at most 1%" as a bound. Lower-is-better metrics only |
-| `95-98%`, `95 to 98%`, `95–98%` | `range` | the favorable end (98% for accuracy, 95% for an error rate) as a point figure; `value` must lie inside the range |
+| `99%+`, `99+%`, `at least 99%`, `≥99%`, `>=99%` | `floor` (inclusive) | "at least 99%" as a bound: checked against the conservative end, never excused by matching the observed rate. Higher-is-better metrics only |
+| `over 99%`, `above`, `more than`, `greater than`, `>99%` | `floor` (strict) | "more than 99%": the bound itself does not satisfy it (on a complete set, exactly 99% fails; on an interval, the conservative end must clear it) |
+| `no more than 1%`, `at most`, `up to`, `≤1%`, `<=1%` | `ceiling` (inclusive) | "at most 1%" as a bound. Lower-is-better metrics only |
+| `<1%`, `under 1%`, `below`, `less than`, `fewer than` | `ceiling` (strict) | "less than 1%": exactly 1% fails |
+| `95-98%`, `95 to 98%`, `95–98%` | `range` | the favorable end (98% for accuracy, 95% for an error rate) as a point figure, on every path (a complete set is judged at that end too, not as a span); `value` must lie inside the range exactly, with one ulp of representation error allowed at each end |
 | `1 in 10,000` | `one-in-n` | 1/N at the precision of N (trailing zeros are placeholders, so `10,000` means 5,000 to 15,000) |
 
-A bound pointing the wrong way for the metric ("<99%" accuracy), an inverted range, a figure above 100% and any other text throw `RangeError`. The decimals rule skips bounds and "1 in N". Case, spacing, full-width forms and one trailing period are tolerated.
+A bound pointing the wrong way for the metric ("<99%" accuracy), an impossible one ("over 100%", "under 0%"), an inverted range, a figure above 100% and any other text throw `RangeError`. On a complete set, every figure the reader can see is judged by its form, and a `value` more favorable than the printed figure is judged as its own point figure (a value of 0.994 printed as `99%+` on 990 of 1000 is contradicted). The decimals rule skips bounds and "1 in N". Case, spacing, full-width forms and one trailing period are tolerated.
 
 ## Sampling and label sources
 
