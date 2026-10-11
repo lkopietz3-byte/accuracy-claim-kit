@@ -63,7 +63,7 @@ const overstated = assessAccuracyClaim({
   sample: { n: 500, correct: 499 },
 });
 assert.equal(overstated.verdict, 'overstated');
-assert.deepEqual(overstated.reasons, ['claim-beyond-conservative-bound', 'precision-too-fine']);
+assert.deepEqual(overstated.reasons, ['precision-too-fine']);
 
 const contradicted = assessAccuracyClaim({
   ...base,
@@ -81,6 +81,26 @@ const refused = assessAccuracyClaim({
 assert.equal(refused.verdict, 'refused');
 assert.deepEqual(refused.reasons, ['no-human-labels']);
 assert.equal(refused.interval, null);
+
+// No counts is a refusal, an unsupported metric is a refusal, a bound is read from its text.
+const noCounts = assessAccuracyClaim({ ...base, claim: { metric: 'accuracy', value: 0.99, display: '99%+' } });
+assert.deepEqual(noCounts.reasons, ['n-undisclosed']);
+assert.equal(noCounts.n, null);
+assert.deepEqual(
+  assessAccuracyClaim({ ...base, claim: { metric: 'f1', value: 0.9 }, sample: { n: 100, correct: 90 } }).reasons,
+  ['metric-not-supported'],
+);
+const ceiling = assessAccuracyClaim({
+  ...base,
+  claim: { metric: 'false-positive-rate', value: 0.01, display: 'no more than 1%' },
+  sample: { n: 27743, errors: 0 },
+});
+assert.equal(ceiling.verdict, 'supported');
+assert.deepEqual(ceiling.parsedDisplay, { form: 'ceiling', figure: 0.01, decimals: 0 });
+// An honest report of the observed rate is supported; the strict option restores the old rule.
+const honest = { ...base, claim: { metric: 'accuracy', value: 0.95, display: '95%' }, sample: { n: 1000, correct: 950 } };
+assert.deepEqual(assessAccuracyClaim(honest).reasons, ['matches-observed-rate']);
+assert.equal(assessAccuracyClaim(honest, { conservative: true }).verdict, 'overstated');
 
 // A whole fixed set is compared with the exact count, not an interval.
 const census = assessAccuracyClaim({

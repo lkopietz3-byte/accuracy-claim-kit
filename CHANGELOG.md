@@ -36,3 +36,10 @@
 - Claim digits come from the shortest round-trip text (mantissa and exponent), never from `toFixed`; `5e-7` on 5 of 10,000,000 is supported.
 - A value computed as `correct / n` matches its own count (one ulp of allowance).
 - Added a 1,050-row grid of values (exponent forms, 0, 1, thirds) and counts checked against exact rational references from the Python generator.
+
+### Usability round (prevalence-audit findings)
+- An undisclosed sample is a refusal: omit `sample` (or its counts) and the result is `refused` with `n-undisclosed`; `n` is `null` in the result. Half-given counts still throw.
+- Metrics: `precision`, `recall`, `false-positive-rate`, `false-negative-rate` join `accuracy` and `error-rate`. F1, AUC, WER, BLEU and similar names are refused (`metric-not-supported`) instead of throwing. Unknown metric names still throw.
+- Display forms: floors (`99%+`, `over 99%`, `>=`), ceilings (`<1%`, `no more than 1%`), approximate words (`~`, `about`), ranges (`95-98%`, judged at the favorable end) and `1 in N` are parsed. The parsed form is returned as `parsedDisplay`. Unparseable text still throws.
+- Default verdict model: a claim equal to the observed rate to its printed precision is `supported` with `matches-observed-rate`; the interval is still in the statement. `overstated` stays for claims above the observed rate and for `precision-too-fine`; `contradicted` for claims outside the interval. Bounds and absolute claims (0, 1) never use the allowance. `options.conservative: true` restores the old rule. Changed verdicts: a point claim equal to the observed rate used to be `overstated` (`claim-beyond-conservative-bound`); it is now `supported` unless printed too finely, in which case the reasons are now `['precision-too-fine']` alone.
+- Label source `by-construction`; sampling `held-out-split` (complete-set path) and `cross-validation` (judged as random, with a caveat).

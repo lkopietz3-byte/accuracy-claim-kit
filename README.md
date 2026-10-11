@@ -4,7 +4,7 @@ Substantiation for a published accuracy or error-rate number. You give it the co
 
 It is for people who publish a figure from their own evaluation: an AI-eval author, a team with a model or detector in production, a maintainer writing a benchmark README or a methodology page. It does one job: checking one number against its own evidence. Most real claims fail on a missing declaration (nobody wrote down who labeled, how items were picked, or what was measured), so expect "refused" often and read it as "write this down", not "false".
 
-What it does not do: it does not judge whether labels are correct, detect a sample that was quietly filtered, compare systems, or make any legal or regulatory determination. A `supported` verdict means the claim is no more favorable than the evidence you supplied; it is not proof the system is accurate. See "What it does not do".
+What it does not do: it does not judge whether labels are correct, detect a sample that was quietly filtered, compare systems, or make any legal or regulatory determination. A `supported` verdict means the claim is no more favorable than the evidence you supplied (or is an honest report of the observed rate); it is not proof the system is accurate. See "What it does not do".
 
 Zero runtime dependencies, TypeScript, ESM, Node 20 or newer, no `node:` imports in the source. It reads no clock and uses no randomness: the same input gives the same output (dates are passed in, never read).
 
@@ -16,7 +16,9 @@ A claim like "99.8% accurate" or "0.2% error" is only as good as the evidence un
 
 | Reason code | Refused because |
 | --- | --- |
-| `no-human-labels` | The labels came from a model, so there is no human ground truth. (Use `automated` only for a deterministic procedure with known answers, such as a test suite or an exact search; never for a model's judgment.) |
+| `metric-not-supported` | The metric is one this kit cannot judge (F1, AUC, WER, BLEU, composite scores). See "Metrics". |
+| `n-undisclosed` | The sample counts were not supplied at all. |
+| `no-human-labels` | The labels came from a model, so there is no human ground truth. (Use `automated` for a deterministic procedure with known answers, such as a test suite or an exact search, and `by-construction` for ground truth fixed by how the data was made, such as text from a known generator or labels taken from a corpus's language. Both are declarations the kit cannot verify and are accepted like `human`; never use them for a model's judgment.) |
 | `unknown-label-source` | Nobody can say where the labels came from. |
 | `mixed-label-source` | Some labels are from a model and the counts are not split. Assess only the human-labeled items. |
 | `ranked-sample` | The sample was picked by rank (for example the top-scored items). |
@@ -33,15 +35,17 @@ A claim like "99.8% accurate" or "0.2% error" is only as good as the evidence un
 
 If nothing blocks it, the claim is compared with the Wilson interval (or, for a whole fixed set, with the exact count):
 
-| Verdict | Accuracy claim | Error-rate claim |
+| Verdict | Higher-is-better claim (accuracy, precision, recall) | Lower-is-better claim (error rate, FPR, FNR) |
 | --- | --- | --- |
 | `contradicted` | above the top of the interval | below the bottom of the interval |
-| `overstated` | inside the interval but above its lower end, or printed with more decimals than the interval supports | inside the interval but below its upper end, or printed with more decimals than the interval supports |
-| `supported` | at or below the lower end | at or above the upper end |
+| `overstated` | inside the interval, more favorable than the observed rate; or printed with more decimals than the interval supports | the mirror image |
+| `supported` | at or below the lower end (`claim-within-bound`), **or** equal to the observed rate to its printed precision (`matches-observed-rate`) | at or above the upper end, or equal to the observed rate |
+
+An honest report of what was measured ("95%" after 950 of 1000) is `supported` with `matches-observed-rate`, and the suggested statement still gives the interval. It does not ride this allowance if it is a bound ("99%+", "<1%"), is `0` or `1` (`0%` / `100%`: an interval never reaches certainty), or is printed finer than the interval supports. Pass `options.conservative: true` for the strict rule, where only a claim at or below the conservative bound is supported.
 
 One more code never changes a verdict: `claim-worse-than-counts` is added when a figure is far *less* favorable than the counts support (outside the 99.9% interval on the pessimistic side). That pattern is what a stale or mistyped number looks like (a published 44% error rate against 56 errors in 189 items, which is 29.6%), so the explanation says it may be stale or wrong. The verdict stays `supported`, because an understated claim is not an overstatement.
 
-The "conservative bound" is the end of the interval a claim should not beat: the lower end for accuracy, the upper end for error rate. A supported claim is no more favorable than that bound. A claim that is more cautious than the evidence (say "90%" when the lower end is 98%) is supported.
+The "conservative bound" is the end of the interval a claim should not beat: the lower end for higher-is-better metrics, the upper end for lower-is-better ones. A claim that is more cautious than the evidence (say "90%" when the lower end is 98%) is supported.
 
 ## Worked example
 
@@ -58,15 +62,15 @@ const result = assessAccuracyClaim({
 })
 
 result.verdict // 'overstated'
-result.reasons // ['claim-beyond-conservative-bound', 'precision-too-fine']
+result.reasons // ['precision-too-fine']
 result.explanation[0]
-// 'The claimed 99.800% is inside the 95% Wilson interval but above its lower end (98.875%), which is the most the evidence supports.'
+// 'The figure is printed to 1 decimal place(s), but the interval is 1.09 percentage points wide and supports at most 0 decimal place(s).'
 result.interval // { low: 0.98875..., high: 0.99964..., point: 0.998, confidence: 0.95, z: 1.95996..., successes: 499, n: 500 }
 result.suggestedStatement
 // 'At least 98.87% accurate (95% Wilson interval 98.87% to 99.97%, n = 500, human labels, random sample)'
 ```
 
-Two things are wrong with "99.8%": the data cannot rule out that the true rate is as low as 98.88%, and a figure printed to a tenth of a percent implies far more precision than an interval 1.09 points wide supports. The suggested statement describes the evidence and rounds the lower end down (98.8759 prints as 98.87, never 98.88). The headline bound and the interval it quotes always use the same precision.
+The figure equals the observed rate (499 of 500), so it is not inflated, but a figure printed to a tenth of a percent implies far more precision than an interval 1.09 points wide supports, and the data cannot rule out that the true rate is as low as 98.87%. Printed as "99%" the claim would be inside the interval but above its lower end and above the observed rate, which is `overstated` with `claim-beyond-conservative-bound`. The suggested statement describes the evidence and rounds the lower end down (98.8759 prints as 98.87, never 98.88). The headline bound and the interval it quotes always use the same precision.
 
 Other results from the same style of input:
 
@@ -74,6 +78,44 @@ Other results from the same style of input:
 - 900 of 1000 right, claimed 95%: `contradicted`. The top of the interval is 91.71%.
 - A 0.2% error claim where a model did the labeling: `refused`, reason `no-human-labels`, no interval returned.
 - 980 of 1000 right in one stratum and 10 of 30 in another, claimed 95% overall: `refused`, reason `merged-strata-differ`.
+
+## Metrics
+
+Each metric is a proportion with a stated meaning of `sample.n`:
+
+| `claim.metric` | `n` counts | give | better when |
+| --- | --- | --- | --- |
+| `accuracy` | items checked | `correct` | higher |
+| `error-rate` | items checked | `errors` | lower |
+| `precision` | predicted positives | `correct` (true positives) | higher |
+| `recall` | actual positives | `correct` (found) | higher |
+| `false-positive-rate` | actual negatives | `errors` (false positives) | lower |
+| `false-negative-rate` | actual positives | `errors` (misses) | lower |
+
+`f1`, `auc`, `roc-auc`, `wer`, `cer`, `bleu`, `rouge`, `map`, `composite` and `other` are not proportions of independently checked items; they come back `refused` with `metric-not-supported` (their `value` is only required to be a number, since a word error rate can pass 1). A metric name the kit does not know at all (a typo) throws `RangeError`.
+
+If the source does not give counts, leave `sample` out (or give an object with no `n`, `correct` or `errors`): the result is `refused` with `n-undisclosed` plus any other failed precondition, never a throw. Counts that are half given, fractional or inconsistent still throw.
+
+## Printed forms of a figure
+
+`display` is read into the figure a reader takes away, using the favorable reading, and the result records the parsed form in `parsedDisplay` (`form`, `figure`, `decimals`):
+
+| Printed | Form | Judged as |
+| --- | --- | --- |
+| `99.8%` | `percent` | the point figure, with the allowance and precision rule |
+| `~95%`, `about 95%`, `approximately`, `around`, `roughly`, `≈95%` | `approx` | the same as the plain figure (the stated precision is kept) |
+| `99%+`, `99+%`, `over 99%`, `above`, `at least`, `more than`, `≥`, `>=`, `>` | `floor` | "at least 99%" as a bound: checked against the conservative end, never excused by matching the observed rate. Higher-is-better metrics only |
+| `<1%`, `under`, `below`, `less than`, `fewer than`, `at most`, `no more than`, `up to`, `≤`, `<=` | `ceiling` | "at most 1%" as a bound. Lower-is-better metrics only |
+| `95-98%`, `95 to 98%`, `95–98%` | `range` | the favorable end (98% for accuracy, 95% for an error rate) as a point figure; `value` must lie inside the range |
+| `1 in 10,000` | `one-in-n` | 1/N at the precision of N (trailing zeros are placeholders, so `10,000` means 5,000 to 15,000) |
+
+A bound pointing the wrong way for the metric ("<99%" accuracy), an inverted range, a figure above 100% and any other text throw `RangeError`. The decimals rule skips bounds and "1 in N". Case, spacing, full-width forms and one trailing period are tolerated.
+
+## Sampling and label sources
+
+- `sampling: 'held-out-split'` is a fixed, named test split. It follows the complete-set path below (`benchmark.name` is the split's name, and the claim text must mention it); otherwise it is refused as `benchmark-unnamed` or `claim-not-scoped-to-benchmark`. The statement says "held-out split".
+- `sampling: 'cross-validation'` is judged like a random sample and the statement says "cross-validation estimate". Caveat: the folds share data, so the items are not independent and the interval is optimistic.
+- `provenance.source: 'by-construction'`: see the label table above.
 
 ## Claims about a fixed benchmark
 
@@ -168,19 +210,19 @@ Pass a result straight into `provenance.agreement`.
 
 ```ts
 assessAccuracyClaim({
-  claim: { metric: 'accuracy' | 'error-rate', value, display?, text? },   // value in 0..1; display like "99.8%"; text for 'complete'
-  sample: { n, correct? , errors? },                               // give correct or errors (or both, adding to n)
-  provenance: { source: 'human' | 'automated' | 'model' | 'mixed' | 'unknown', raters?, agreement? },
-  sampling: 'random' | 'stratified' | 'ranked' | 'convenience' | 'unknown' | 'complete',
+  claim: { metric, value, display?, text? },                       // metric: see Metrics; value in 0..1; display: see Printed forms; text for fixed sets
+  sample?: { n, correct? , errors? },                              // correct or errors (or both, adding to n); omit when undisclosed
+  provenance: { source: 'human' | 'automated' | 'by-construction' | 'model' | 'mixed' | 'unknown', raters?, agreement? },
+  sampling: 'random' | 'stratified' | 'ranked' | 'convenience' | 'unknown' | 'complete' | 'held-out-split' | 'cross-validation',
   strata?: [{ name, n, correct? , errors? }],                      // required with 'stratified'; must add up to the sample
   retractions?: { count, includedInSample },
   benchmark?: { name },                                            // required with 'complete', rejected otherwise
   population?: { claimed, evaluated },
   evaluatedAt?: 'YYYY-MM-DD',
-}, { confidence?, minN?, minAgreement?, maxAgeDays?, now?, requireScope? })
+}, { confidence?, minN?, minAgreement?, maxAgeDays?, now?, requireScope?, conservative? })
 ```
 
-Returns `{ verdict, reasons, explanation, metric, claimed, assessedValue, n, basis, interval, conservativeBound, suggestedStatement }`. `reasons` has at least one code and `explanation` has one plain sentence per code. When refused, `interval` and `conservativeBound` are `null` so no number is there to quote, and `suggestedStatement` says why no figure can be given.
+Returns `{ verdict, reasons, explanation, metric, claimed, assessedValue, n (null if undisclosed), basis, parsedDisplay, interval, conservativeBound, suggestedStatement }`. `reasons` has at least one code and `explanation` has one plain sentence per code. When refused, `interval` and `conservativeBound` are `null` so no number is there to quote, and `suggestedStatement` says why no figure can be given.
 
 Rules you can rely on:
 
@@ -188,7 +230,7 @@ Rules you can rely on:
 - **Every property is read once**, in a fixed order, before any judgment. Proxies, getters, class instances, inherited fields and null-prototype objects all work. A getter that throws propagates its own error. No key listing, `toJSON` or `then` is ever used.
 - **`sampling: 'stratified'` needs `strata`.** Without them the pooled counts are not the population rate, so the claim is refused (`stratified-without-strata`). With them, the combined number is refused if strata clearly differ.
 - **A refusal outranks a verdict.** A ranked sample with a plainly false claim is refused, not contradicted.
-- **`display`** is optional. Readers see the printed figure, so when it is given the verdict judges the **more favorable of `value` and the parsed display** (the higher for accuracy, the lower for error rate). That figure is returned as `assessedValue`, and the explanation says "printed figure" when it came from the display. A `value` of 0.996 printed as "100%" on 1000 of 1000 correct is judged as 100% and comes out `overstated`, not `supported`. A display that disagrees with `value` by more than the allowance throws `RangeError`, so the two can never quietly diverge. The comparison is exact (the double's exact value against the display's decimal digits, no float tolerance) and the allowance is half a unit of the display's last digit plus one ulp of the value. A figure a person rounded by hand (0.985 printed as `99%`) is therefore never rejected for the double's own representation error, while `98.00000000009%` for 0.98 still is. The display must be a percent from 0 to 100 (its decimal digits are checked before conversion, so `100.000000000000001%` is rejected rather than rounded to 100%; signs are not accepted). `assessedValue` is computed before any refusal, so a refused result reports the same selected figure. The number of decimals is also checked against the interval (see below); whole-percent figures are never flagged.
+- **`display`** is optional (forms in "Printed forms of a figure"). Readers see the printed figure, so when it is given the verdict judges the **more favorable of `value` and the parsed display** (the higher for higher-is-better metrics, the lower for the others). That figure is returned as `assessedValue`, and the explanation says "printed figure" when it came from the display. A `value` of 0.996 printed as "100%" on 1000 of 1000 correct is judged as 100% and comes out `overstated`, not `supported`. A display that disagrees with `value` by more than the allowance throws `RangeError`, so the two can never quietly diverge. The comparison is exact (the double's exact value against the display's decimal digits, no float tolerance) and the allowance is half a unit of the display's last digit plus one ulp of the value. A figure a person rounded by hand (0.985 printed as `99%`) is therefore never rejected for the double's own representation error, while `98.00000000009%` for 0.98 still is. The display must be a percent from 0 to 100 (its decimal digits are checked before conversion, so `100.000000000000001%` is rejected rather than rounded to 100%; signs are not accepted). `assessedValue` is computed before any refusal, so a refused result reports the same selected figure. The number of decimals is also checked against the interval (see below); whole-percent figures are never flagged.
 - **`provenance.agreement`**: a defined statistic needs a finite `value` from -1 to 1. An undefined one (`status: 'undefined'`, as `cohenKappa` and `gwetAC1` return) must carry `value: null`; `NaN`, numbers, text or objects in its place throw. An undefined statistic is accepted as input but can never pass a gate (`agreement-undefined`).
 - **`options.minAgreement`** (from -1 to 1) turns agreement into a gate. Equal to the minimum passes. Without it, a supplied agreement statistic is only echoed in the statement.
 - **Strata**: if two strata have non-overlapping intervals the combined number is refused. The intervals use a Bonferroni split of the error budget across strata (`k` strata use confidence `1 - (1 - confidence) / k`), so many strata do not cause refusals by chance. One stratum never triggers it.
