@@ -1,7 +1,8 @@
 import type { AgreementStatistic } from './agreement.js'
-import { countDecimals, matchesCount, matchesValue } from './census.js'
+import { countDecimals, matchesValue } from './census.js'
 import { dayNumber } from './dates.js'
-import { withinHalfUnit } from './exact.js'
+import { parseDisplayFigure } from './display.js'
+import type { DisplayFigure } from './display.js'
 import { confidenceLabel, maxDisplayDecimals, pctCeil, pctFloor, pctNearest } from './format.js'
 import type {
   AccuracyAssessment,
@@ -9,6 +10,7 @@ import type {
   AccuracyVerdict,
   AssessOptions,
   ClaimMetric,
+  UnsupportedMetric,
   LabelSource,
   ReasonCode,
   SamplingMethod,
@@ -40,9 +42,30 @@ export const DEFAULT_MIN_N = 30
  */
 export const COMPARISON_TOLERANCE = 1e-12
 
-const SOURCES: readonly LabelSource[] = ['human', 'automated', 'model', 'mixed', 'unknown']
-const SAMPLINGS: readonly SamplingMethod[] = ['random', 'stratified', 'ranked', 'convenience', 'unknown', 'complete']
-const METRICS: readonly ClaimMetric[] = ['accuracy', 'error-rate']
+const SOURCES: readonly LabelSource[] = ['human', 'automated', 'by-construction', 'model', 'mixed', 'unknown']
+const SAMPLINGS: readonly SamplingMethod[] = ['random', 'stratified', 'ranked', 'convenience', 'unknown', 'complete', 'held-out-split', 'cross-validation']
+const METRICS: readonly ClaimMetric[] = [
+  'accuracy',
+  'error-rate',
+  'precision',
+  'recall',
+  'false-positive-rate',
+  'false-negative-rate',
+]
+/** Metrics the kit knows it cannot judge: they get a refusal, not a throw. */
+const UNSUPPORTED_METRICS: readonly UnsupportedMetric[] = [
+  'f1', 'auc', 'roc-auc', 'wer', 'cer', 'bleu', 'rouge', 'map', 'composite', 'other',
+]
+const HIGHER_IS_BETTER: readonly ClaimMetric[] = ['accuracy', 'precision', 'recall']
+const METRIC_PHRASE: Record<ClaimMetric, string> = {
+  accuracy: 'accurate',
+  'error-rate': 'error rate',
+  precision: 'precision',
+  recall: 'recall',
+  'false-positive-rate': 'false-positive rate',
+  'false-negative-rate': 'false-negative rate',
+}
+const SUPPORTED_LIST = 'accuracy, error-rate, precision, recall, false-positive-rate and false-negative-rate'
 const STATISTICS: readonly AgreementStatistic[] = ['percent-agreement', 'cohen-kappa', 'gwet-ac1']
 const STATISTIC_LABEL: Record<AgreementStatistic, string> = {
   'percent-agreement': 'percent agreement',
@@ -62,6 +85,17 @@ function readEnum<T extends string>(value: unknown, allowed: readonly T[], name:
 interface Counts {
   n: number
   correct: number
+}
+
+/** Reads {n, correct?, errors?} for the sample; null when no counts were disclosed at all. */
+function readSampleCounts(raw: unknown): Counts | null {
+  if (raw === undefined) return null
+  const rec = requireRecord(raw, 'sample')
+  const nRaw: unknown = rec.n
+  const correctRaw: unknown = rec.correct
+  const errorsRaw: unknown = rec.errors
+  if (nRaw === undefined && correctRaw === undefined && errorsRaw === undefined) return null
+  return readCounts({ n: nRaw, correct: correctRaw, errors: errorsRaw }, 'sample')
 }
 
 /** Reads {n, correct?, errors?}; each property once. */
@@ -86,38 +120,6 @@ function readCounts(raw: unknown, name: string): Counts {
     throw new RangeError(`${name}.correct + ${name}.errors must equal n`)
   }
   return { n, correct: correct !== undefined ? correct : n - (errors as number) }
-}
-
-const DISPLAY = /^\s*(\d{1,3})(?:\.(\d{1,15}))?\s*%\s*$/
-
-interface ParsedDisplay {
-  /** The figure as a proportion, correctly rounded from its decimal digits. */
-  proportion: number
-  /** All digits of the percent figure as one integer (whole and fraction). */
-  digits: bigint
-  decimals: number
-}
-
-/**
- * Parses a percent string such as "99.8%". The decimal digits are checked
- * against 0..100 before anything is converted to a double, so "100.000000000000001%"
- * cannot round its way to a valid 100%. A sign is not part of the format.
- */
-function parseDisplay(display: unknown): ParsedDisplay {
-  if (typeof display !== 'string') throw new TypeError('claim.display must be a string')
-  if (display.length > 64) throw new RangeError('claim.display is too long to be a percent figure')
-  const match = DISPLAY.exec(display)
-  if (match === null) {
-    throw new RangeError(`claim.display must look like "99.8%"; got "${clip(display)}"`)
-  }
-  const whole = match[1] as string
-  const frac = match[2] ?? ''
-  if (Number(whole) > 100 || (Number(whole) === 100 && /[1-9]/.test(frac))) {
-    throw new RangeError(`claim.display must be between 0% and 100%; got "${clip(display)}"`)
-  }
-  const text = frac === '' ? whole : `${whole}.${frac}`
-  // Parsing "99.8e-2" is correctly rounded; dividing 99.8 by 100 is not always.
-  return { proportion: Number(`${text}e-2`), digits: BigInt(`${whole}${frac}`), decimals: frac.length }
 }
 
 interface Agreement {
@@ -173,6 +175,8 @@ function readStrata(raw: unknown): Stratum[] {
 }
 
 const REFUSAL_PHRASE: Record<string, string> = {
+  'metric-not-supported': 'this kit cannot judge that kind of metric',
+  'n-undisclosed': 'the number of items checked was not disclosed',
   'no-human-labels': 'the labels were not checked by people',
   'unknown-label-source': 'nobody has said where the labels came from',
   'mixed-label-source': 'only some labels came from people and the counts are not split',
@@ -186,7 +190,7 @@ const REFUSAL_PHRASE: Record<string, string> = {
   'agreement-undefined': 'the agreement statistic could not be computed',
   'agreement-below-minimum': 'the raters agreed less than the required minimum',
   'stratified-without-strata': 'the sample is stratified but the strata were not supplied, so the pooled counts cannot be read as the population rate',
-  'benchmark-unnamed': 'a complete-set claim needs the name of the fixed set',
+  'benchmark-unnamed': 'a complete-set or held-out-split claim needs the name of the fixed set',
   'claim-not-scoped-to-benchmark': 'the claim wording does not name the benchmark, so a benchmark score is standing in for a general claim',
   'evaluation-date-missing': 'a maximum age was set but the evaluation date was not supplied',
   'evaluation-stale': 'the evaluation is older than the allowed age',
@@ -194,7 +198,16 @@ const REFUSAL_PHRASE: Record<string, string> = {
   'scope-undeclared': 'the claimed and evaluated populations were not declared',
 }
 
-const LABEL_WORD: Record<'human' | 'automated', string> = { human: 'human labels', automated: 'automated labels' }
+const LABEL_WORD: Record<'human' | 'automated' | 'by-construction', string> = {
+  human: 'human labels',
+  automated: 'automated labels',
+  'by-construction': 'labels fixed by construction',
+}
+
+const SAMPLE_WORD: Partial<Record<SamplingMethod, string>> = {
+  stratified: 'stratified sample',
+  'cross-validation': 'cross-validation estimate',
+}
 
 /**
  * Does this accuracy or error-rate claim have the evidence to carry it?
@@ -207,10 +220,11 @@ const LABEL_WORD: Record<'human' | 'automated', string> = { human: 'human labels
  * Verdicts:
  *  - refused: a precondition failed. This means "cannot tell", not "false".
  *  - contradicted: the claim is more favorable than the interval's best end.
- *  - overstated: inside the interval but more favorable than its
- *    conservative end, or printed with finer precision than the interval allows.
- *  - supported: no more favorable than the conservative end (and, if a
- *    display string was given, not printed finer than the interval allows).
+ *  - overstated: inside the interval but more favorable than the observed
+ *    rate (or, with options.conservative, than the conservative end), or
+ *    printed with finer precision than the interval allows.
+ *  - supported: no more favorable than the conservative end, or an honest
+ *    report of the observed rate to its printed precision.
  *
  * Malformed input throws (TypeError for a wrong type, RangeError for a wrong
  * value); it never returns a verdict. Every input property is read once.
@@ -235,6 +249,7 @@ export function assessAccuracyClaim(
   const maxAgeRaw: unknown = options === undefined ? undefined : options.maxAgeDays
   const nowRaw: unknown = options === undefined ? undefined : options.now
   const requireScopeRaw: unknown = options === undefined ? undefined : options.requireScope
+  const conservativeRaw: unknown = options === undefined ? undefined : options.conservative
   const maxAgeDays = maxAgeRaw === undefined ? undefined : readCount(maxAgeRaw, 'options.maxAgeDays', 0)
   if (maxAgeDays !== undefined && nowRaw === undefined) {
     throw new TypeError('options.now is required with options.maxAgeDays: the kit never reads a clock')
@@ -243,7 +258,11 @@ export function assessAccuracyClaim(
   if (requireScopeRaw !== undefined && typeof requireScopeRaw !== 'boolean') {
     throw new TypeError('options.requireScope must be a boolean')
   }
+  if (conservativeRaw !== undefined && typeof conservativeRaw !== 'boolean') {
+    throw new TypeError('options.conservative must be a boolean')
+  }
   const requireScope = requireScopeRaw === true
+  const conservative = conservativeRaw === true
 
   const root = requireRecord(input, 'input')
   const claimRaw: unknown = root.claim
@@ -261,22 +280,35 @@ export function assessAccuracyClaim(
   const valueRaw: unknown = claimRec.value
   const displayRaw: unknown = claimRec.display
   const textRaw: unknown = claimRec.text
-  const metric = readEnum(metricRaw, METRICS, 'claim.metric')
-  const claimed = readFiniteInRange(valueRaw, 'claim.value', 0, 1)
-  let displayDecimals: number | undefined
-  let displayProportion: number | undefined
-  let displayDigits: bigint | undefined
-  if (displayRaw !== undefined) {
-    const parsed = parseDisplay(displayRaw)
-    displayDecimals = parsed.decimals
-    displayProportion = parsed.proportion
-    displayDigits = parsed.digits
-    // Exact: the value must be within half a unit of the printed last digit,
-    // judged on the double's exact value. No tolerance is involved.
-    if (!withinHalfUnit(claimed, parsed.digits, parsed.decimals + 2, parsed.decimals + 2)) {
+
+  // The metric: judged, or known-unsupported (refused below), or a typo (thrown).
+  const unsupportedMetric =
+    typeof metricRaw === 'string' ? UNSUPPORTED_METRICS.find((m) => m === metricRaw) : undefined
+  const metric: ClaimMetric | UnsupportedMetric =
+    unsupportedMetric !== undefined
+      ? unsupportedMetric
+      : readEnum(metricRaw, METRICS, `claim.metric (or one of ${UNSUPPORTED_METRICS.join(', ')})`)
+  const judged = unsupportedMetric === undefined
+  const higherIsBetter = judged && HIGHER_IS_BETTER.includes(metric as ClaimMetric)
+
+  // A value is a proportion from 0 to 1 for a judged metric. An unsupported
+  // metric (a word error rate can pass 1) only needs to be a number.
+  const claimed = judged
+    ? readFiniteInRange(valueRaw, 'claim.value', 0, 1)
+    : readFiniteInRange(valueRaw, 'claim.value', -Infinity, Infinity)
+
+  let figure: DisplayFigure | undefined
+  if (displayRaw !== undefined && judged) {
+    figure = parseDisplayFigure(displayRaw, higherIsBetter)
+    // Exact: the value must agree with the printed figure to its rounding plus
+    // one ulp of the value. No float tolerance is involved.
+    if (!figure.consistentWith(claimed)) {
       throw new RangeError('claim.display does not match claim.value')
     }
   }
+  const displayIsPoint = figure !== undefined && figure.bound === null
+  const displayDecimals =
+    figure !== undefined && figure.info.form !== 'one-in-n' && figure.bound === null ? figure.info.decimals : null
 
   let claimText: string | undefined
   if (textRaw !== undefined) {
@@ -285,7 +317,7 @@ export function assessAccuracyClaim(
     claimText = textRaw
   }
 
-  const { n, correct } = readCounts(sampleRaw, 'sample')
+  const counts = readSampleCounts(sampleRaw)
 
   const provRec = requireRecord(provenanceRaw, 'provenance')
   const sourceRaw: unknown = provRec.source
@@ -296,14 +328,15 @@ export function assessAccuracyClaim(
   const agreement = agreementRaw === undefined ? undefined : readAgreement(agreementRaw)
 
   const sampling = readEnum(samplingRaw, SAMPLINGS, 'sampling')
+  const isFixedSet = sampling === 'complete' || sampling === 'held-out-split'
 
   let benchmarkName: string | undefined
   if (benchmarkRaw !== undefined) {
     const rec = requireRecord(benchmarkRaw, 'benchmark')
     const nameRaw: unknown = rec.name
     benchmarkName = readName(nameRaw, 'benchmark.name')
-    if (sampling !== 'complete') {
-      throw new RangeError("benchmark is only for sampling: 'complete'")
+    if (!isFixedSet) {
+      throw new RangeError("benchmark is only for sampling: 'complete' or 'held-out-split'")
     }
   }
 
@@ -324,7 +357,7 @@ export function assessAccuracyClaim(
   }
 
   const strata = strataRaw === undefined ? undefined : readStrata(strataRaw)
-  if (strata !== undefined) {
+  if (strata !== undefined && counts !== null) {
     // BigInt: a plain sum can round past 2^53 and falsely equal the total.
     let sumN = 0n
     let sumCorrect = 0n
@@ -332,7 +365,7 @@ export function assessAccuracyClaim(
       sumN += BigInt(s.n)
       sumCorrect += BigInt(s.correct)
     }
-    if (sumN !== BigInt(n) || sumCorrect !== BigInt(correct)) {
+    if (sumN !== BigInt(counts.n) || sumCorrect !== BigInt(counts.correct)) {
       throw new RangeError('strata counts must add up to the sample counts')
     }
   }
@@ -348,28 +381,35 @@ export function assessAccuracyClaim(
       throw new TypeError('retractions.includedInSample must be a boolean')
     }
     retractionsIncluded = includedRaw
-    if (retractionsIncluded && retractionCount > n) {
+    if (retractionsIncluded && counts !== null && retractionCount > counts.n) {
       throw new RangeError('retractions.count is larger than the sample, so it cannot all be included')
     }
   }
 
   // Readers see the printed figure, so the more favorable of the value and the
-  // parsed display is what gets judged. A display that disagrees with the value
+  // parsed figure is what gets judged. A display that disagrees with the value
   // by more than its own rounding already threw above.
   let assessed = claimed
   let fromDisplay = false
-  if (displayProportion !== undefined) {
-    const displayWins = metric === 'accuracy' ? displayProportion > claimed : displayProportion < claimed
+  if (figure !== undefined) {
+    const shown = figure.info.figure
+    const displayWins = higherIsBetter ? shown > claimed : shown < claimed
     if (displayWins) {
-      assessed = displayProportion
+      assessed = shown
       fromDisplay = true
     }
   }
+  const parsedDisplay = figure === undefined ? null : figure.info
 
   // ---- preconditions -----------------------------------------------------
   const refusals: ReasonCode[] = []
   const notes: string[] = []
-  const metricWord = metric === 'accuracy' ? 'accuracy' : 'error-rate'
+  const metricWord = String(metric)
+
+  if (!judged) {
+    refusals.push('metric-not-supported')
+    notes.push(`"${clip(String(metric))}" is not a proportion of independently checked items. This kit judges ${SUPPORTED_LIST}; for anything else, report the counts and method instead.`)
+  }
 
   if (source === 'model') {
     refusals.push('no-human-labels')
@@ -398,20 +438,25 @@ export function assessAccuracyClaim(
     notes.push('The sample is stratified but no strata were supplied. The pooled counts are not a simple random sample, so they cannot be read as the population rate; supply the strata.')
   }
 
-  if (sampling === 'complete') {
+  if (isFixedSet) {
     if (benchmarkName === undefined) {
       refusals.push('benchmark-unnamed')
-      notes.push("A complete-set claim must name the fixed set it was measured on (the 'benchmark' field).")
+      notes.push("A complete-set or held-out-split claim must name the fixed set it was measured on (the 'benchmark' field).")
     } else if (claimText === undefined || !foldText(claimText).includes(foldText(benchmarkName))) {
       refusals.push('claim-not-scoped-to-benchmark')
       notes.push(`The claim wording does not mention "${clip(benchmarkName)}". A score on a fixed set describes that set; word the claim for it, or supply a random sample for a general claim.`)
     }
-  } else if (n < minN) {
-    refusals.push('sample-too-small')
-    notes.push(`The sample has ${String(n)} items, below the minimum of ${String(minN)} needed for a verdict.`)
   }
 
-  if (sampling !== 'complete' && strata !== undefined && strata.length > 1) {
+  if (counts === null) {
+    refusals.push('n-undisclosed')
+    notes.push('The sample counts (n and correct or errors) were not supplied, so there is nothing to weigh the figure against.')
+  } else if (!isFixedSet && counts.n < minN) {
+    refusals.push('sample-too-small')
+    notes.push(`The sample has ${String(counts.n)} items, below the minimum of ${String(minN)} needed for a verdict.`)
+  }
+
+  if (!isFixedSet && strata !== undefined && strata.length > 1) {
     // Bonferroni: split the error budget across the strata so that many
     // strata do not make a refusal likelier by chance alone.
     const zStrata = zForTail((1 - confidence) / (2 * strata.length))
@@ -478,7 +523,7 @@ export function assessAccuracyClaim(
     }
   }
 
-  if (refusals.length > 0) {
+  if (refusals.length > 0 || counts === null) {
     const phrases = refusals.map((code) => REFUSAL_PHRASE[code] as string)
     return {
       verdict: 'refused',
@@ -487,41 +532,48 @@ export function assessAccuracyClaim(
       metric,
       claimed,
       assessedValue: assessed,
-      n,
+      n: counts === null ? null : counts.n,
       basis: 'none',
+      parsedDisplay,
       interval: null,
       conservativeBound: null,
       suggestedStatement: `No ${metricWord} figure can be supported from this evidence: ${phrases.join('; ')}.`,
     }
   }
 
-  const labelWord = LABEL_WORD[source as 'human' | 'automated']
+  const { n, correct } = counts
+  const supportedMetric = metric as ClaimMetric
+  const successes = higherIsBetter ? correct : n - correct
+  const labelWord = LABEL_WORD[source as 'human' | 'automated' | 'by-construction']
   const datePart = evaluatedAtRaw === undefined ? '' : `, evaluated ${evaluatedAtRaw as string}`
+  const metricName = METRIC_PHRASE[supportedMetric]
 
-  // ---- complete set: compare with the exact count ---------------------------
-  if (sampling === 'complete') {
-    const k = metric === 'accuracy' ? correct : n - correct
-    // Every figure the reader can see must match the count: the value, and the
-    // printed display when there is one (so a more favorable value cannot hide
-    // behind a display that happens to round correctly, or the reverse).
-    const matches =
-      matchesValue(claimed, k, n) &&
-      (displayDigits === undefined || displayDecimals === undefined || matchesCount(displayDigits, displayDecimals + 2, k, n))
+  // ---- complete set or held-out split: compare with the exact count ---------
+  if (isFixedSet) {
+    const k = successes
     const censusReasons: ReasonCode[] = []
     const censusNotes: string[] = []
     let censusVerdict: AccuracyVerdict
     const shown = Math.min(countDecimals(n), 2)
     const exactText = pctNearest(k / n, shown)
-    if (matches) {
+    // Every figure the reader can see must match the count. A bound, a range
+    // and "1 in N" are checked as what they say (an inequality, a span, a
+    // precision band); a plain percent or a bare value must match to its digits.
+    const form = figure?.info.form
+    const printedOnly = form === 'floor' || form === 'ceiling' || form === 'range' || form === 'one-in-n'
+    const ok = figure !== undefined && printedOnly
+      ? figure.satisfiedBy(k, n)
+      : matchesValue(claimed, k, n) && (figure === undefined || figure.satisfiedBy(k, n))
+    if (ok) {
       censusVerdict = 'supported'
       censusReasons.push('census-matches-count')
-      censusNotes.push(`The figure matches the exact count (${String(k)} of ${String(n)}, ${exactText}) to its printed precision.`)
+      censusNotes.push(`The figure ${printedOnly && form !== 'one-in-n' && form !== 'range' ? 'is consistent with' : 'matches'} the exact count (${String(k)} of ${String(n)}, ${exactText}) to its printed precision.`)
     } else {
       censusVerdict = 'contradicted'
       censusReasons.push('claim-differs-from-count')
       censusNotes.push(`The figure does not match the exact count (${String(k)} of ${String(n)}, ${exactText}). It may be stale or mistyped.`)
     }
-    if (displayDecimals !== undefined && displayDecimals > countDecimals(n)) {
+    if (displayDecimals !== null && displayDecimals > countDecimals(n)) {
       if (censusVerdict === 'supported') {
         censusReasons.length = 0
         censusNotes.length = 0
@@ -531,7 +583,8 @@ export function assessAccuracyClaim(
       censusNotes.push(`The figure is printed to ${String(displayDecimals)} decimal place(s); ${String(n)} items resolve at most ${String(countDecimals(n))}.`)
     }
     const name = benchmarkName as string
-    const counted = metric === 'accuracy' ? `${String(k)} of ${String(n)} correct` : `${String(k)} of ${String(n)} wrong`
+    const counted = higherIsBetter ? `${String(k)} of ${String(n)} correct` : `${String(k)} of ${String(n)} wrong`
+    const setWord = sampling === 'held-out-split' ? 'held-out split' : 'complete set'
     return {
       verdict: censusVerdict,
       reasons: censusReasons,
@@ -541,17 +594,17 @@ export function assessAccuracyClaim(
       assessedValue: assessed,
       n,
       basis: 'census',
+      parsedDisplay,
       interval: null,
       conservativeBound: null,
-      suggestedStatement: `${counted} on ${name} (complete set, ${labelWord}${datePart}): ${exactText} ${metric === 'accuracy' ? 'accuracy' : 'error rate'}. This describes that set only; it is not an estimate for other data`,
+      suggestedStatement: `${counted} on ${name} (${setWord}, ${labelWord}${datePart}): ${exactText} ${metricName === 'accurate' ? 'accuracy' : metricName}. This describes that set only; it is not an estimate for other data`,
     }
   }
 
   // ---- the interval and the verdict ------------------------------------
-  const successes = metric === 'accuracy' ? correct : n - correct
   const w = wilsonWithZ(successes, n, z)
   const interval = { ...w, confidence, z, successes, n }
-  const conservativeBound = metric === 'accuracy' ? w.low : w.high
+  const conservativeBound = higherIsBetter ? w.low : w.high
   const cl = confidenceLabel(confidence)
   const tol = COMPARISON_TOLERANCE
 
@@ -562,18 +615,38 @@ export function assessAccuracyClaim(
   const subject = fromDisplay
     ? `The printed figure ${claimedText} (more favorable than the claim value ${pctNearest(claimed, 3)})`
     : `The claimed ${claimedText}`
+  const qualifier = higherIsBetter ? '' : ` ${metricName}`
+
+  // An honest report of the observed rate: a point figure (not a bound, not 0 or
+  // 100%) equal to successes / n to its printed precision. Never for a bound,
+  // and not at all with options.conservative.
+  const absolute = assessed === 0 || assessed === 1
+  let matchesObserved = false
+  if (!conservative && !absolute && (figure === undefined || displayIsPoint)) {
+    matchesObserved =
+      figure !== undefined && !(higherIsBetter ? claimed > figure.info.figure : claimed < figure.info.figure)
+        ? figure.matchesObserved(successes, n)
+        : matchesValue(claimed, successes, n)
+  }
 
   const top = pctCeil(w.high, 3)
   const bottom = pctFloor(w.low, 3)
-  if (metric === 'accuracy') {
+  const observedText = `${String(successes)} of ${String(n)}`
+  if (higherIsBetter) {
     if (assessed > w.high + tol) {
       verdict = 'contradicted'
       reasons.push('claim-outside-interval')
       explanation.push(`${subject} is above the top of the ${cl} Wilson interval (${top}).`)
     } else if (assessed > w.low + tol) {
-      verdict = 'overstated'
-      reasons.push('claim-beyond-conservative-bound')
-      explanation.push(`${subject} is inside the ${cl} Wilson interval but above its lower end (${bottom}), which is the most the evidence supports.`)
+      if (matchesObserved) {
+        verdict = 'supported'
+        reasons.push('matches-observed-rate')
+        explanation.push(`${subject} matches the observed rate (${observedText}) to its printed precision. The ${cl} Wilson interval is ${bottom} to ${top}.`)
+      } else {
+        verdict = 'overstated'
+        reasons.push('claim-beyond-conservative-bound')
+        explanation.push(`${subject} is inside the ${cl} Wilson interval but above its lower end (${bottom}), which is the most the evidence supports.`)
+      }
     } else {
       verdict = 'supported'
       reasons.push('claim-within-bound')
@@ -582,18 +655,24 @@ export function assessAccuracyClaim(
   } else if (assessed < w.low - tol) {
     verdict = 'contradicted'
     reasons.push('claim-outside-interval')
-    explanation.push(`${subject} error rate is below the bottom of the ${cl} Wilson interval (${bottom}).`)
+    explanation.push(`${subject}${qualifier} is below the bottom of the ${cl} Wilson interval (${bottom}).`)
   } else if (assessed < w.high - tol) {
-    verdict = 'overstated'
-    reasons.push('claim-beyond-conservative-bound')
-    explanation.push(`${subject} error rate is inside the ${cl} Wilson interval but below its upper end (${top}), which is the least the evidence supports.`)
+    if (matchesObserved) {
+      verdict = 'supported'
+      reasons.push('matches-observed-rate')
+      explanation.push(`${subject}${qualifier} matches the observed rate (${observedText}) to its printed precision. The ${cl} Wilson interval is ${bottom} to ${top}.`)
+    } else {
+      verdict = 'overstated'
+      reasons.push('claim-beyond-conservative-bound')
+      explanation.push(`${subject}${qualifier} is inside the ${cl} Wilson interval but below its upper end (${top}), which is the least the evidence supports.`)
+    }
   } else {
     verdict = 'supported'
     reasons.push('claim-within-bound')
-    explanation.push(`${subject} error rate is no lower than the upper end of the ${cl} Wilson interval (${top}).`)
+    explanation.push(`${subject}${qualifier} is no lower than the upper end of the ${cl} Wilson interval (${top}).`)
   }
 
-  if (displayDecimals !== undefined) {
+  if (displayDecimals !== null) {
     const allowed = maxDisplayDecimals(w.high - w.low)
     if (displayDecimals > allowed) {
       const text = `The figure is printed to ${String(displayDecimals)} decimal place(s), but the interval is ${pctNearest(w.high - w.low, 2).replace('%', '')} percentage points wide and supports at most ${String(allowed)} decimal place(s).`
@@ -613,7 +692,7 @@ export function assessAccuracyClaim(
   // the verdict is unchanged.
   if (verdict !== 'contradicted') {
     const wide = wilsonWithZ(successes, n, zForConfidence(0.999))
-    const worse = metric === 'accuracy' ? assessed < wide.low - tol : assessed > wide.high + tol
+    const worse = higherIsBetter ? assessed < wide.low - tol : assessed > wide.high + tol
     if (worse) {
       reasons.push('claim-worse-than-counts')
       explanation.push(
@@ -625,15 +704,14 @@ export function assessAccuracyClaim(
   // ---- statement ---------------------------------------------------------
   // One precision for the headline bound and the interval it quotes.
   const decimals = Math.min(maxDisplayDecimals(w.high - w.low) + 2, 5)
-  const headline =
-    metric === 'accuracy'
-      ? `At least ${pctFloor(w.low, decimals)} accurate`
-      : `At most ${pctCeil(w.high, decimals)} error rate`
+  const headline = higherIsBetter
+    ? `At least ${pctFloor(w.low, decimals)} ${metricName}`
+    : `At most ${pctCeil(w.high, decimals)} ${metricName}`
   const parts = [
     `${cl} Wilson interval ${pctFloor(w.low, decimals)} to ${pctCeil(w.high, decimals)}`,
     `n = ${String(n)}`,
     labelWord,
-    sampling === 'stratified' ? 'stratified sample' : 'random sample',
+    SAMPLE_WORD[sampling] ?? 'random sample',
   ]
   if (evaluatedAtRaw !== undefined) parts.push(`evaluated ${evaluatedAtRaw as string}`)
   if (agreement !== undefined && agreement.value !== null) {
@@ -648,6 +726,7 @@ export function assessAccuracyClaim(
     assessedValue: assessed,
     n,
     basis: 'wilson-interval',
+    parsedDisplay,
     interval,
     conservativeBound,
     suggestedStatement: `${headline} (${parts.join(', ')})`,

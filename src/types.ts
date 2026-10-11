@@ -1,20 +1,49 @@
 import type { AgreementResult, AgreementStatistic } from './agreement.js'
 import type { WilsonInterval } from './wilson.js'
 
-export type ClaimMetric = 'accuracy' | 'error-rate'
 /**
- * Where the labels came from. `automated` means a deterministic procedure with
+ * Proportions the kit can judge, with what `sample.n` counts for each:
+ * accuracy (items checked), error-rate (items checked), precision (predicted
+ * positives; `correct` are the true positives), recall (actual positives;
+ * `correct` are the ones found), false-positive-rate (actual negatives;
+ * `errors` are the false positives), false-negative-rate (actual positives;
+ * `errors` are the misses).
+ */
+export type ClaimMetric =
+  | 'accuracy'
+  | 'error-rate'
+  | 'precision'
+  | 'recall'
+  | 'false-positive-rate'
+  | 'false-negative-rate'
+/** Metrics the kit knows but refuses (`metric-not-supported`) instead of throwing. */
+export type UnsupportedMetric =
+  | 'f1' | 'auc' | 'roc-auc' | 'wer' | 'cer' | 'bleu' | 'rouge' | 'map' | 'composite' | 'other'
+/**
+ * Where the labels came from. `by-construction` means the ground truth was fixed by how
+ * the data was made (text from a known generator, labels taken from a corpus's language);
+ * it is accepted like `human` and is a declaration the kit cannot verify. `automated` means a deterministic procedure with
  * known correct answers (a test suite, an exact search), never a model's judgment.
  */
-export type LabelSource = 'human' | 'automated' | 'model' | 'mixed' | 'unknown'
+export type LabelSource = 'human' | 'automated' | 'by-construction' | 'model' | 'mixed' | 'unknown'
 /**
  * How the items were chosen. `complete` means the sample is the whole of a
  * fixed, named set (a benchmark): the count is exact and no interval is used.
+ * `held-out-split` is the same for a fixed named test split. `cross-validation`
+ * is judged like `random`; folds are not independent, so the interval is optimistic.
  */
-export type SamplingMethod = 'random' | 'stratified' | 'ranked' | 'convenience' | 'unknown' | 'complete'
+export type SamplingMethod =
+  | 'random'
+  | 'stratified'
+  | 'ranked'
+  | 'convenience'
+  | 'unknown'
+  | 'complete'
+  | 'held-out-split'
+  | 'cross-validation'
 
 export interface Claim {
-  metric: ClaimMetric
+  metric: ClaimMetric | UnsupportedMetric
   /** The claimed rate as a proportion from 0 to 1 (0.998 means 99.8%). */
   value: number
   /**
@@ -77,7 +106,8 @@ export interface PopulationScope {
 
 export interface AccuracyClaimInput {
   claim: Claim
-  sample: SampleCounts
+  /** Omit it (or leave out n and the counts) when the source does not say; the result is refused with `n-undisclosed`. */
+  sample?: SampleCounts | undefined
   provenance: LabelProvenance
   sampling: SamplingMethod
   strata?: readonly Stratum[] | undefined
@@ -101,6 +131,8 @@ export interface AssessOptions {
   maxAgeDays?: number | undefined
   /** Reference date "YYYY-MM-DD" for `maxAgeDays`. The kit never reads a clock. */
   now?: string | undefined
+  /** Restore the strict rule: supported only at or below the interval's conservative end. Default false. */
+  conservative?: boolean | undefined
   /** Refuse a claim that does not declare `population`. Default false. */
   requireScope?: boolean | undefined
 }
@@ -121,6 +153,8 @@ export type ReasonCode =
   | 'agreement-missing'
   | 'agreement-undefined'
   | 'agreement-below-minimum'
+  | 'metric-not-supported'
+  | 'n-undisclosed'
   | 'stratified-without-strata'
   | 'benchmark-unnamed'
   | 'claim-not-scoped-to-benchmark'
@@ -137,6 +171,7 @@ export type ReasonCode =
   // supported
   | 'claim-within-bound'
   | 'census-matches-count'
+  | 'matches-observed-rate'
   // informational, never changes the verdict
   | 'claim-worse-than-counts'
 
@@ -146,7 +181,7 @@ export interface AccuracyAssessment {
   reasons: ReasonCode[]
   /** One plain sentence per reason, in the same order. */
   explanation: string[]
-  metric: ClaimMetric
+  metric: ClaimMetric | UnsupportedMetric
   /** The claim's `value` as supplied. */
   claimed: number
   /**
@@ -155,7 +190,10 @@ export interface AccuracyAssessment {
    * `claimed` when there is no display or the value is already the more favorable.
    */
   assessedValue: number
-  n: number
+  /** Items in the sample; null when the counts were not disclosed. */
+  n: number | null
+  /** How the printed `display` was read, or null when there was none. */
+  parsedDisplay: { form: 'percent' | 'approx' | 'floor' | 'ceiling' | 'range' | 'one-in-n'; figure: number; decimals: number | null } | null
   /** `wilson-interval`: judged against an interval. `census`: compared with the exact count of a complete set. `none`: refused. */
   basis: 'wilson-interval' | 'census' | 'none'
   /** Wilson interval for the claimed metric (accuracy, or error rate). Null when refused or for a census. */
