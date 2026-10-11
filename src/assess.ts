@@ -250,6 +250,7 @@ export function assessAccuracyClaim(
   const nowRaw: unknown = options === undefined ? undefined : options.now
   const requireScopeRaw: unknown = options === undefined ? undefined : options.requireScope
   const conservativeRaw: unknown = options === undefined ? undefined : options.conservative
+  const strictPrecisionRaw: unknown = options === undefined ? undefined : options.strictPrecision
   const maxAgeDays = maxAgeRaw === undefined ? undefined : readCount(maxAgeRaw, 'options.maxAgeDays', 0)
   if (maxAgeDays !== undefined && nowRaw === undefined) {
     throw new TypeError('options.now is required with options.maxAgeDays: the kit never reads a clock')
@@ -261,8 +262,13 @@ export function assessAccuracyClaim(
   if (conservativeRaw !== undefined && typeof conservativeRaw !== 'boolean') {
     throw new TypeError('options.conservative must be a boolean')
   }
+  if (strictPrecisionRaw !== undefined && typeof strictPrecisionRaw !== 'boolean') {
+    throw new TypeError('options.strictPrecision must be a boolean')
+  }
   const requireScope = requireScopeRaw === true
   const conservative = conservativeRaw === true
+  // Excess printed precision is informational unless asked for, or in conservative mode.
+  const strictPrecision = strictPrecisionRaw === true || conservative
 
   const root = requireRecord(input, 'input')
   const claimRaw: unknown = root.claim
@@ -573,14 +579,16 @@ export function assessAccuracyClaim(
       censusReasons.push('claim-differs-from-count')
       censusNotes.push(`The figure does not match the exact count (${String(k)} of ${String(n)}, ${exactText}). It may be stale or mistyped.`)
     }
+    let censusPrecisionNote = ''
     if (displayDecimals !== null && displayDecimals > countDecimals(n)) {
-      if (censusVerdict === 'supported') {
+      if (strictPrecision && censusVerdict === 'supported') {
         censusReasons.length = 0
         censusNotes.length = 0
         censusVerdict = 'overstated'
       }
       censusReasons.push('precision-too-fine')
       censusNotes.push(`The figure is printed to ${String(displayDecimals)} decimal place(s); ${String(n)} items resolve at most ${String(countDecimals(n))}.`)
+      censusPrecisionNote = `; print it to at most ${String(countDecimals(n))} decimal place(s)`
     }
     const name = benchmarkName as string
     const counted = higherIsBetter ? `${String(k)} of ${String(n)} correct` : `${String(k)} of ${String(n)} wrong`
@@ -597,7 +605,7 @@ export function assessAccuracyClaim(
       parsedDisplay,
       interval: null,
       conservativeBound: null,
-      suggestedStatement: `${counted} on ${name} (${setWord}, ${labelWord}${datePart}): ${exactText} ${metricName === 'accurate' ? 'accuracy' : metricName}. This describes that set only; it is not an estimate for other data`,
+      suggestedStatement: `${counted} on ${name} (${setWord}, ${labelWord}${datePart}): ${exactText} ${metricName === 'accurate' ? 'accuracy' : metricName}. This describes that set only; it is not an estimate for other data${censusPrecisionNote}`,
     }
   }
 
@@ -672,11 +680,12 @@ export function assessAccuracyClaim(
     explanation.push(`${subject}${qualifier} is no lower than the upper end of the ${cl} Wilson interval (${top}).`)
   }
 
+  let precisionNote = ''
   if (displayDecimals !== null) {
     const allowed = maxDisplayDecimals(w.high - w.low)
     if (displayDecimals > allowed) {
       const text = `The figure is printed to ${String(displayDecimals)} decimal place(s), but the interval is ${pctNearest(w.high - w.low, 2).replace('%', '')} percentage points wide and supports at most ${String(allowed)} decimal place(s).`
-      if (verdict === 'supported') {
+      if (strictPrecision && verdict === 'supported') {
         // The value itself is fine; only the printed precision overreaches.
         reasons.length = 0
         explanation.length = 0
@@ -684,6 +693,7 @@ export function assessAccuracyClaim(
       }
       reasons.push('precision-too-fine')
       explanation.push(text)
+      precisionNote = `; print it to at most ${String(allowed)} decimal place(s)`
     }
   }
 
@@ -729,6 +739,6 @@ export function assessAccuracyClaim(
     parsedDisplay,
     interval,
     conservativeBound,
-    suggestedStatement: `${headline} (${parts.join(', ')})`,
+    suggestedStatement: `${headline} (${parts.join(', ')})${precisionNote}`,
   }
 }

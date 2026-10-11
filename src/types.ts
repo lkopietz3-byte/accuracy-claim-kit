@@ -131,6 +131,11 @@ export interface AssessOptions {
   maxAgeDays?: number | undefined
   /** Reference date "YYYY-MM-DD" for `maxAgeDays`. The kit never reads a clock. */
   now?: string | undefined
+  /**
+   * Make excess printed precision (`precision-too-fine`) change a supported claim to
+   * overstated. By default it is only noted. Implied by `conservative`.
+   */
+  strictPrecision?: boolean | undefined
   /** Restore the strict rule: supported only at or below the interval's conservative end. Default false. */
   conservative?: boolean | undefined
   /** Refuse a claim that does not declare `population`. Default false. */
