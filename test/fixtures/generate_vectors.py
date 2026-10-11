@@ -359,6 +359,163 @@ def main():
         census.append(rec)
     out["censusGrid"] = census
 
+    # printed-form grid (floors, ceilings strict and inclusive, ranges, "1 in N")
+    # on the interval path and the census path ------------------------------
+    # Python restates the documented rules in exact rationals, from the *structure*
+    # of each display (not by parsing its text):
+    #   figure f: the number; a range is judged at its favorable end (high end
+    #     for higher-is-better metrics, low end otherwise); "1 in N" is 1/N.
+    #   a value x (double) is 'more favorable' than f when x > f (higher) / x < f (lower).
+    #   point match of f to k/n: 0 and 1 are exact (k == 0 / k == n), otherwise
+    #     |f - k/n| <= 1/2 * 10^-(decimals+2); "1 in N": k/n within
+    #     [1/(N+h), 1/(N-h)] with h = half of the unit of N's last significant digit.
+    #   bound check on the census: floor f <= k/n (strict: <), ceiling f >= k/n (strict: >).
+    #   census: ok = display_ok and value_ok where value_ok is a point match of the
+    #     value when the value is more favorable than f or the display is a plain
+    #     percent/approx figure, else True; supported if ok else contradicted.
+    #   interval path (Wilson interval [lo, hi] for k of n, k counted in the metric's
+    #     favorable direction): within-bound for a higher metric: assessed <= lo
+    #     (strict bound: assessed < lo); else supported if the point match holds
+    #     (never for a bound, never for 0 or 1); else contradicted if assessed > hi;
+    #     else overstated. Lower metric mirrors with hi / lo. assessed = the more
+    #     favorable of f and x.
+    def match_point(digits, decimals, k, n):
+        return match_display(digits, decimals, k, n)
+
+    def match_one_in_n(N, k, n):
+        digits = str(N)
+        zeros = len(digits) - len(digits.rstrip("0"))
+        h = Fraction(10 ** zeros, 2)
+        return Fraction(1, 1) / (N + h) <= Fraction(k, n) <= Fraction(1, 1) / (N - h)
+
+    words = {
+        "floor_inc": ["{p}%+", "at least {p}%", "≥{p}%", ">={p}%"],
+        "floor_strict": ["over {p}%", "above {p}%", ">{p}%", "more than {p}%"],
+        "ceil_inc": ["at most {p}%", "no more than {p}%", "≤{p}%", "up to {p}%", "<={p}%"],
+        "ceil_strict": ["<{p}%", "under {p}%", "below {p}%", "less than {p}%", "fewer than {p}%"],
+        "point": ["{p}%"],
+        "approx": ["about {p}%", "~{p}%"],
+    }
+    rng4 = random.Random(11)
+    pvals = [("0", 0), ("0.5", 1), ("1", 0), ("1.0", 1), ("2.5", 1), ("5", 0), ("50", 0), ("95", 0), ("98", 0), ("98.9", 1), ("99", 0), ("99.5", 1), ("99.9", 1), ("100", 0)]
+    ns2 = [100, 1000, 100000]
+    drows = []
+    for metric in ("accuracy", "error-rate"):
+        higher = metric == "accuracy"
+        for n in ns2:
+            for ptxt, dec in pvals:
+                f = Fraction(Decimal(ptxt)) / 100
+                kc = f * n
+                ks = {int(kc), int(kc) + 1, max(0, int(kc) - 1), 0, n}
+                ks = {k for k in ks if 0 <= k <= n}
+                forms = []
+                for key, tmpls in words.items():
+                    if key.startswith("floor") and not higher:
+                        continue
+                    if key.startswith("ceil") and higher:
+                        continue
+                    if key == "floor_strict" and ptxt == "100":
+                        continue  # impossible bound
+                    if key == "ceil_strict" and Decimal(ptxt) == 0:
+                        continue
+                    for t in tmpls:
+                        forms.append((key, t.format(p=ptxt), dec, f))
+                a, b = ("95", "98") if higher else ("1", "2")
+                for key, txt in (("range", f"{a}-{b}%"), ("range", f"{a} to {b}%")):
+                    end = Fraction(Decimal(b if higher else a)) / 100
+                    forms.append((key, txt, 0, end))
+                forms.append(("one_in_n", "1 in " + str(int(Fraction(1) / f)) if f != 0 and (Fraction(1) / f).denominator == 1 else "1 in 1000", 0, None))
+                for (key, txt, d, fig) in forms:
+                    if key == "one_in_n":
+                        N = int(txt.split()[-1])
+                        fig = Fraction(1, N)
+                    for k in sorted(ks):
+                        # value: the figure itself, or (for a point/bound) a more favorable value within half a unit
+                        xs = {float(fig)}
+                        if key in ("point", "approx", "floor_inc", "floor_strict", "ceil_inc", "ceil_strict"):
+                            half = Fraction(1, 2 * 10 ** (d + 2))
+                            xs.add(float(fig + (half * Fraction(4, 5) if higher else -half * Fraction(4, 5))))
+                            xs.add(float(fig - (half * Fraction(4, 5) if higher else -half * Fraction(4, 5))))
+                        for x in sorted(xs):
+                            if not 0 <= x <= 1:
+                                continue
+                            drows.append((metric, higher, key, txt, d, fig, x, k, n))
+    keep = rng4.sample(drows, 1800)
+    grid2 = []
+    for (metric, higher, key, txt, d, fig, x, k, n) in keep:
+        # the count that favors the metric: accuracy counts correct, error-rate counts errors
+        succ = k
+        # --- consistency: the value must agree with the display, else JS throws; skip those rows
+        half = Fraction(1, 2 * 10 ** (d + 2))
+        if key == "range":
+            lo = Fraction(Decimal(txt.replace(" to ", "-").replace("%", "").split("-")[0])) / 100
+            hi = Fraction(Decimal(txt.replace(" to ", "-").replace("%", "").split("-")[1])) / 100
+            ulp = Fraction(math.ulp(x))
+            if not (lo - ulp <= Fraction(x) <= hi + ulp):
+                continue
+        elif key == "one_in_n":
+            N = int(txt.split()[-1])
+            digs = str(N); h = Fraction(10 ** (len(digs) - len(digs.rstrip("0"))), 2)
+            ulp = Fraction(math.ulp(x))
+            if not (Fraction(1, 1) / (N + h) - ulp <= Fraction(x) <= Fraction(1, 1) / (N - h) + ulp):
+                continue
+        else:
+            if abs(Fraction(x) - fig) > half + Fraction(math.ulp(x)):
+                continue
+        # --- point match of the display
+        if key == "one_in_n":
+            dmatch = match_one_in_n(int(txt.split()[-1]), succ, n)
+        elif key in ("point", "approx", "range"):
+            digits = int(fig * 100 * 10 ** d)
+            dmatch = match_display(digits, d, succ, n)
+        else:  # bounds
+            dmatch = None
+        bound = key in ("floor_inc", "floor_strict", "ceil_inc", "ceil_strict")
+        strict = key.endswith("strict")
+        more_fav = (x > float(fig)) if higher else (x < float(fig))  # doubles, as a reader's two numbers compare
+        # --- census path
+        if bound:
+            kf = Fraction(succ, n)
+            if key.startswith("floor"):
+                disp_ok = fig < kf if strict else fig <= kf
+            else:
+                disp_ok = fig > kf if strict else fig >= kf
+        else:
+            disp_ok = dmatch
+        value_ok = match_value(x, succ, n) if (more_fav or key in ("point", "approx")) else True
+        census_exp = "supported" if (disp_ok and value_ok) else "contradicted"
+        # --- interval path
+        lo_f, hi_f, _ = wilson(succ, n, 0.95)
+        assessed = x if more_fav else float(fig)
+        absolute = assessed in (0.0, 1.0)
+        if bound:
+            matches_obs = False
+        elif absolute:
+            matches_obs = False
+        elif more_fav:
+            matches_obs = match_value(x, succ, n)
+        else:
+            matches_obs = dmatch
+        tol = 1e-12
+        if higher:
+            within = (assessed < lo_f - tol) if strict else (assessed <= lo_f + tol)
+            beyond_hi = assessed > hi_f + tol
+        else:
+            within = (assessed > hi_f + tol) if strict else (assessed >= hi_f - tol)
+            beyond_hi = assessed < lo_f - tol
+        if within:
+            iv_exp = "supported"
+        elif matches_obs:
+            iv_exp = "supported"
+        elif beyond_hi:
+            iv_exp = "contradicted"
+        else:
+            iv_exp = "overstated"
+        near = min(abs(assessed - lo_f), abs(assessed - hi_f))
+        grid2.append({"metric": metric, "display": txt, "value": x, "k": k, "n": n,
+                      "census": census_exp, "interval": iv_exp, "nearLimit": near < 1e-9})
+    out["displayGrid"] = grid2
+
     json.dump(out, sys.stdout, indent=1, allow_nan=False)
     sys.stdout.write("\n")
 

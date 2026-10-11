@@ -1855,3 +1855,121 @@ describe('more label sources and samplings', () => {
     expect(() => assessU(claimOf('accuracy', 0.9), { n: 1000, correct: 990 }, { sampling: 'random', benchmark: { name: 'x' } })).toThrow(RangeError)
   })
 })
+
+// ---- review round on printed forms (25215b6) ---------------------------------
+
+describe('printed forms are judged on the census path too, by their form', () => {
+  const cens = (metric: string, value: number, display: string, sample: Record<string, unknown>): AccuracyAssessment =>
+    assessAccuracyClaim(
+      bench({ claim: { metric, value, display, text: 'Ridgeview validation set' }, sample }),
+    )
+
+  it('a range is judged at its favorable end, not as a span (P1)', () => {
+    expect(cens('accuracy', 0.98, '95-98%', { n: 1000, correct: 950 }).verdict).toBe('contradicted')
+    expect(cens('accuracy', 0.98, '95-98%', { n: 1000, correct: 980 }).verdict).toBe('supported')
+    expect(cens('error-rate', 0.01, '1-2%', { n: 1000, errors: 20 }).verdict).toBe('contradicted')
+    expect(cens('error-rate', 0.01, '1-2%', { n: 1000, errors: 10 }).verdict).toBe('supported')
+  })
+
+  it('a value more favorable than a bound is judged as its own figure (P1)', () => {
+    expect(cens('accuracy', 0.994, '99%+', { n: 1000, correct: 990 }).verdict).toBe('contradicted')
+    expect(cens('accuracy', 0.99, '99%+', { n: 1000, correct: 990 }).verdict).toBe('supported')
+    expect(cens('error-rate', 0.006, '<1%', { n: 1000, errors: 10 }).verdict).toBe('contradicted')
+  })
+
+  it('strict bounds exclude equality, inclusive ones keep it (P1)', () => {
+    const all = (d: string, s: Record<string, unknown>, m = 'accuracy', v = 0.99): string => cens(m, v, d, s).verdict
+    expect(all('over 99%', { n: 100, correct: 99 })).toBe('contradicted')
+    expect(all('at least 99%', { n: 100, correct: 99 })).toBe('supported')
+    expect(all('99%+', { n: 100, correct: 99 })).toBe('supported')
+    expect(all('>99%', { n: 100, correct: 99 })).toBe('contradicted')
+    expect(all('above 99%', { n: 100, correct: 100 })).toBe('supported')
+    expect(all('<1%', { n: 100, errors: 1 }, 'error-rate', 0.01)).toBe('contradicted')
+    expect(all('under 1%', { n: 100, errors: 1 }, 'error-rate', 0.01)).toBe('contradicted')
+    expect(all('no more than 1%', { n: 100, errors: 1 }, 'error-rate', 0.01)).toBe('supported')
+    expect(all('≤1%', { n: 100, errors: 1 }, 'error-rate', 0.01)).toBe('supported')
+    expect(all('<1%', { n: 100, errors: 0 }, 'error-rate', 0.01)).toBe('supported')
+  })
+
+  it('impossible bounds are malformed', () => {
+    expect(() => cens('accuracy', 1, '>100%', { n: 100, correct: 100 })).toThrow(RangeError)
+    expect(() => cens('accuracy', 1, 'over 100%', { n: 100, correct: 100 })).toThrow(RangeError)
+    expect(() => cens('error-rate', 0, '<0%', { n: 100, errors: 0 })).toThrow(RangeError)
+    expect(() => cens('error-rate', 0, 'under 0%', { n: 100, errors: 0 })).toThrow(RangeError)
+    // satisfiable at the edge, so allowed
+    expect(cens('accuracy', 1, '100%+', { n: 100, correct: 100 }).verdict).toBe('supported')
+    expect(cens('accuracy', 1, '≥100%', { n: 100, correct: 99 }).verdict).toBe('contradicted')
+    expect(cens('error-rate', 0, '≤0%', { n: 100, errors: 0 }).verdict).toBe('supported')
+  })
+})
+
+describe('strict and inclusive bounds on the interval path', () => {
+  it('a strict floor needs the conservative end to clear it; the inclusive one does not', () => {
+    const run = (display: string, correct: number): string =>
+      assessU(claimOf('accuracy', 0.99, display), { n: 1000, correct }).reasons.join('+')
+    expect(run('over 99%', 998)).toBe('claim-within-bound')
+    expect(run('at least 99%', 998)).toBe('claim-within-bound')
+    expect(run('over 99%', 990)).toBe('claim-beyond-conservative-bound')
+  })
+
+  it('impossible strict bounds throw here too', () => {
+    expect(() => assessU(claimOf('accuracy', 1, '>100%'), { n: 1000, correct: 1000 })).toThrow(RangeError)
+    expect(() => assessU(claimOf('error-rate', 0, '<0%'), { n: 1000, errors: 0 })).toThrow(RangeError)
+  })
+})
+
+describe('an honest rounded rate is not contradicted by the interval it was rounded from (P1)', () => {
+  it('98.9% printed as "99%" on 98,900 of 100,000', () => {
+    const r = assessU(claimOf('accuracy', 0.989, '99%'), { n: 100_000, correct: 98_900 })
+    expect(r.interval?.high).toBeLessThan(0.99)
+    expect(r.verdict).toBe('supported')
+    expect(r.reasons).toEqual(['matches-observed-rate'])
+  })
+
+  it('the error-rate mirror: 1.1% printed as "1%" on 1,100 of 100,000', () => {
+    const r = assessU(claimOf('error-rate', 0.011, '1%'), { n: 100_000, errors: 1100 })
+    expect(r.interval?.low).toBeGreaterThan(0.01)
+    expect(r.verdict).toBe('supported')
+    expect(r.reasons).toEqual(['matches-observed-rate'])
+  })
+
+  it('but not for a bound, an absolute claim, a real overshoot, or conservative mode', () => {
+    expect(assessU(claimOf('accuracy', 0.99, '99%+'), { n: 100_000, correct: 98_900 }).verdict).toBe('contradicted')
+    expect(assessU(claimOf('accuracy', 0.995, '99.5%'), { n: 100_000, correct: 98_900 }).verdict).toBe('contradicted')
+    expect(assessU(claimOf('accuracy', 0.989, '99%'), { n: 100_000, correct: 98_900 }, {}, { conservative: true }).verdict).toBe('contradicted')
+    expect(assessU(claimOf('accuracy', 1, '100%'), { n: 100_000, correct: 99_999 }).verdict).toBe('contradicted')
+  })
+})
+
+describe('a range must contain the value, exactly (P2)', () => {
+  it('rejects a value outside the range by more than representation error', () => {
+    expect(() => assessU(claimOf('accuracy', 0.984, '95-98%'), { n: 1000, correct: 980 })).toThrow(RangeError)
+    expect(() => assessU(claimOf('accuracy', 0.9449, '95-98%'), { n: 1000, correct: 950 })).toThrow(RangeError)
+    expect(() => assessU(claimOf('accuracy', 0.98 + 2 ** -53, '95-98%'), { n: 1000, correct: 980 })).not.toThrow()
+    expect(() => assessU(claimOf('accuracy', 0.98 + 3 * 2 ** -53, '95-98%'), { n: 1000, correct: 980 })).toThrow(RangeError)
+    expect(() => assessU(claimOf('accuracy', 0.95, '95-98%'), { n: 1000, correct: 980 })).not.toThrow()
+    expect(() => assessU(claimOf('accuracy', 0.97, '95-98%'), { n: 1000, correct: 980 })).not.toThrow()
+  })
+})
+
+describe('printed forms against an exact-rational grid (floors, ceilings, ranges, 1 in N)', () => {
+  it('agrees on the census path and the interval path for every row', () => {
+    expect(vectors.displayGrid.length).toBeGreaterThan(1000)
+    let interval = 0
+    for (const g of vectors.displayGrid) {
+      const label = `${g.metric} ${g.display} value ${JSON.stringify(g.value)} ${String(g.k)}/${String(g.n)}`
+      const claim = { metric: g.metric, value: g.value, display: g.display }
+      const sample = g.metric === 'accuracy' ? { n: g.n, correct: g.k } : { n: g.n, errors: g.k }
+      const c = assessAccuracyClaim(bench({ claim: { ...claim, text: 'Ridgeview validation set' }, sample }))
+      expect(c.verdict, `census ${label}`).toBe(g.census)
+      if (!g.nearLimit) {
+        const i = assessAccuracyClaim(
+          { ...U, claim, sample, provenance: { source: 'human' }, sampling: 'random' } as unknown as AccuracyClaimInput,
+        )
+        expect(i.verdict, `interval ${label}`).toBe(g.interval)
+        interval += 1
+      }
+    }
+    expect(interval).toBeGreaterThan(1000)
+  })
+})

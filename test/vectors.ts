@@ -45,6 +45,16 @@ export interface CensusVector {
   expected: 'supported' | 'overstated' | 'contradicted'
   expectedStrict: 'supported' | 'overstated' | 'contradicted'
 }
+export interface DisplayVector {
+  metric: 'accuracy' | 'error-rate'
+  display: string
+  value: number
+  k: number
+  n: number
+  census: 'supported' | 'contradicted'
+  interval: 'supported' | 'overstated' | 'contradicted'
+  nearLimit: boolean
+}
 export interface Vectors {
   normalQuantile: [number, number][]
   zForConfidence: [number, number][]
@@ -54,6 +64,7 @@ export interface Vectors {
   agreement: AgreementVector[]
   verdictGrid: GridVector[]
   censusGrid: CensusVector[]
+  displayGrid: DisplayVector[]
 }
 
 export const vectors = raw as unknown as Vectors
