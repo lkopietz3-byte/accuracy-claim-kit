@@ -166,10 +166,10 @@ const rows: Row[] = [
     reasons: ['claim-within-bound'],
   },
   {
-    name: 'a claim far below the evidence is supported (understated)',
+    name: 'a claim far below the evidence is supported (understated), with a note',
     input: input({ claim: accuracy(0.5) }),
     verdict: 'supported',
-    reasons: ['claim-within-bound'],
+    reasons: ['claim-within-bound', 'claim-worse-than-counts'],
   },
   {
     name: 'error rate 10/1000 claimed as 2%',
@@ -222,11 +222,11 @@ const rows: Row[] = [
     name: 'n = 30 exactly meets the minimum',
     input: input({ claim: accuracy(0.5), sample: { n: 30, correct: 30 } }),
     verdict: 'supported',
-    reasons: ['claim-within-bound'],
+    reasons: ['claim-within-bound', 'claim-worse-than-counts'],
   },
   {
-    name: 'stratified sampling is accepted',
-    input: input({ sampling: 'stratified' }),
+    name: 'stratified sampling is accepted when the strata come with it',
+    input: input({ sampling: 'stratified', strata: [{ name: 'a', n: 600, correct: 594 }, { name: 'b', n: 400, correct: 396 }] }),
     verdict: 'supported',
     reasons: ['claim-within-bound'],
   },
@@ -327,7 +327,7 @@ describe('suggested statements', () => {
     const r = assessAccuracyClaim(input({ claim: accuracy(0.998, '99.8%'), sample: { n: 500, correct: 499 } }))
     // The lower limit is 98.8759...%, so it prints as 98.8, not 98.9.
     expect(r.suggestedStatement).toBe(
-      'At least 98.8% accurate (95% Wilson interval 98.87% to 99.97%, n = 500, human labels, random sample)',
+      'At least 98.87% accurate (95% Wilson interval 98.87% to 99.97%, n = 500, human labels, random sample)',
     )
   })
 
@@ -337,11 +337,12 @@ describe('suggested statements', () => {
         claim: errorRate(0.02),
         sample: { n: 1000, errors: 10 },
         sampling: 'stratified',
+        strata: [{ name: 'a', n: 500, errors: 5 }, { name: 'b', n: 500, errors: 5 }],
         provenance: { source: 'human', agreement: { statistic: 'gwet-ac1', value: 0.912 } },
       }),
     )
     expect(r.suggestedStatement).toBe(
-      'At most 1.9% error rate (95% Wilson interval 0.54% to 1.84%, n = 1000, human labels, stratified sample, Gwet AC1 0.91)',
+      'At most 1.84% error rate (95% Wilson interval 0.54% to 1.84%, n = 1000, human labels, stratified sample, Gwet AC1 0.91)',
     )
   })
 
@@ -1185,5 +1186,283 @@ describe('a refusal reports the figure that would have been judged', () => {
     })
     expect(r.verdict).toBe('refused')
     expect(r.assessedValue).toBe(0)
+  })
+})
+
+// ---- learning-driven round: rows paraphrased from real-claim field trials ----
+
+const human = { source: 'human' } as const
+
+const bench = (over: Record<string, unknown> = {}): AccuracyClaimInput =>
+  ({
+    claim: { metric: 'accuracy', value: 0.799, display: '79.9%', text: 'Reaches 79.9% top-1 accuracy on the Ridgeview validation set' },
+    sample: { n: 50_000, correct: 39_950 },
+    provenance: human,
+    sampling: 'complete',
+    benchmark: { name: 'Ridgeview validation set' },
+    ...over,
+  })
+
+describe('stratified sampling needs its strata', () => {
+  it('refuses a stratified sample that arrives without strata', () => {
+    const r = assessAccuracyClaim({
+      claim: { metric: 'error-rate', value: 0.07, display: '7%' },
+      sample: { n: 1000, errors: 50 },
+      provenance: human,
+      sampling: 'stratified',
+    })
+    expect(r.verdict).toBe('refused')
+    expect(r.reasons).toEqual(['stratified-without-strata'])
+  })
+
+  it('accepts the same stratified sample once the strata are given and agree', () => {
+    const r = assessAccuracyClaim({
+      claim: { metric: 'error-rate', value: 0.07 },
+      sample: { n: 1000, errors: 50 },
+      provenance: human,
+      sampling: 'stratified',
+      strata: [{ name: 'a', n: 500, errors: 26 }, { name: 'b', n: 500, errors: 24 }],
+    })
+    expect(r.verdict).toBe('supported')
+  })
+})
+
+describe('a figure far worse than the counts is flagged without changing the verdict', () => {
+  it('error rate 44% on 56 errors in 189 (the stale-figure pattern)', () => {
+    const r = assessAccuracyClaim({
+      claim: { metric: 'error-rate', value: 0.44, display: '44%' },
+      sample: { n: 189, errors: 56 },
+      provenance: human,
+      sampling: 'random',
+    })
+    expect(r.verdict).toBe('supported')
+    expect(r.reasons).toEqual(['claim-within-bound', 'claim-worse-than-counts'])
+    expect(r.explanation[1]).toContain('stale or wrong')
+  })
+
+  it('accuracy mirror: 40% accurate on 140 of 189 correct', () => {
+    const r = assessAccuracyClaim({
+      claim: { metric: 'accuracy', value: 0.4 },
+      sample: { n: 189, correct: 133 },
+      provenance: human,
+      sampling: 'random',
+    })
+    expect(r.verdict).toBe('supported')
+    expect(r.reasons).toContain('claim-worse-than-counts')
+  })
+
+  it('an honest figure and a mildly cautious one carry no note', () => {
+    for (const value of [0.30, 0.33, 0.36]) {
+      const r = assessAccuracyClaim({
+        claim: { metric: 'error-rate', value },
+        sample: { n: 189, errors: 56 },
+        provenance: human,
+        sampling: 'random',
+      })
+      expect(r.reasons, String(value)).not.toContain('claim-worse-than-counts')
+    }
+  })
+})
+
+describe('headline bound and quoted interval use one precision', () => {
+  it('prints the same figure for the bound and the limit it comes from', () => {
+    const cases: [number, number][] = [[190, 0], [1000, 4], [464, 1], [189, 56], [500, 1], [2294, 2012]]
+    for (const [n, errors] of cases) {
+      const r = assessAccuracyClaim({
+        claim: { metric: 'error-rate', value: 0.5 },
+        sample: { n, errors },
+        provenance: human,
+        sampling: 'random',
+      })
+      const m = /^At most (\S+) error rate \(95% Wilson interval (\S+) to (\S+),/.exec(r.suggestedStatement)
+      expect(m, r.suggestedStatement).not.toBeNull()
+      expect((m as RegExpExecArray)[1]).toBe((m as RegExpExecArray)[3])
+    }
+  })
+})
+
+describe('benchmark-scoped (complete-set) claims', () => {
+  it('a count on the whole named set, worded for that set, is supported without an interval', () => {
+    const r = assessAccuracyClaim(bench())
+    expect(r.verdict).toBe('supported')
+    expect(r.reasons).toEqual(['census-matches-count'])
+    expect(r.basis).toBe('census')
+    expect(r.interval).toBeNull()
+    expect(r.conservativeBound).toBeNull()
+    expect(r.suggestedStatement).toBe(
+      '39950 of 50000 correct on Ridgeview validation set (complete set, human labels): 79.90% accuracy. This describes that set only; it is not an estimate for other data',
+    )
+  })
+
+  it('a small fixed set is fine: no minimum n for a census', () => {
+    const r = assessAccuracyClaim(bench({ sample: { n: 10, correct: 9 }, claim: { metric: 'accuracy', value: 0.9, display: '90%', text: 'Ridgeview validation set: 90%' } }))
+    expect(r.verdict).toBe('supported')
+  })
+
+  it('the same score worded as a general claim is refused', () => {
+    for (const text of ['Our model is 79.9% accurate', '', '   ']) {
+      const r = assessAccuracyClaim(bench({ claim: { metric: 'accuracy', value: 0.799, display: '79.9%', text } }))
+      expect(r.verdict, text).toBe('refused')
+      expect(r.reasons).toEqual(['claim-not-scoped-to-benchmark'])
+    }
+    const noText = assessAccuracyClaim(bench({ claim: { metric: 'accuracy', value: 0.799, display: '79.9%' } }))
+    expect(noText.reasons).toEqual(['claim-not-scoped-to-benchmark'])
+  })
+
+  it('finds the benchmark name regardless of case, spacing and width forms', () => {
+    const r = assessAccuracyClaim(bench({ claim: { metric: 'accuracy', value: 0.799, display: '79.9%', text: '79.9% on the  RIDGEVIEW\u3000VALIDATION   set' } }))
+    expect(r.verdict).toBe('supported')
+    const wide = assessAccuracyClaim(bench({ claim: { metric: 'accuracy', value: 0.799, display: '79.9%', text: '79.9% on \uff32idgeview validation set' } }))
+    expect(wide.verdict).toBe('supported')
+  })
+
+  it('a stale or wrong number is contradicted by the exact count, in either direction', () => {
+    for (const [value, display] of [[0.85, '85%'], [0.75, '75%'], [0.81, '81%']] as const) {
+      const r = assessAccuracyClaim(bench({ claim: { metric: 'accuracy', value, display, text: `${display} on Ridgeview validation set` } }))
+      expect(r.verdict, display).toBe('contradicted')
+      expect(r.reasons).toEqual(['claim-differs-from-count'])
+    }
+  })
+
+  it('rounds the way the count rounds: 12.29% for 282 of 2294', () => {
+    const input = bench({
+      claim: { metric: 'error-rate', value: 0.1229, display: '12.29%', text: 'Resolves 87.71% on Ridgeview validation set; fails 12.29% of Ridgeview validation set' },
+      sample: { n: 2294, errors: 282 },
+      benchmark: { name: 'Ridgeview validation set' },
+    })
+    expect(assessAccuracyClaim(input).verdict).toBe('supported')
+    const off = bench({
+      claim: { metric: 'error-rate', value: 0.1231, display: '12.31%', text: 'x on Ridgeview validation set' },
+      sample: { n: 2294, errors: 282 },
+    })
+    expect(assessAccuracyClaim(off).verdict).toBe('contradicted')
+  })
+
+  it('digits beyond what the count resolves are over-precise', () => {
+    const r = assessAccuracyClaim(bench({ claim: { metric: 'accuracy', value: 0.799, display: '79.9000%', text: 'Ridgeview validation set 79.9000%' } }))
+    expect(r.verdict).toBe('overstated')
+    expect(r.reasons).toEqual(['precision-too-fine'])
+  })
+
+  it('without a display, the value is read at the precision it was written', () => {
+    const r = assessAccuracyClaim(bench({ claim: { metric: 'accuracy', value: 0.799, text: 'Ridgeview validation set' } }))
+    expect(r.verdict).toBe('supported')
+    const r2 = assessAccuracyClaim(bench({ claim: { metric: 'accuracy', value: 0.81, text: 'Ridgeview validation set' } }))
+    expect(r2.verdict).toBe('contradicted')
+    // 79.9% rounds to 80% at whole-percent precision, so that is a faithful figure too
+    expect(assessAccuracyClaim(bench({ claim: { metric: 'accuracy', value: 0.8, display: '80%', text: 'Ridgeview validation set' } })).verdict).toBe('supported')
+  })
+
+  it('error rate 0.2% for 1 error in 464 matches; 0.0% does not', () => {
+    const base = { sample: { n: 464, errors: 1 } }
+    expect(assessAccuracyClaim(bench({ ...base, claim: { metric: 'error-rate', value: 0.002, display: '0.2%', text: 'Ridgeview validation set' } })).verdict).toBe('supported')
+    expect(assessAccuracyClaim(bench({ ...base, claim: { metric: 'error-rate', value: 0, display: '0.0%', text: 'Ridgeview validation set' } })).verdict).toBe('contradicted')
+  })
+
+  it('still needs a named benchmark, honest labels and agreement', () => {
+    expect(assessAccuracyClaim(bench({ benchmark: undefined })).reasons).toEqual(['benchmark-unnamed'])
+    expect(assessAccuracyClaim(bench({ provenance: { source: 'model' } })).reasons).toEqual(['no-human-labels'])
+    expect(assessAccuracyClaim(bench({ retractions: { count: 2, includedInSample: false } })).reasons).toEqual(['retractions-not-included'])
+  })
+
+  it('rejects benchmark metadata that does not fit', () => {
+    expect(() => assessAccuracyClaim(bench({ sampling: 'random' }))).toThrow(RangeError)
+    expect(() => assessAccuracyClaim(bench({ benchmark: { name: '' } }))).toThrow(RangeError)
+    expect(() => assessAccuracyClaim(bench({ benchmark: { name: 5 } }))).toThrow(TypeError)
+    expect(() => assessAccuracyClaim(bench({ benchmark: { name: 'x'.repeat(201) } }))).toThrow(RangeError)
+    expect(() => assessAccuracyClaim(bench({ claim: { metric: 'accuracy', value: 0.799, text: 'x'.repeat(2001) } }))).toThrow(RangeError)
+    expect(() => assessAccuracyClaim(bench({ claim: { metric: 'accuracy', value: 0.799, text: 5 } }))).toThrow(TypeError)
+  })
+})
+
+describe('automated labels', () => {
+  it('a deterministic ground truth is accepted and named in the statement', () => {
+    const r = assessAccuracyClaim({
+      claim: { metric: 'accuracy', value: 0.9 },
+      sample: { n: 1000, correct: 990 },
+      provenance: { source: 'automated' },
+      sampling: 'random',
+    })
+    expect(r.verdict).toBe('supported')
+    expect(r.suggestedStatement).toContain('automated labels')
+  })
+})
+
+describe('how old the evaluation is', () => {
+  const dated = (evaluatedAt?: string): AccuracyClaimInput => ({
+    claim: { metric: 'accuracy', value: 0.98 },
+    sample: { n: 1000, correct: 990 },
+    provenance: human,
+    sampling: 'random',
+    ...(evaluatedAt === undefined ? {} : { evaluatedAt }),
+  })
+  const opts = { maxAgeDays: 365, now: '2026-10-10' }
+
+  it('exactly the limit passes, one day over is refused', () => {
+    expect(assessAccuracyClaim(dated('2025-10-10'), opts).verdict).toBe('supported')
+    const r = assessAccuracyClaim(dated('2025-10-09'), opts)
+    expect(r.verdict).toBe('refused')
+    expect(r.reasons).toEqual(['evaluation-stale'])
+    expect(r.explanation[0]).toContain('366 days')
+  })
+
+  it('names the evaluation date in the statement', () => {
+    expect(assessAccuracyClaim(dated('2026-09-01'), opts).suggestedStatement).toContain('evaluated 2026-09-01')
+  })
+
+  it('a missing date cannot satisfy a maximum age', () => {
+    expect(assessAccuracyClaim(dated(), opts).reasons).toEqual(['evaluation-date-missing'])
+  })
+
+  it('needs a caller-supplied reference date, and real dates', () => {
+    expect(() => assessAccuracyClaim(dated('2026-01-01'), { maxAgeDays: 30 })).toThrow(TypeError)
+    for (const bad of ['2026-02-30', '2026-1-1', '2026/01/01', '2026-01-01T00:00:00Z', '', 20260101]) {
+      expect(() => assessAccuracyClaim(dated(bad as string), opts), String(bad)).toThrow()
+    }
+    expect(() => assessAccuracyClaim(dated('2026-10-11'), opts)).toThrow(RangeError) // after the reference date
+    expect(() => assessAccuracyClaim(dated('2026-01-01'), { maxAgeDays: 30, now: '2026-13-01' })).toThrow(RangeError)
+    expect(() => assessAccuracyClaim(dated('2026-01-01'), { maxAgeDays: -1, now: '2026-10-10' })).toThrow(RangeError)
+    expect(assessAccuracyClaim(dated('2024-02-29'), { maxAgeDays: 1000, now: '2026-10-10' }).verdict).toBe('supported')
+  })
+
+  it('does nothing when no maximum is given', () => {
+    expect(assessAccuracyClaim(dated('2001-01-01')).verdict).toBe('supported')
+  })
+})
+
+describe('claimed population versus evaluated population', () => {
+  const scoped = (claimed: string, evaluated: string): AccuracyClaimInput => ({
+    claim: { metric: 'accuracy', value: 0.98 },
+    sample: { n: 1000, correct: 990 },
+    provenance: human,
+    sampling: 'random',
+    population: { claimed, evaluated },
+  })
+
+  it('same population passes, including case, spacing and width variants', () => {
+    expect(assessAccuracyClaim(scoped('English support emails', 'English support emails')).verdict).toBe('supported')
+    expect(assessAccuracyClaim(scoped('English  Support Emails', 'english support\temails')).verdict).toBe('supported')
+    expect(assessAccuracyClaim(scoped('\uff25nglish emails', 'English emails')).verdict).toBe('supported')
+  })
+
+  it('a different population is refused', () => {
+    const r = assessAccuracyClaim(scoped('all text', 'academic essays'))
+    expect(r.verdict).toBe('refused')
+    expect(r.reasons).toEqual(['scope-mismatch'])
+  })
+
+  it('requireScope refuses a claim with no declared populations', () => {
+    const base = scoped('a', 'a')
+    const { population: _unused, ...rest } = base
+    void _unused
+    expect(assessAccuracyClaim(rest, { requireScope: true }).reasons).toEqual(['scope-undeclared'])
+    expect(assessAccuracyClaim(rest).verdict).toBe('supported')
+  })
+
+  it('rejects malformed population declarations', () => {
+    expect(() => assessAccuracyClaim({ ...scoped('a', 'a'), population: { claimed: 'a' } as never })).toThrow(TypeError)
+    expect(() => assessAccuracyClaim(scoped('', 'a'))).toThrow(RangeError)
+    expect(() => assessAccuracyClaim(scoped('a', 'x'.repeat(201)))).toThrow(RangeError)
+    expect(() => assessAccuracyClaim(scoped('a', 'a'), { requireScope: 'yes' as never })).toThrow(TypeError)
   })
 })
