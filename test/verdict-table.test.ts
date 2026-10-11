@@ -1466,3 +1466,74 @@ describe('claimed population versus evaluated population', () => {
     expect(() => assessAccuracyClaim(scoped('a', 'a'), { requireScope: 'yes' as never })).toThrow(TypeError)
   })
 })
+
+// ---- census review round (187a27d) ------------------------------------------
+
+describe('complete-set comparison: every figure printed must match the count', () => {
+  const census = (claim: Record<string, unknown>, sample: Record<string, unknown>): ReturnType<typeof assessAccuracyClaim> =>
+    assessAccuracyClaim(
+      bench({
+        claim: { text: 'Ridgeview validation set', ...claim },
+        sample,
+      }),
+    )
+
+  it('a more favorable value is not hidden behind a display that matches (P1)', () => {
+    const r = census({ metric: 'accuracy', value: 0.9849, display: '98%' }, { n: 1000, correct: 976 })
+    expect(r.verdict).toBe('contradicted')
+    expect(r.reasons).toEqual(['claim-differs-from-count'])
+  })
+
+  it('and the display is still checked when the value is the cautious one', () => {
+    expect(census({ metric: 'accuracy', value: 0.976, display: '98%' }, { n: 1000, correct: 976 }).verdict).toBe('supported')
+    expect(census({ metric: 'accuracy', value: 0.9755, display: '98%' }, { n: 1000, correct: 976 }).verdict).toBe('contradicted')
+    expect(census({ metric: 'accuracy', value: 0.98, display: '98%' }, { n: 1000, correct: 976 }).verdict).toBe('supported')
+  })
+
+  it('0 and 1, and 0% and 100%, are exact claims, never rounded', () => {
+    const cases: [Record<string, unknown>, Record<string, unknown>, string][] = [
+      [{ metric: 'accuracy', value: 1 }, { n: 100, correct: 60 }, 'contradicted'],
+      [{ metric: 'accuracy', value: 0 }, { n: 100, correct: 40 }, 'contradicted'],
+      [{ metric: 'accuracy', value: 1, display: '100%' }, { n: 100, correct: 60 }, 'contradicted'],
+      [{ metric: 'accuracy', value: 0.999, display: '100%' }, { n: 1000, correct: 999 }, 'contradicted'],
+      [{ metric: 'accuracy', value: 1, display: '100%' }, { n: 100, correct: 100 }, 'supported'],
+      [{ metric: 'accuracy', value: 1 }, { n: 100, correct: 100 }, 'supported'],
+      [{ metric: 'error-rate', value: 0, display: '0%' }, { n: 1000, errors: 0 }, 'supported'],
+      [{ metric: 'error-rate', value: 0.0004, display: '0.0%' }, { n: 1000, errors: 1 }, 'contradicted'],
+      [{ metric: 'error-rate', value: 0, display: '0.0%' }, { n: 1000, errors: 1 }, 'contradicted'],
+      [{ metric: 'error-rate', value: 0 }, { n: 1000, errors: 1 }, 'contradicted'],
+    ]
+    for (const [claim, sample, verdict] of cases) {
+      expect(census(claim, sample).verdict, JSON.stringify([claim, sample])).toBe(verdict)
+    }
+  })
+
+  it('reads exponent forms from the shortest text, not from binary noise (P1)', () => {
+    expect(census({ metric: 'error-rate', value: 5e-7 }, { n: 10_000_000, errors: 5 }).verdict).toBe('supported')
+    expect(census({ metric: 'error-rate', value: 1.5e-7 }, { n: 20_000_000, errors: 3 }).verdict).toBe('supported')
+    expect(census({ metric: 'error-rate', value: 6e-7 }, { n: 10_000_000, errors: 5 }).verdict).toBe('contradicted')
+  })
+
+  it('a value computed as correct / n matches its own count', () => {
+    for (const [k, n] of [[282, 2294], [1, 3], [39_950, 50_000], [7, 11], [1, 464]] as const) {
+      const r = census({ metric: 'accuracy', value: k / n }, { n, correct: k })
+      expect(r.verdict, `${String(k)}/${String(n)}`).toBe('supported')
+    }
+    expect(census({ metric: 'accuracy', value: 0.3333 }, { n: 3, correct: 1 }).verdict).toBe('supported')
+    expect(census({ metric: 'accuracy', value: 0.33 }, { n: 3, correct: 1 }).verdict).toBe('supported')
+    expect(census({ metric: 'accuracy', value: 0.34 }, { n: 3, correct: 1 }).verdict).toBe('contradicted')
+  })
+})
+
+describe('complete-set comparison against exact rational references (python grid)', () => {
+  it('agrees on every row', () => {
+    expect(vectors.censusGrid.length).toBeGreaterThan(400)
+    for (const g of vectors.censusGrid) {
+      const claim: Record<string, unknown> = { metric: 'accuracy', value: g.value, text: 'Ridgeview validation set' }
+      if (g.display !== undefined) claim.display = g.display
+      const r = assessAccuracyClaim(bench({ claim, sample: { n: g.n, correct: g.k } }))
+      const label = `${JSON.stringify(g.value)} ${g.display ?? ''} ${String(g.k)}/${String(g.n)}`
+      expect(r.verdict, label).toBe(g.expected)
+    }
+  })
+})

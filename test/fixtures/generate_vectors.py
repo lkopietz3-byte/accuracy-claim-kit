@@ -269,6 +269,93 @@ def main():
                     grid.append({"metric": "error-rate", "n": n, "errors": errors, "confidence": conf, "claim": v, "expected": ex, "low": elo, "high": ehi, "tag": tag})
     out["verdictGrid"] = grid
 
+    # complete-set (census) comparison ------------------------------------
+    # A claimed figure matches a count k/n when, in exact rational arithmetic:
+    #   * 0 (or 0%) matches only k = 0 and 1 (or 100%) matches only k = n;
+    #   * a printed percent with `decimals` places matches when
+    #     |digits/10^(decimals+2) - k/n| <= 1/2 * 10^-(decimals+2);
+    #   * a value (a double) matches when |Fraction(value) - k/n| <=
+    #     1/2 * 10^-scale + 1 ulp, where scale is the number of decimals of its
+    #     SHORTEST round-trip text (repr), read from mantissa and exponent.
+    # Every figure supplied (value, and display if any) must match. A matching
+    # display with more decimals than the count resolves (10^(d+2) > 10 n) is
+    # 'overstated'; otherwise a match is 'supported' and a miss 'contradicted'.
+    def shortest(x):
+        r = repr(x)
+        m, e = (r.split("e") + ["0"])[:2] if "e" in r else (r, "0")
+        e = int(e)
+        whole, frac = (m.split(".") + [""])[:2]
+        frac = frac.rstrip("0")
+        return int(whole + frac), len(frac) - e
+
+    def match_value(x, k, n):
+        if x == 0:
+            return k == 0
+        if x == 1:
+            return k == n
+        _, scale = shortest(x)
+        return abs(Fraction(x) - Fraction(k, n)) <= Fraction(1, 2 * 10 ** scale) + Fraction(math.ulp(x))
+
+    def match_display(digits, decimals, k, n):
+        scale = decimals + 2
+        if digits == 0:
+            return k == 0
+        if digits == 10 ** scale:
+            return k == n
+        return abs(Fraction(digits, 10 ** scale) - Fraction(k, n)) <= Fraction(1, 2 * 10 ** scale)
+
+    def count_decimals(n):
+        d = 0
+        while 10 * n >= 10 ** (d + 3):
+            d += 1
+        return d
+
+    from decimal import ROUND_HALF_UP
+    values = [0.0, 1.0, 0.1, 0.3, 0.5, 1 / 3, 0.3333, 0.33333333333333331, 2 / 3, 0.6667, 0.9, 0.99, 0.999,
+              0.9999, 0.1229, 0.799, 5e-7, 1.5e-7, 1e-9, 1e-12, 0.12293, 282 / 2294, 39950 / 50000,
+              1 - 1e-9, 0.004, 0.0021551724137931034, 0.976, 0.9849, 0.2963, 1e-5, 2.5e-5, 0.07]
+    ns = [3, 10, 100, 464, 1000, 2294, 50000, 10 ** 7, 10 ** 9]
+    rows = []
+    for x in values:
+        for n in ns:
+            ks = {0, n, round(x * n), round(x * n) + 1, max(0, round(x * n) - 1)}
+            for k in sorted(ks):
+                if not 0 <= k <= n:
+                    continue
+                rows.append((x, None, k, n))
+                pct = Decimal(repr(x)) * 100
+                for d in (0, 1, 2, 3):
+                    q = pct.quantize(Decimal(1).scaleb(-d), rounding=ROUND_HALF_UP)
+                    if q > 100 or q < 0:
+                        continue
+                    if abs(Fraction(x) - Fraction(q) / 100) > Fraction(1, 2 * 10 ** (d + 2)) + Fraction(math.ulp(x)):
+                        continue
+                    rows.append((x, format(q, "f") + "%", k, n))
+    rng3 = random.Random(5)
+    special = [r for r in rows if r[0] in (0.0, 1.0)]
+    rest = [r for r in rows if r[0] not in (0.0, 1.0)]
+    keep = special[:150] + rng3.sample(rest, 900)
+    census = []
+    for (x, disp, k, n) in keep:
+        ok = match_value(x, k, n)
+        decimals = None
+        if disp is not None:
+            body = disp[:-1]
+            decimals = len(body.split(".")[1]) if "." in body else 0
+            digits = int(body.replace(".", ""))
+            ok = ok and match_display(digits, decimals, k, n)
+        if not ok:
+            exp = "contradicted"
+        elif decimals is not None and decimals > count_decimals(n):
+            exp = "overstated"
+        else:
+            exp = "supported"
+        rec = {"value": x, "k": k, "n": n, "expected": exp}
+        if disp is not None:
+            rec["display"] = disp
+        census.append(rec)
+    out["censusGrid"] = census
+
     json.dump(out, sys.stdout, indent=1, allow_nan=False)
     sys.stdout.write("\n")
 

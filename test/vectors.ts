@@ -37,6 +37,13 @@ export interface GridVector {
   high: number
   tag: string
 }
+export interface CensusVector {
+  value: number
+  display?: string
+  k: number
+  n: number
+  expected: 'supported' | 'overstated' | 'contradicted'
+}
 export interface Vectors {
   normalQuantile: [number, number][]
   zForConfidence: [number, number][]
@@ -45,6 +52,7 @@ export interface Vectors {
   wilsonAnalytic: { n: number; confidence: number; zeroUpper: number; allLower: number }[]
   agreement: AgreementVector[]
   verdictGrid: GridVector[]
+  censusGrid: CensusVector[]
 }
 
 export const vectors = raw as unknown as Vectors
