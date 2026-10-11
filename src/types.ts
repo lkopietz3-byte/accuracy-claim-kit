@@ -2,8 +2,16 @@ import type { AgreementResult, AgreementStatistic } from './agreement.js'
 import type { WilsonInterval } from './wilson.js'
 
 export type ClaimMetric = 'accuracy' | 'error-rate'
-export type LabelSource = 'human' | 'model' | 'mixed' | 'unknown'
-export type SamplingMethod = 'random' | 'stratified' | 'ranked' | 'convenience' | 'unknown'
+/**
+ * Where the labels came from. `automated` means a deterministic procedure with
+ * known correct answers (a test suite, an exact search), never a model's judgment.
+ */
+export type LabelSource = 'human' | 'automated' | 'model' | 'mixed' | 'unknown'
+/**
+ * How the items were chosen. `complete` means the sample is the whole of a
+ * fixed, named set (a benchmark): the count is exact and no interval is used.
+ */
+export type SamplingMethod = 'random' | 'stratified' | 'ranked' | 'convenience' | 'unknown' | 'complete'
 
 export interface Claim {
   metric: ClaimMetric
@@ -15,6 +23,11 @@ export interface Claim {
    * decimals is checked against what the interval can support.
    */
   display?: string | undefined
+  /**
+   * The claim's wording, used only for `sampling: 'complete'`: it must name the
+   * benchmark, or the claim is refused as an unscoped general claim. At most 2000 characters.
+   */
+  text?: string | undefined
 }
 
 /**
@@ -50,6 +63,18 @@ export interface Retractions {
   includedInSample: boolean
 }
 
+/** The fixed set a `complete` claim is about. */
+export interface Benchmark {
+  /** Name of the set, as the claim text must mention it (at most 200 characters). */
+  name: string
+}
+
+/** What the claim says it covers, and what was actually evaluated. Compared after Unicode and case folding. */
+export interface PopulationScope {
+  claimed: string
+  evaluated: string
+}
+
 export interface AccuracyClaimInput {
   claim: Claim
   sample: SampleCounts
@@ -57,6 +82,12 @@ export interface AccuracyClaimInput {
   sampling: SamplingMethod
   strata?: readonly Stratum[] | undefined
   retractions?: Retractions | undefined
+  /** Required (and only allowed) with `sampling: 'complete'`. */
+  benchmark?: Benchmark | undefined
+  /** Claimed versus evaluated population; a mismatch is refused. */
+  population?: PopulationScope | undefined
+  /** Date the evaluation was run, "YYYY-MM-DD". Used with `options.maxAgeDays`. */
+  evaluatedAt?: string | undefined
 }
 
 export interface AssessOptions {
@@ -66,6 +97,12 @@ export interface AssessOptions {
   minN?: number | undefined
   /** If given, the supplied agreement statistic must be at least this value (from -1 to 1). */
   minAgreement?: number | undefined
+  /** Refuse an evaluation older than this many days (whole number, 0 or more). Needs `now`. */
+  maxAgeDays?: number | undefined
+  /** Reference date "YYYY-MM-DD" for `maxAgeDays`. The kit never reads a clock. */
+  now?: string | undefined
+  /** Refuse a claim that does not declare `population`. Default false. */
+  requireScope?: boolean | undefined
 }
 
 export type AccuracyVerdict = 'supported' | 'overstated' | 'contradicted' | 'refused'
@@ -84,13 +121,24 @@ export type ReasonCode =
   | 'agreement-missing'
   | 'agreement-undefined'
   | 'agreement-below-minimum'
+  | 'stratified-without-strata'
+  | 'benchmark-unnamed'
+  | 'claim-not-scoped-to-benchmark'
+  | 'evaluation-date-missing'
+  | 'evaluation-stale'
+  | 'scope-mismatch'
+  | 'scope-undeclared'
   // contradicted
   | 'claim-outside-interval'
+  | 'claim-differs-from-count'
   // overstated
   | 'claim-beyond-conservative-bound'
   | 'precision-too-fine'
   // supported
   | 'claim-within-bound'
+  | 'census-matches-count'
+  // informational, never changes the verdict
+  | 'claim-worse-than-counts'
 
 export interface AccuracyAssessment {
   verdict: AccuracyVerdict
@@ -108,7 +156,9 @@ export interface AccuracyAssessment {
    */
   assessedValue: number
   n: number
-  /** Wilson interval for the claimed metric (accuracy, or error rate). Null when refused. */
+  /** `wilson-interval`: judged against an interval. `census`: compared with the exact count of a complete set. `none`: refused. */
+  basis: 'wilson-interval' | 'census' | 'none'
+  /** Wilson interval for the claimed metric (accuracy, or error rate). Null when refused or for a census. */
   interval: WilsonInterval | null
   /** The end of the interval a claim should not beat: lower for accuracy, upper for error rate. Null when refused. */
   conservativeBound: number | null

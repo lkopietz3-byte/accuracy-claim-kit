@@ -1,4 +1,6 @@
 import type { AgreementStatistic } from './agreement.js'
+import { countDecimals, matchesCount, valueDigits } from './census.js'
+import { dayNumber } from './dates.js'
 import { withinHalfUnit } from './exact.js'
 import { confidenceLabel, maxDisplayDecimals, pctCeil, pctFloor, pctNearest } from './format.js'
 import type {
@@ -20,6 +22,7 @@ import {
   readOpenUnit,
   requireRecord,
 } from './validate.js'
+import { foldText, MAX_TEXT_LENGTH, readName } from './text.js'
 import { DEFAULT_CONFIDENCE, wilsonWithZ, zForConfidence, zForTail } from './wilson.js'
 
 /** Smallest sample that gets a verdict unless options.minN says otherwise. */
@@ -37,8 +40,8 @@ export const DEFAULT_MIN_N = 30
  */
 export const COMPARISON_TOLERANCE = 1e-12
 
-const SOURCES: readonly LabelSource[] = ['human', 'model', 'mixed', 'unknown']
-const SAMPLINGS: readonly SamplingMethod[] = ['random', 'stratified', 'ranked', 'convenience', 'unknown']
+const SOURCES: readonly LabelSource[] = ['human', 'automated', 'model', 'mixed', 'unknown']
+const SAMPLINGS: readonly SamplingMethod[] = ['random', 'stratified', 'ranked', 'convenience', 'unknown', 'complete']
 const METRICS: readonly ClaimMetric[] = ['accuracy', 'error-rate']
 const STATISTICS: readonly AgreementStatistic[] = ['percent-agreement', 'cohen-kappa', 'gwet-ac1']
 const STATISTIC_LABEL: Record<AgreementStatistic, string> = {
@@ -182,7 +185,16 @@ const REFUSAL_PHRASE: Record<string, string> = {
   'agreement-missing': 'no agreement statistic was supplied for the required agreement check',
   'agreement-undefined': 'the agreement statistic could not be computed',
   'agreement-below-minimum': 'the raters agreed less than the required minimum',
+  'stratified-without-strata': 'the sample is stratified but the strata were not supplied, so the pooled counts cannot be read as the population rate',
+  'benchmark-unnamed': 'a complete-set claim needs the name of the fixed set',
+  'claim-not-scoped-to-benchmark': 'the claim wording does not name the benchmark, so a benchmark score is standing in for a general claim',
+  'evaluation-date-missing': 'a maximum age was set but the evaluation date was not supplied',
+  'evaluation-stale': 'the evaluation is older than the allowed age',
+  'scope-mismatch': 'the claim covers a different population than the one evaluated',
+  'scope-undeclared': 'the claimed and evaluated populations were not declared',
 }
+
+const LABEL_WORD: Record<'human' | 'automated', string> = { human: 'human labels', automated: 'automated labels' }
 
 /**
  * Does this accuracy or error-rate claim have the evidence to carry it?
@@ -220,6 +232,18 @@ export function assessAccuracyClaim(
   const minN = minNRaw === undefined ? DEFAULT_MIN_N : readCount(minNRaw, 'options.minN', 1)
   const minAgreement =
     minAgreementRaw === undefined ? undefined : readFiniteInRange(minAgreementRaw, 'options.minAgreement', -1, 1)
+  const maxAgeRaw: unknown = options === undefined ? undefined : options.maxAgeDays
+  const nowRaw: unknown = options === undefined ? undefined : options.now
+  const requireScopeRaw: unknown = options === undefined ? undefined : options.requireScope
+  const maxAgeDays = maxAgeRaw === undefined ? undefined : readCount(maxAgeRaw, 'options.maxAgeDays', 0)
+  if (maxAgeDays !== undefined && nowRaw === undefined) {
+    throw new TypeError('options.now is required with options.maxAgeDays: the kit never reads a clock')
+  }
+  const nowDay = nowRaw === undefined ? undefined : dayNumber(nowRaw, 'options.now')
+  if (requireScopeRaw !== undefined && typeof requireScopeRaw !== 'boolean') {
+    throw new TypeError('options.requireScope must be a boolean')
+  }
+  const requireScope = requireScopeRaw === true
 
   const root = requireRecord(input, 'input')
   const claimRaw: unknown = root.claim
@@ -228,24 +252,37 @@ export function assessAccuracyClaim(
   const samplingRaw: unknown = root.sampling
   const strataRaw: unknown = root.strata
   const retractionsRaw: unknown = root.retractions
+  const benchmarkRaw: unknown = root.benchmark
+  const populationRaw: unknown = root.population
+  const evaluatedAtRaw: unknown = root.evaluatedAt
 
   const claimRec = requireRecord(claimRaw, 'claim')
   const metricRaw: unknown = claimRec.metric
   const valueRaw: unknown = claimRec.value
   const displayRaw: unknown = claimRec.display
+  const textRaw: unknown = claimRec.text
   const metric = readEnum(metricRaw, METRICS, 'claim.metric')
   const claimed = readFiniteInRange(valueRaw, 'claim.value', 0, 1)
   let displayDecimals: number | undefined
   let displayProportion: number | undefined
+  let displayDigits: bigint | undefined
   if (displayRaw !== undefined) {
     const parsed = parseDisplay(displayRaw)
     displayDecimals = parsed.decimals
     displayProportion = parsed.proportion
+    displayDigits = parsed.digits
     // Exact: the value must be within half a unit of the printed last digit,
     // judged on the double's exact value. No tolerance is involved.
     if (!withinHalfUnit(claimed, parsed.digits, parsed.decimals + 2, parsed.decimals + 2)) {
       throw new RangeError('claim.display does not match claim.value')
     }
+  }
+
+  let claimText: string | undefined
+  if (textRaw !== undefined) {
+    if (typeof textRaw !== 'string') throw new TypeError('claim.text must be a string')
+    if (textRaw.length > MAX_TEXT_LENGTH) throw new RangeError(`claim.text must be at most ${String(MAX_TEXT_LENGTH)} characters`)
+    claimText = textRaw
   }
 
   const { n, correct } = readCounts(sampleRaw, 'sample')
@@ -259,6 +296,32 @@ export function assessAccuracyClaim(
   const agreement = agreementRaw === undefined ? undefined : readAgreement(agreementRaw)
 
   const sampling = readEnum(samplingRaw, SAMPLINGS, 'sampling')
+
+  let benchmarkName: string | undefined
+  if (benchmarkRaw !== undefined) {
+    const rec = requireRecord(benchmarkRaw, 'benchmark')
+    const nameRaw: unknown = rec.name
+    benchmarkName = readName(nameRaw, 'benchmark.name')
+    if (sampling !== 'complete') {
+      throw new RangeError("benchmark is only for sampling: 'complete'")
+    }
+  }
+
+  let population: { claimed: string; evaluated: string } | undefined
+  if (populationRaw !== undefined) {
+    const rec = requireRecord(populationRaw, 'population')
+    const claimedRaw: unknown = rec.claimed
+    const evaluatedRaw: unknown = rec.evaluated
+    population = {
+      claimed: readName(claimedRaw, 'population.claimed'),
+      evaluated: readName(evaluatedRaw, 'population.evaluated'),
+    }
+  }
+
+  const evaluatedDay = evaluatedAtRaw === undefined ? undefined : dayNumber(evaluatedAtRaw, 'evaluatedAt')
+  if (evaluatedDay !== undefined && nowDay !== undefined && evaluatedDay > nowDay) {
+    throw new RangeError('evaluatedAt is after options.now')
+  }
 
   const strata = strataRaw === undefined ? undefined : readStrata(strataRaw)
   if (strata !== undefined) {
@@ -330,12 +393,25 @@ export function assessAccuracyClaim(
     notes.push('How the sample was chosen is unknown, so the interval cannot be read as covering a larger group.')
   }
 
-  if (n < minN) {
+  if (sampling === 'stratified' && strata === undefined) {
+    refusals.push('stratified-without-strata')
+    notes.push('The sample is stratified but no strata were supplied. The pooled counts are not a simple random sample, so they cannot be read as the population rate; supply the strata.')
+  }
+
+  if (sampling === 'complete') {
+    if (benchmarkName === undefined) {
+      refusals.push('benchmark-unnamed')
+      notes.push("A complete-set claim must name the fixed set it was measured on (the 'benchmark' field).")
+    } else if (claimText === undefined || !foldText(claimText).includes(foldText(benchmarkName))) {
+      refusals.push('claim-not-scoped-to-benchmark')
+      notes.push(`The claim wording does not mention "${clip(benchmarkName)}". A score on a fixed set describes that set; word the claim for it, or supply a random sample for a general claim.`)
+    }
+  } else if (n < minN) {
     refusals.push('sample-too-small')
     notes.push(`The sample has ${String(n)} items, below the minimum of ${String(minN)} needed for a verdict.`)
   }
 
-  if (strata !== undefined && strata.length > 1) {
+  if (sampling !== 'complete' && strata !== undefined && strata.length > 1) {
     // Bonferroni: split the error budget across the strata so that many
     // strata do not make a refusal likelier by chance alone.
     const zStrata = zForTail((1 - confidence) / (2 * strata.length))
@@ -367,6 +443,26 @@ export function assessAccuracyClaim(
     notes.push(`${String(retractionCount)} retracted item(s) are known but are not counted in the sample.`)
   }
 
+  if (maxAgeDays !== undefined && nowDay !== undefined) {
+    if (evaluatedDay === undefined) {
+      refusals.push('evaluation-date-missing')
+      notes.push('A maximum age was set but no evaluation date (evaluatedAt) was supplied.')
+    } else if (nowDay - evaluatedDay > maxAgeDays) {
+      refusals.push('evaluation-stale')
+      notes.push(`The evaluation is ${String(nowDay - evaluatedDay)} days old, over the allowed ${String(maxAgeDays)} days.`)
+    }
+  }
+
+  if (population !== undefined) {
+    if (foldText(population.claimed) !== foldText(population.evaluated)) {
+      refusals.push('scope-mismatch')
+      notes.push(`The claim covers "${clip(population.claimed)}" but the evaluation covered "${clip(population.evaluated)}".`)
+    }
+  } else if (requireScope) {
+    refusals.push('scope-undeclared')
+    notes.push('The claimed and evaluated populations were not declared (population).')
+  }
+
   if (minAgreement !== undefined) {
     if (agreement === undefined) {
       refusals.push('agreement-missing')
@@ -392,9 +488,61 @@ export function assessAccuracyClaim(
       claimed,
       assessedValue: assessed,
       n,
+      basis: 'none',
       interval: null,
       conservativeBound: null,
       suggestedStatement: `No ${metricWord} figure can be supported from this evidence: ${phrases.join('; ')}.`,
+    }
+  }
+
+  const labelWord = LABEL_WORD[source as 'human' | 'automated']
+  const datePart = evaluatedAtRaw === undefined ? '' : `, evaluated ${evaluatedAtRaw as string}`
+
+  // ---- complete set: compare with the exact count ---------------------------
+  if (sampling === 'complete') {
+    const k = metric === 'accuracy' ? correct : n - correct
+    const written =
+      displayDigits !== undefined && displayDecimals !== undefined
+        ? { digits: displayDigits, scale: displayDecimals + 2 }
+        : valueDigits(claimed)
+    const matches = matchesCount(written.digits, written.scale, k, n)
+    const censusReasons: ReasonCode[] = []
+    const censusNotes: string[] = []
+    let censusVerdict: AccuracyVerdict
+    const shown = Math.min(countDecimals(n), 2)
+    const exactText = pctNearest(k / n, shown)
+    if (matches) {
+      censusVerdict = 'supported'
+      censusReasons.push('census-matches-count')
+      censusNotes.push(`The figure matches the exact count (${String(k)} of ${String(n)}, ${exactText}) to its printed precision.`)
+    } else {
+      censusVerdict = 'contradicted'
+      censusReasons.push('claim-differs-from-count')
+      censusNotes.push(`The figure does not match the exact count (${String(k)} of ${String(n)}, ${exactText}). It may be stale or mistyped.`)
+    }
+    if (displayDecimals !== undefined && displayDecimals > countDecimals(n)) {
+      if (censusVerdict === 'supported') {
+        censusReasons.length = 0
+        censusNotes.length = 0
+        censusVerdict = 'overstated'
+      }
+      censusReasons.push('precision-too-fine')
+      censusNotes.push(`The figure is printed to ${String(displayDecimals)} decimal place(s); ${String(n)} items resolve at most ${String(countDecimals(n))}.`)
+    }
+    const name = benchmarkName as string
+    const counted = metric === 'accuracy' ? `${String(k)} of ${String(n)} correct` : `${String(k)} of ${String(n)} wrong`
+    return {
+      verdict: censusVerdict,
+      reasons: censusReasons,
+      explanation: censusNotes,
+      metric,
+      claimed,
+      assessedValue: assessed,
+      n,
+      basis: 'census',
+      interval: null,
+      conservativeBound: null,
+      suggestedStatement: `${counted} on ${name} (complete set, ${labelWord}${datePart}): ${exactText} ${metric === 'accuracy' ? 'accuracy' : 'error rate'}. This describes that set only; it is not an estimate for other data`,
     }
   }
 
@@ -459,19 +607,34 @@ export function assessAccuracyClaim(
     }
   }
 
+  // A claim far less favorable than the counts (outside the 99.9% interval on
+  // the pessimistic side) looks like a stale or mistyped figure. Informational:
+  // the verdict is unchanged.
+  if (verdict !== 'contradicted') {
+    const wide = wilsonWithZ(successes, n, zForConfidence(0.999))
+    const worse = metric === 'accuracy' ? assessed < wide.low - tol : assessed > wide.high + tol
+    if (worse) {
+      reasons.push('claim-worse-than-counts')
+      explanation.push(
+        `${subject} is far less favorable than the counts support (the 99.9% Wilson interval is ${pctFloor(wide.low, 3)} to ${pctCeil(wide.high, 3)}). If this is a published figure it may be stale or wrong.`,
+      )
+    }
+  }
+
   // ---- statement ---------------------------------------------------------
-  const stmtDecimals = Math.min(maxDisplayDecimals(w.high - w.low) + 1, 4)
-  const edgeDecimals = stmtDecimals + 1
+  // One precision for the headline bound and the interval it quotes.
+  const decimals = Math.min(maxDisplayDecimals(w.high - w.low) + 2, 5)
   const headline =
     metric === 'accuracy'
-      ? `At least ${pctFloor(w.low, stmtDecimals)} accurate`
-      : `At most ${pctCeil(w.high, stmtDecimals)} error rate`
+      ? `At least ${pctFloor(w.low, decimals)} accurate`
+      : `At most ${pctCeil(w.high, decimals)} error rate`
   const parts = [
-    `${cl} Wilson interval ${pctFloor(w.low, edgeDecimals)} to ${pctCeil(w.high, edgeDecimals)}`,
+    `${cl} Wilson interval ${pctFloor(w.low, decimals)} to ${pctCeil(w.high, decimals)}`,
     `n = ${String(n)}`,
-    'human labels',
+    labelWord,
     sampling === 'stratified' ? 'stratified sample' : 'random sample',
   ]
+  if (evaluatedAtRaw !== undefined) parts.push(`evaluated ${evaluatedAtRaw as string}`)
   if (agreement !== undefined && agreement.value !== null) {
     parts.push(`${STATISTIC_LABEL[agreement.statistic]} ${agreement.value.toFixed(2)}`)
   }
@@ -483,6 +646,7 @@ export function assessAccuracyClaim(
     claimed,
     assessedValue: assessed,
     n,
+    basis: 'wilson-interval',
     interval,
     conservativeBound,
     suggestedStatement: `${headline} (${parts.join(', ')})`,
