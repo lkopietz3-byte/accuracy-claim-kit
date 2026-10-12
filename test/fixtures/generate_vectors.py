@@ -274,15 +274,24 @@ def main():
     #   * 0 (or 0%) matches only k = 0 and 1 (or 100%) matches only k = n;
     #   * a printed percent with `decimals` places matches when
     #     |digits/10^(decimals+2) - k/n| <= 1/2 * 10^-(decimals+2);
-    #   * a value (a double) matches when |Fraction(value) - k/n| <=
-    #     1/2 * 10^-scale + 1 ulp, where scale is the number of decimals of its
-    #     SHORTEST round-trip text (repr), read from mantissa and exponent.
+    #   * a value (a double) is read as D, the SHORTEST decimal text (1 to 16
+    #     significant digits) within one ulp of the value, from mantissa and
+    #     exponent: a double one ulp from a shorter decimal (82.7/100) is that
+    #     decimal. It matches when |D - k/n| <= 1/2 * 10^-scale + 1 ulp, where
+    #     scale is the number of decimals of D, never less than 2: a value is not
+    #     read coarser than a whole percent (0.9 means 90% +/- 0.5 points).
     # Every figure supplied (value, and display if any) must match. A matching
     # display with more decimals than the count resolves (10^(d+2) > 10 n) is
     # still 'supported' (the precision is only noted) and 'overstated' under
     # strictPrecision; otherwise a match is 'supported' and a miss 'contradicted'.
     def shortest(x):
         r = repr(x)
+        if x != 0:
+            for p in range(1, 17):
+                t = format(x, ".%de" % (p - 1))
+                if abs(Fraction(float(t)) - Fraction(x)) <= Fraction(math.ulp(x)):
+                    r = t
+                    break
         m, e = (r.split("e") + ["0"])[:2] if "e" in r else (r, "0")
         e = int(e)
         whole, frac = (m.split(".") + [""])[:2]
@@ -294,8 +303,9 @@ def main():
             return k == 0
         if x == 1:
             return k == n
-        _, scale = shortest(x)
-        return abs(Fraction(x) - Fraction(k, n)) <= Fraction(1, 2 * 10 ** scale) + Fraction(math.ulp(x))
+        digits, own = shortest(x)
+        scale = max(own, 2)
+        return abs(Fraction(digits, 10 ** own) - Fraction(k, n)) <= Fraction(1, 2 * 10 ** scale) + Fraction(math.ulp(x))
 
     def match_display(digits, decimals, k, n):
         scale = decimals + 2
@@ -441,29 +451,39 @@ def main():
                                 continue
                             drows.append((metric, higher, key, txt, d, fig, x, k, n))
     keep = rng4.sample(drows, 1800)
-    grid2 = []
-    for (metric, higher, key, txt, d, fig, x, k, n) in keep:
+
+    def ulp_apart(x, y):
+        """True when two doubles are within one ulp of x."""
+        return abs(Fraction(x) - Fraction(y)) <= Fraction(math.ulp(x))
+
+    def judge(metric, higher, key, txt, d, fig, x, k, n):
+        """Expected census and interval verdicts for one row, or None when the value
+        and the display disagree (the kit throws then). key 'none' is a value with no display."""
         # the count that favors the metric: accuracy counts correct, error-rate counts errors
         succ = k
         # --- consistency: the value must agree with the display, else JS throws; skip those rows
-        half = Fraction(1, 2 * 10 ** (d + 2))
-        if key == "range":
+        if key == "none":
+            pass
+        elif key == "range":
             lo = Fraction(Decimal(txt.replace(" to ", "-").replace("%", "").split("-")[0])) / 100
             hi = Fraction(Decimal(txt.replace(" to ", "-").replace("%", "").split("-")[1])) / 100
             ulp = Fraction(math.ulp(x))
             if not (lo - ulp <= Fraction(x) <= hi + ulp):
-                continue
+                return None
         elif key == "one_in_n":
             N = int(txt.split()[-1])
             digs = str(N); h = Fraction(10 ** (len(digs) - len(digs.rstrip("0"))), 2)
             ulp = Fraction(math.ulp(x))
             if not (Fraction(1, 1) / (N + h) - ulp <= Fraction(x) <= Fraction(1, 1) / (N - h) + ulp):
-                continue
+                return None
         else:
+            half = Fraction(1, 2 * 10 ** (d + 2))
             if abs(Fraction(x) - fig) > half + Fraction(math.ulp(x)):
-                continue
+                return None
         # --- point match of the display
-        if key == "one_in_n":
+        if key == "none":
+            dmatch = None
+        elif key == "one_in_n":
             dmatch = match_one_in_n(int(txt.split()[-1]), succ, n)
         elif key in ("point", "approx", "range"):
             digits = int(fig * 100 * 10 ** d)
@@ -472,9 +492,20 @@ def main():
             dmatch = None
         bound = key in ("floor_inc", "floor_strict", "ceil_inc", "ceil_strict")
         strict = key.endswith("strict")
-        more_fav = (x > float(fig)) if higher else (x < float(fig))  # doubles, as a reader's two numbers compare
+        # a value is 'more favorable' than the printed figure only by more than one ulp of the value;
+        # one ulp apart is the same figure (82.7/100 against 0.827)
+        if key == "none":
+            more_fav = False
+            same_fig = True
+        else:
+            figd = float(fig)
+            more_fav = ((x > figd) if higher else (x < figd)) and not ulp_apart(x, figd)
+            display_more_fav = ((figd > x) if higher else (figd < x)) and not ulp_apart(x, figd)
+            same_fig = not more_fav and not display_more_fav
         # --- census path
-        if bound:
+        if key == "none":
+            disp_ok = True
+        elif bound:
             kf = Fraction(succ, n)
             if key.startswith("floor"):
                 disp_ok = fig < kf if strict else fig <= kf
@@ -482,16 +513,21 @@ def main():
                 disp_ok = fig > kf if strict else fig >= kf
         else:
             disp_ok = dmatch
-        value_ok = match_value(x, succ, n) if (more_fav or key in ("point", "approx")) else True
+        value_ok = match_value(x, succ, n) if (more_fav or key in ("point", "approx", "none")) else True
         census_exp = "supported" if (disp_ok and value_ok) else "contradicted"
         # --- interval path
         lo_f, hi_f, _ = wilson(succ, n, 0.95)
-        assessed = x if more_fav else float(fig)
+        if key == "none" or same_fig:
+            assessed = x
+        else:
+            assessed = x if more_fav else float(fig)
         absolute = assessed in (0.0, 1.0)
         if bound:
             matches_obs = False
         elif absolute:
             matches_obs = False
+        elif key == "none":
+            matches_obs = match_value(x, succ, n)
         elif more_fav:
             matches_obs = match_value(x, succ, n)
         else:
@@ -512,9 +548,47 @@ def main():
         else:
             iv_exp = "overstated"
         near = min(abs(assessed - lo_f), abs(assessed - hi_f))
-        grid2.append({"metric": metric, "display": txt, "value": x, "k": k, "n": n,
-                      "census": census_exp, "interval": iv_exp, "nearLimit": near < 1e-9})
+        rec = {"metric": metric, "value": x, "k": k, "n": n,
+               "census": census_exp, "interval": iv_exp, "nearLimit": near < 1e-9}
+        if key != "none":
+            rec["display"] = txt
+        return rec
+
+    grid2 = []
+    for (metric, higher, key, txt, d, fig, x, k, n) in keep:
+        rec = judge(metric, higher, key, txt, d, fig, x, k, n)
+        if rec is None:
+            continue
+        # keep the long-standing key order of this grid
+        grid2.append({"metric": rec["metric"], "display": rec["display"], "value": rec["value"], "k": rec["k"], "n": rec["n"],
+                      "census": rec["census"], "interval": rec["interval"], "nearLimit": rec["nearLimit"]})
     out["displayGrid"] = grid2
+
+    # noisy-value grid ----------------------------------------------------
+    # An honest report of a one-decimal percent whose value was computed from the
+    # printed figure (pct / 100, pct * 0.01) or sits one ulp either side of it, with
+    # and without the display. These must be judged exactly like the clean literal.
+    rng5 = random.Random(17)
+    nrows = []
+    for metric in ("accuracy", "error-rate"):
+        higher = metric == "accuracy"
+        for n in (30, 99, 500, 913, 1000, 1946, 2000):
+            for k in sorted(set(rng5.sample(range(0, n + 1), min(40, n + 1)))):
+                pct = (Decimal(k) * 100 / Decimal(n)).quantize(Decimal("0.1"), rounding=ROUND_HALF_UP)
+                if pct <= 0 or pct >= 100:
+                    continue
+                fig = Fraction(pct) / 100
+                lit = float(fig)
+                spellings = {lit, float(pct) / 100, float(pct) * 0.01, math.nextafter(lit, 2.0), math.nextafter(lit, -1.0)}
+                for x in sorted(spellings):
+                    nrows.append((metric, higher, "point", format(pct, "f") + "%", 1, fig, x, k, n))
+                    nrows.append((metric, higher, "none", None, None, None, x, k, n))
+    noisy = []
+    for row in nrows:
+        rec = judge(*row)
+        if rec is not None:
+            noisy.append(rec)
+    out["noisyGrid"] = rng5.sample(noisy, min(1500, len(noisy)))
 
     json.dump(out, sys.stdout, indent=1, allow_nan=False)
     sys.stdout.write("\n")

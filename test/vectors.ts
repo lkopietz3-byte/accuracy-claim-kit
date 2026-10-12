@@ -55,6 +55,16 @@ export interface DisplayVector {
   interval: 'supported' | 'overstated' | 'contradicted'
   nearLimit: boolean
 }
+export interface NoisyVector {
+  metric: 'accuracy' | 'error-rate'
+  display?: string
+  value: number
+  k: number
+  n: number
+  census: 'supported' | 'contradicted'
+  interval: 'supported' | 'overstated' | 'contradicted'
+  nearLimit: boolean
+}
 export interface Vectors {
   normalQuantile: [number, number][]
   zForConfidence: [number, number][]
@@ -65,6 +75,7 @@ export interface Vectors {
   verdictGrid: GridVector[]
   censusGrid: CensusVector[]
   displayGrid: DisplayVector[]
+  noisyGrid: NoisyVector[]
 }
 
 export const vectors = raw as unknown as Vectors

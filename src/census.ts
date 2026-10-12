@@ -51,27 +51,34 @@ export function matchesCount(digits: bigint, scale: number, k: number, n: number
 }
 
 /**
+ * The finest decimal place a bare value can be read at is a whole percent:
+ * 0.9 means 90%, within half a point, never 90 plus or minus 5 points. A value
+ * written with more digits keeps them.
+ */
+export const COARSEST_VALUE_SCALE = 2
+
+/**
  * True when the double `x` matches k / n: 0 and 1 are exact claims; otherwise
- * the exact value of the double must be within half a unit of its own last
- * shortest-text digit plus one ulp of `x` itself, so a value
- * computed as k / n in floating point matches its own count.
+ * the decimal `x` is written as (see valueDigits) must be within half a unit of
+ * its own last digit (never coarser than a whole percent) plus one ulp of `x`
+ * of k / n, so a value computed as k / n in floating point matches its own
+ * count and a value one ulp off a rounded figure is judged like that figure.
+ * Exact integer arithmetic.
  */
 export function matchesValue(x: number, k: number, n: number): boolean {
   if (x === 0) return k === 0
   if (x === 1) return k === n
-  const { scale } = valueDigits(x)
-  const { mantissa, exponent } = splitDouble(x)
-  const ten = 10n ** BigInt(scale)
+  const { digits, scale: own } = valueDigits(x)
+  const half = 10n ** BigInt(Math.max(own, COARSEST_VALUE_SCALE)) // half a unit is 1 / (2 half)
+  const written = 10n ** BigInt(own)
+  const { exponent } = splitDouble(x)
   const bn = BigInt(n)
-  // |m 2^e - k/n| <= 1/(2 10^s) + 2^e, multiplied through by 2 n 10^s 2^-e (e < 0 here)
-  if (exponent >= 0) {
-    const big = mantissa << BigInt(exponent)
-    const lhs = big * bn - BigInt(k)
-    return 2n * ten * (lhs < 0n ? -lhs : lhs) <= bn + 2n * bn * ten * (1n << BigInt(exponent))
-  }
-  const d = 1n << BigInt(-exponent)
-  const lhs = mantissa * bn - BigInt(k) * d
-  return 2n * ten * (lhs < 0n ? -lhs : lhs) <= bn * d + 2n * bn * ten
+  // |digits / written - k / n| <= 1 / (2 half) + ulp, ulp = 2^exponent = num / den,
+  // multiplied through by 2 half written n den
+  const num = exponent >= 0 ? 1n << BigInt(exponent) : 1n
+  const den = exponent >= 0 ? 1n : 1n << BigInt(-exponent)
+  const gap = digits * bn - BigInt(k) * written
+  return 2n * half * den * (gap < 0n ? -gap : gap) <= written * bn * den + 2n * half * written * bn * num
 }
 
 /**
