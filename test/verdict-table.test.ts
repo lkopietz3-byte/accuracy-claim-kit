@@ -1973,3 +1973,39 @@ describe('printed forms against an exact-rational grid (floors, ceilings, ranges
     expect(interval).toBeGreaterThan(1000)
   })
 })
+
+describe('final review round: value and printed figure are each judged on their own terms', () => {
+  it('a precise printed figure must match the observed rate even when a coarse value does', () => {
+    // 86,000 of 100,000: the value 0.9 is a one-decimal rounding of 0.86, but the printed figure is not.
+    const r = assessU(claimOf('accuracy', 0.9, '89.99999999999999%'), { n: 100_000, correct: 86_000 })
+    expect(r.verdict).toBe('contradicted')
+    expect(r.reasons).toEqual(['claim-outside-interval', 'precision-too-fine'])
+    expect(assessU(claimOf('accuracy', 0.9, '90%'), { n: 100_000, correct: 86_000 }).verdict).toBe('contradicted')
+    expect(assessU(claimOf('accuracy', 0.86, '86%'), { n: 100_000, correct: 86_000 }).verdict).toBe('supported')
+  })
+
+  it('a benchmark name must appear as its own word, not inside another word', () => {
+    const scoped = (name: string, text: string): AccuracyAssessment =>
+      assessAccuracyClaim(bench({ claim: { metric: 'accuracy', value: 0.9, text }, sample: { n: 1000, correct: 900 }, benchmark: { name } }))
+    expect(scoped('test', 'Our latest system is 90% accurate').reasons).toEqual(['claim-not-scoped-to-benchmark'])
+    expect(scoped('test', 'Reaches 90% on the test split').verdict).toBe('supported')
+    expect(scoped('test', '90% on the (test), measured last week').verdict).toBe('supported')
+    expect(scoped('MMLU', '90% on MMLU-Pro').verdict).toBe('supported')
+    expect(scoped('Ridgeview validation set', '90% on RIDGEVIEW  Validation Set.').verdict).toBe('supported')
+    expect(scoped('C++', '90% on C++').verdict).toBe('supported')
+  })
+
+  it('a value at the conservative bound beside a strict printed floor below it is supported', () => {
+    const low = wilsonInterval(990, 1000).low
+    const r = assessU(claimOf('accuracy', low, 'over 98%'), { n: 1000, correct: 990 })
+    expect(r.verdict).toBe('supported')
+    expect(r.reasons).toEqual(['claim-within-bound'])
+    // a strict floor at the bound itself is still not enough
+    expect(assessU(claimOf('accuracy', 0.98, 'over 98%'), { n: 1000, correct: 980 }).verdict).not.toBe('supported')
+  })
+
+  it('a display of the wrong type throws even for an unsupported metric', () => {
+    expect(() => assessU(claimOf('f1', 0.9, 42 as unknown as string), { n: 1000, correct: 900 })).toThrow(TypeError)
+    expect(assessU(claimOf('f1', 0.9, '90%'), { n: 1000, correct: 900 }).verdict).toBe('refused')
+  })
+})

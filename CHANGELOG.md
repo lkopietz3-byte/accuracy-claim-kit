@@ -28,6 +28,10 @@ First version. The package is private and unlicensed and has not been published,
 - `zForConfidence` keeps its digits for tiny confidence levels (computed from the displacement `c/2`).
 - Formatted bounds are rounded exactly outward; an all-correct sample of 1e14 no longer prints 100%.
 - Confidence labels round down and never print 100%.
+- A printed point figure must match the observed rate to its own precision even when a coarser `value` does (86,000 of 100,000 with `value: 0.9` and `display: '89.99999999999999%'` is now `contradicted`).
+- A strict printed floor (`over 98%`) no longer makes a `value` that equals the conservative bound `overstated`; the value and the printed bound are judged separately.
+- The benchmark name must appear in `claim.text` as its own word or phrase, not inside another word.
+- A non-string `claim.display` throws `TypeError` for unsupported metrics too.
 
 ### Final review round
 - A display is compared with `value` exactly (BigInt, half a unit of the display's last digit plus one ulp of the value, so representation error never throws); `COMPARISON_TOLERANCE` no longer softens that check.

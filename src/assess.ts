@@ -24,7 +24,7 @@ import {
   readOpenUnit,
   requireRecord,
 } from './validate.js'
-import { foldText, MAX_TEXT_LENGTH, readName } from './text.js'
+import { foldText, MAX_TEXT_LENGTH, mentionsName, readName } from './text.js'
 import { DEFAULT_CONFIDENCE, wilsonWithZ, zForConfidence, zForTail } from './wilson.js'
 
 /** Smallest sample that gets a verdict unless options.minN says otherwise. */
@@ -303,6 +303,7 @@ export function assessAccuracyClaim(
     ? readFiniteInRange(valueRaw, 'claim.value', 0, 1)
     : readFiniteInRange(valueRaw, 'claim.value', -Infinity, Infinity)
 
+  if (displayRaw !== undefined && typeof displayRaw !== 'string') throw new TypeError('claim.display must be a string')
   let figure: DisplayFigure | undefined
   if (displayRaw !== undefined && judged) {
     figure = parseDisplayFigure(displayRaw, higherIsBetter)
@@ -448,7 +449,7 @@ export function assessAccuracyClaim(
     if (benchmarkName === undefined) {
       refusals.push('benchmark-unnamed')
       notes.push("A complete-set or held-out-split claim must name the fixed set it was measured on (the 'benchmark' field).")
-    } else if (claimText === undefined || !foldText(claimText).includes(foldText(benchmarkName))) {
+    } else if (claimText === undefined || !mentionsName(claimText, benchmarkName)) {
       refusals.push('claim-not-scoped-to-benchmark')
       notes.push(`The claim wording does not mention "${clip(benchmarkName)}". A score on a fixed set describes that set; word the claim for it, or supply a random sample for a general claim.`)
     }
@@ -638,10 +639,14 @@ export function assessAccuracyClaim(
   const absolute = assessed === 0 || assessed === 1
   let matchesObserved = false
   if (!conservative && !absolute && (figure === undefined || displayIsPoint)) {
+    // The printed figure must match the rate to its own precision; a value that
+    // is more favorable than the printed figure must match as well, so a coarse
+    // value cannot stand in for a precise print.
+    const valueMoreFavorable = figure !== undefined && (higherIsBetter ? claimed > figure.info.figure : claimed < figure.info.figure)
     matchesObserved =
-      figure !== undefined && !(higherIsBetter ? claimed > figure.info.figure : claimed < figure.info.figure)
-        ? figure.matchesObserved(successes, n)
-        : matchesValue(claimed, successes, n)
+      figure === undefined
+        ? matchesValue(claimed, successes, n)
+        : figure.matchesObserved(successes, n) && (!valueMoreFavorable || matchesValue(claimed, successes, n))
   }
 
   const top = pctCeil(w.high, 3)
@@ -650,13 +655,11 @@ export function assessAccuracyClaim(
   const strictBound = figure !== undefined && figure.strict
   // A bound claim is supported when it sits on the cautious side of the
   // interval's conservative end; a strict one ("over 99%") needs to clear it.
-  const withinBound = higherIsBetter
-    ? strictBound
-      ? assessed < w.low - tol
-      : assessed <= w.low + tol
-    : strictBound
-      ? assessed > w.high + tol
-      : assessed >= w.high - tol
+  // The value and the printed figure are each judged on their own terms: only
+  // the printed bound carries the strictness.
+  const clears = (x: number, strict: boolean): boolean =>
+    higherIsBetter ? (strict ? x < w.low - tol : x <= w.low + tol) : strict ? x > w.high + tol : x >= w.high - tol
+  const withinBound = clears(claimed, false) && (figure === undefined || clears(figure.info.figure, strictBound))
   const matchesText = `matches the observed rate (${observedText}) to its printed precision. The ${cl} Wilson interval is ${bottom} to ${top}.`
   if (withinBound) {
     verdict = 'supported'

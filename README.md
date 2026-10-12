@@ -286,7 +286,8 @@ Gwet     pi_k = (a_k + b_k) / (2N)
 - It does not check an interval you quote. A published "95% CI 0.0 to 1.2" is not compared with the computed interval; a claim that carries its own correct interval can still come back `overstated` when the point figure sits above the interval's lower end. Use the suggested statement, which quotes the computed interval.
 - It does not compare systems ("+27 points over the old one", "best of ten models") and does not reweight a stratified sample by population share; for that, report per-stratum results.
 - It does not model excluded or non-answered items (a rate computed only over items every system answered), or clustered, non-independent items; the interval assumes independent items.
-- The scope and benchmark-wording checks compare strings you provide. They catch a mismatch you declared, not one you did not. Naming the benchmark in `claim.text` is necessary for a complete-set claim, not sufficient: the kit cannot read whether the sentence still generalizes.
+- The scope and benchmark-wording checks compare strings you provide. They catch a mismatch you declared, not one you did not. Naming the benchmark in `claim.text` is necessary for a complete-set claim, not sufficient: the kit cannot read whether the sentence still generalizes. The name must appear as its own word or phrase (`test` is not found inside `latest`), and a plural or a different spelling of the name is treated as not named.
+- `1 in N` is judged at the precision band of N, so a very short N (`1 in 1`) has a wide band; print N with enough digits for the claim to mean something.
 - Multiple raters beyond two, ordinal weighting (weighted kappa), and confidence intervals for kappa or AC1 are not included.
 
 ## Relationship to advice-ledger-kit
