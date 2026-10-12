@@ -7,9 +7,13 @@ import { splitDouble } from './exact.js'
  * The decimal digits a number is written with, read from its shortest
  * round-trip text (never from binary expansion): 0.799 -> digits 799, scale 3;
  * 5e-7 -> digits 5, scale 7 (value = digits / 10^scale).
+ *
+ * A double that is one ulp from a shorter decimal is read as that decimal, so
+ * the noisy results of 82.7 / 100 (0.8270000000000001) and 82.7 * 0.01 read as
+ * 0.827 and not as a sixteen-digit figure nobody wrote.
  */
 export function valueDigits(value: number): { digits: bigint; scale: number } {
-  const text = String(value)
+  const text = shortestWithinOneUlp(value)
   const at = text.indexOf('e')
   const mantissa = at < 0 ? text : text.slice(0, at)
   const exponent = at < 0 ? 0 : Number(text.slice(at + 1))
@@ -20,6 +24,17 @@ export function valueDigits(value: number): { digits: bigint; scale: number } {
   while (end > 0 && fraction.charCodeAt(end - 1) === 48) end -= 1 // trailing zeros, scanned from the end
   fraction = fraction.slice(0, end)
   return { digits: BigInt(`${whole}${fraction}`), scale: fraction.length - exponent }
+}
+
+/** The shortest decimal text (from 1 to 16 significant digits) within one ulp of `value`, else its round-trip text. */
+function shortestWithinOneUlp(value: number): string {
+  if (value === 0) return '0'
+  const ulp = 2 ** splitDouble(value).exponent
+  for (let digits = 1; digits <= 16; digits++) {
+    const text = value.toPrecision(digits)
+    if (Math.abs(Number(text) - value) <= ulp) return text
+  }
+  return String(value)
 }
 
 /**

@@ -56,3 +56,15 @@ export function atMostDecimal(x: number, digits: bigint, scale: number): boolean
   if (exponent >= 0) return ((mantissa - 1n) << BigInt(exponent)) * ten <= digits
   return (mantissa - 1n) * ten <= digits * (1n << BigInt(-exponent))
 }
+
+/**
+ * True when `a` is more favorable than `b` by more than one ulp of `a`.
+ * "More favorable" is higher when `higherIsBetter`, else lower. A value built
+ * as printedPercent / 100 can sit one ulp from the figure it was printed as;
+ * that is the same figure, not a more favorable one.
+ */
+export function beyondOneUlp(a: number, b: number, higherIsBetter: boolean): boolean {
+  const gap = higherIsBetter ? a - b : b - a
+  if (!(gap > 0)) return false
+  return gap > 2 ** splitDouble(a).exponent
+}

@@ -2,6 +2,7 @@ import type { AgreementStatistic } from './agreement.js'
 import { countDecimals, matchesValue } from './census.js'
 import { dayNumber } from './dates.js'
 import { parseDisplayFigure } from './display.js'
+import { beyondOneUlp } from './exact.js'
 import type { DisplayFigure } from './display.js'
 import { confidenceLabel, maxDisplayDecimals, pctCeil, pctFloor, pctNearest } from './format.js'
 import type {
@@ -400,7 +401,8 @@ export function assessAccuracyClaim(
   let fromDisplay = false
   if (figure !== undefined) {
     const shown = figure.info.figure
-    const displayWins = higherIsBetter ? shown > claimed : shown < claimed
+    // One ulp apart is the same figure (82.7 / 100 against 0.827), not a more favorable one.
+    const displayWins = beyondOneUlp(shown, claimed, higherIsBetter)
     if (displayWins) {
       assessed = shown
       fromDisplay = true
@@ -571,8 +573,7 @@ export function assessAccuracyClaim(
     // printed figure is itself a point figure. 0 and 1 stay exact.
     const form = figure?.info.form
     const pointDisplay = form === 'percent' || form === 'approx'
-    const valueMoreFavorable =
-      figure !== undefined && (higherIsBetter ? claimed > figure.info.figure : claimed < figure.info.figure)
+    const valueMoreFavorable = figure !== undefined && beyondOneUlp(claimed, figure.info.figure, higherIsBetter)
     const displayOk = figure === undefined || figure.satisfiedBy(k, n)
     const valueOk =
       figure === undefined || valueMoreFavorable || pointDisplay ? matchesValue(claimed, k, n) : true
@@ -642,7 +643,7 @@ export function assessAccuracyClaim(
     // The printed figure must match the rate to its own precision; a value that
     // is more favorable than the printed figure must match as well, so a coarse
     // value cannot stand in for a precise print.
-    const valueMoreFavorable = figure !== undefined && (higherIsBetter ? claimed > figure.info.figure : claimed < figure.info.figure)
+    const valueMoreFavorable = figure !== undefined && beyondOneUlp(claimed, figure.info.figure, higherIsBetter)
     matchesObserved =
       figure === undefined
         ? matchesValue(claimed, successes, n)
