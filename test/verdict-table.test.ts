@@ -946,18 +946,20 @@ describe('scales linearly on hostile sizes', () => {
   })
 
   it('a 100k-character name or display is cut or rejected in constant time', () => {
-    const long = 'a'.repeat(100_000)
-    const r = assessAccuracyClaim(
+    const withName = (name: string): AccuracyClaimInput =>
       input({
         claim: accuracy(0.9),
         sample: { n: 1030, correct: 990 },
         strata: [
-          { name: long, n: 1000, correct: 980 },
+          { name, n: 1000, correct: 980 },
           { name: 'b', n: 30, correct: 10 },
         ],
-      }),
-    )
+      })
+    // a name at the 1000-character cap is accepted and cut in the explanation
+    const r = assessAccuracyClaim(withName('a'.repeat(1000)))
     expect(r.explanation[0]?.length).toBeLessThan(400)
+    // a longer one is rejected (hostile:F2)
+    expect(() => assessAccuracyClaim(withName('a'.repeat(100_000)))).toThrow(RangeError)
   })
 })
 
@@ -1990,7 +1992,9 @@ describe('final review round: value and printed figure are each judged on their 
     expect(scoped('test', 'Our latest system is 90% accurate').reasons).toEqual(['claim-not-scoped-to-benchmark'])
     expect(scoped('test', 'Reaches 90% on the test split').verdict).toBe('supported')
     expect(scoped('test', '90% on the (test), measured last week').verdict).toBe('supported')
-    expect(scoped('MMLU', '90% on MMLU-Pro').verdict).toBe('supported')
+    // a hyphen, plus or other joiner then a letter is a longer name, not a clean boundary (false-pass:F3)
+    expect(scoped('MMLU', '90% on MMLU-Pro').reasons).toEqual(['claim-not-scoped-to-benchmark'])
+    expect(scoped('MMLU', '90% on MMLU, a broad exam').verdict).toBe('supported')
     expect(scoped('Ridgeview validation set', '90% on RIDGEVIEW  Validation Set.').verdict).toBe('supported')
     expect(scoped('C++', '90% on C++').verdict).toBe('supported')
   })

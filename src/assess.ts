@@ -25,7 +25,7 @@ import {
   readOpenUnit,
   requireRecord,
 } from './validate.js'
-import { foldText, MAX_TEXT_LENGTH, mentionsName, readName } from './text.js'
+import { foldText, MAX_LABEL_LENGTH, MAX_TEXT_LENGTH, mentionsName, readName } from './text.js'
 import { DEFAULT_CONFIDENCE, wilsonWithZ, zForConfidence, zForTail } from './wilson.js'
 
 /** Smallest sample that gets a verdict unless options.minN says otherwise. */
@@ -66,6 +66,8 @@ const METRIC_PHRASE: Record<ClaimMetric, string> = {
   'false-positive-rate': 'false-positive rate',
   'false-negative-rate': 'false-negative rate',
 }
+/** What a bare value (no display) is read at; nothing was printed, so the text must not say so. */
+const VALUE_PRECISION = 'the precision of the value (a whole percent at the coarsest)'
 const SUPPORTED_LIST = 'accuracy, error-rate, precision, recall, false-positive-rate and false-negative-rate'
 const STATISTICS: readonly AgreementStatistic[] = ['percent-agreement', 'cohen-kappa', 'gwet-ac1']
 const STATISTIC_LABEL: Record<AgreementStatistic, string> = {
@@ -167,6 +169,9 @@ function readStrata(raw: unknown): Stratum[] {
     const nameRaw: unknown = rec.name
     if (typeof nameRaw !== 'string') throw new TypeError(`strata[${i}].name must be a string`)
     if (nameRaw === '') throw new RangeError(`strata[${i}].name must not be empty`)
+    if (nameRaw.length > MAX_LABEL_LENGTH) {
+      throw new RangeError(`strata[${i}].name must be at most ${String(MAX_LABEL_LENGTH)} characters`)
+    }
     if (names.has(nameRaw)) throw new RangeError(`strata[${i}].name "${clip(nameRaw)}" is a duplicate`)
     names.add(nameRaw)
     const counts = readCounts(rec, `strata[${i}]`)
@@ -582,7 +587,7 @@ export function assessAccuracyClaim(
     if (ok) {
       censusVerdict = 'supported'
       censusReasons.push('census-matches-count')
-      censusNotes.push(`The figure ${printedOnly && form !== 'one-in-n' && form !== 'range' ? 'is consistent with' : 'matches'} the exact count (${String(k)} of ${String(n)}, ${exactText}) to its printed precision.`)
+      censusNotes.push(`The figure ${printedOnly && form !== 'one-in-n' && form !== 'range' ? 'is consistent with' : 'matches'} the exact count (${String(k)} of ${String(n)}, ${exactText}) to ${figure === undefined ? VALUE_PRECISION : 'its printed precision'}.`)
     } else {
       censusVerdict = 'contradicted'
       censusReasons.push('claim-differs-from-count')
@@ -661,7 +666,7 @@ export function assessAccuracyClaim(
   const clears = (x: number, strict: boolean): boolean =>
     higherIsBetter ? (strict ? x < w.low - tol : x <= w.low + tol) : strict ? x > w.high + tol : x >= w.high - tol
   const withinBound = clears(claimed, false) && (figure === undefined || clears(figure.info.figure, strictBound))
-  const matchesText = `matches the observed rate (${observedText}) to its printed precision. The ${cl} Wilson interval is ${bottom} to ${top}.`
+  const matchesText = `matches the observed rate (${observedText}) to ${figure === undefined ? VALUE_PRECISION : 'its printed precision'}. The ${cl} Wilson interval is ${bottom} to ${top}.`
   if (withinBound) {
     verdict = 'supported'
     reasons.push('claim-within-bound')

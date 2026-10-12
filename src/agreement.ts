@@ -1,3 +1,4 @@
+import { MAX_LABEL_LENGTH } from './text.js'
 import { isRecord, readCount, readLength } from './validate.js'
 
 /** A categorical label. Compared exactly: 1 and "1" are different labels. */
@@ -54,7 +55,14 @@ interface Tally {
 }
 
 function readLabel(value: unknown, where: string): Label {
-  if (typeof value === 'string' || typeof value === 'boolean') return value
+  if (typeof value === 'string') {
+    // Equal-length strings over 16,383 characters collide in V8's Map hashing and make the tally quadratic.
+    if (value.length > MAX_LABEL_LENGTH) {
+      throw new RangeError(`${where} must be at most ${String(MAX_LABEL_LENGTH)} characters`)
+    }
+    return value
+  }
+  if (typeof value === 'boolean') return value
   if (typeof value === 'number') {
     if (!Number.isFinite(value)) {
       throw new RangeError(`${where} must be a finite number when numeric, got ${String(value)}`)

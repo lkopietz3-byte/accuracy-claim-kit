@@ -1,48 +1,116 @@
-// Small text helpers for scope wording. Everything is linear in the input
-// length and bounded by the caps below.
+// Small text helpers for scope wording. Every loop is linear in the input
+// length, which is bounded by the caps below: a match is judged by the one or
+// two code points next to it, never by re-reading the text around it.
 
 export const MAX_NAME_LENGTH = 200
 export const MAX_TEXT_LENGTH = 2000
+/** Most characters in a label (agreement pairs) or a stratum name. Very long equal-length strings collide in V8 Map and Set hashing. */
+export const MAX_LABEL_LENGTH = 1000
+
+// Typographic variants that copied web text carries, folded to the ASCII
+// character a person would type. NFKC runs first, so full-width forms and the
+// non-breaking hyphen (U+2011 becomes U+2010) are already plain by then.
+const APOSTROPHES = /[‘’‛′ʼ]/g
+const DOUBLE_QUOTES = /[“”]/g
+const DASHES = /[‐-―⁃−⸺⸻]/g
+const SOFT_HYPHEN = /­/g
 
 /**
  * Folds a string for comparison: NFKC (so full-width and compatibility forms
- * match their plain forms), lower case, and any run of whitespace becomes one
- * space. Look-alike letters from other scripts are NOT folded.
+ * match their plain forms), lower case, typographic quotes and apostrophes to
+ * ' and ", every dash variant and the minus sign to -, the soft hyphen
+ * dropped, and any run of whitespace becomes one space. Look-alike letters
+ * from other scripts are NOT folded.
  */
 export function foldText(text: string): string {
-  const words = text.normalize('NFKC').toLowerCase().split(/\s+/)
+  const plain = text
+    .normalize('NFKC')
+    .toLowerCase()
+    .replace(SOFT_HYPHEN, '')
+    .replace(APOSTROPHES, "'")
+    .replace(DOUBLE_QUOTES, '"')
+    .replace(DASHES, '-')
+  const words = plain.split(/\s+/)
   return words.filter((word) => word !== '').join(' ')
 }
 
+const WORDISH = /[\p{L}\p{N}\p{M}]/u
+const HAS_LETTER_OR_DIGIT = /[\p{L}\p{N}]/u
+/** Characters that join a name to a suffix or prefix without a space: MMLU-Pro, MMLU_pro, MMLU/pro, MMLU.pro. */
+const JOINERS = '-_/.'
+
+function isWordish(codePoint: number | undefined): boolean {
+  return codePoint !== undefined && WORDISH.test(String.fromCodePoint(codePoint))
+}
+
+/** The code point that ends just before `index`, surrogate-aware; undefined at the start. */
+function codePointBefore(text: string, index: number): number | undefined {
+  if (index <= 0) return undefined
+  const low = text.charCodeAt(index - 1)
+  if (low >= 0xdc00 && low <= 0xdfff && index >= 2) {
+    const high = text.charCodeAt(index - 2)
+    if (high >= 0xd800 && high <= 0xdbff) return text.codePointAt(index - 2)
+  }
+  return low
+}
+
+/** The code point that starts at `index`, surrogate-aware; undefined past the end. */
+function codePointAfter(text: string, index: number): number | undefined {
+  return index >= text.length ? undefined : text.codePointAt(index)
+}
+
+const unitOf = (codePoint: number): number => (codePoint > 0xffff ? 2 : 1)
+const PLUS = 0x2b
+const isJoiner = (codePoint: number | undefined): boolean => codePoint !== undefined && JOINERS.includes(String.fromCodePoint(codePoint))
+
 /**
  * True when the folded `name` appears in the folded `text` as its own word or
- * phrase: the characters next to a match may not be letters or digits when the
- * name itself starts or ends with one, so "test" is not found inside "latest".
+ * phrase. The characters next to a match may not continue it:
+ *  - a letter, digit or combining mark next to a name that starts or ends with
+ *    one ("test" is not found inside "latest");
+ *  - a "+" straight after the match ("HumanEval" is not "HumanEval+");
+ *  - one of - _ / . straight before or after the match when a letter or digit
+ *    sits on the far side of it ("MMLU" is not "MMLU-Pro" or "mini-MMLU", but a
+ *    full stop that ends a sentence, as in "on CIFAR-10.", is fine).
+ * A suffix set off by a space ("SWE-bench Verified") cannot be told apart from
+ * ordinary words; declare the full name for such a set.
  */
 export function mentionsName(text: string, name: string): boolean {
   const hay = foldText(text)
   const needle = foldText(name)
   if (needle === '') return false
-  const wordChar = /[\p{L}\p{N}]/u
-  const first = [...needle][0] as string
-  const last = [...needle].at(-1) as string
+  const first = needle.codePointAt(0)
+  const lastStart = needle.length - unitOf(codePointBefore(needle, needle.length) as number)
+  const last = needle.codePointAt(lastStart)
+  const needsStart = isWordish(first)
+  const needsEnd = isWordish(last)
   let from = 0
   for (;;) {
     const at = hay.indexOf(needle, from)
     if (at < 0) return false
-    const before = [...hay.slice(0, at)].at(-1)
-    const after = [...hay.slice(at + needle.length)][0]
-    const startsOk = !wordChar.test(first) || before === undefined || !wordChar.test(before)
-    const endsOk = !wordChar.test(last) || after === undefined || !wordChar.test(after)
-    if (startsOk && endsOk) return true
     from = at + 1
+    const end = at + needle.length
+    const before = codePointBefore(hay, at)
+    const after = codePointAfter(hay, end)
+    if (needsStart && isWordish(before)) continue
+    if (needsEnd && isWordish(after)) continue
+    if (after === PLUS) continue
+    if (isJoiner(after) && isWordish(codePointAfter(hay, end + 1))) continue
+    if (isJoiner(before) && isWordish(codePointBefore(hay, at - (before !== undefined && before > 0xffff ? 2 : 1)))) continue
+    return true
   }
 }
 
-/** Reads a required, non-blank string of at most `max` characters. */
+/**
+ * Reads a required string of at most `max` characters that holds at least one
+ * letter or digit once folded: a name made only of punctuation or invisible
+ * characters would be "found" in almost any text.
+ */
 export function readName(value: unknown, name: string, max = MAX_NAME_LENGTH): string {
   if (typeof value !== 'string') throw new TypeError(`${name} must be a string`)
   if (value.length > max) throw new RangeError(`${name} must be at most ${max} characters`)
-  if (foldText(value) === '') throw new RangeError(`${name} must not be blank`)
+  const folded = foldText(value)
+  if (folded === '') throw new RangeError(`${name} must not be blank`)
+  if (!HAS_LETTER_OR_DIGIT.test(folded)) throw new RangeError(`${name} must contain at least one letter or digit`)
   return value
 }

@@ -10,7 +10,7 @@ Report suspected vulnerabilities directly to the author (Lucas Kopietz) rather t
 
 ## Input handling
 
-The kit reads caller-supplied objects, arrays and strings. Every property is read once, nothing is evaluated, no regular expression runs over unbounded input (a percent string longer than 64 characters is rejected before matching), and loops are linear in the input size. Malformed input throws instead of returning a verdict.
+The kit reads caller-supplied objects, arrays and strings. Every property is read once, nothing is evaluated, no regular expression runs over unbounded input (a percent string longer than 64 characters is rejected before matching), and loops are linear in the input size (the benchmark-name matcher reads only the characters next to each match; label and stratum names are capped at 1000 characters, benchmark and population names at 200, claim text at 2000). Malformed input throws instead of returning a verdict.
 
 ## Bug bounty
 
