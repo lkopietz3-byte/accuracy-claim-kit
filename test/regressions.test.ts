@@ -590,3 +590,26 @@ describe('hostile:F4 false-pass:F7 docs-release:D1 an unknown key throws instead
 
 // Used by later groups in this file.
 export type { AssessOptions }
+
+describe('hostile:F5 an assessment confidence below one half is rejected', () => {
+  const claim875 = (): AccuracyClaimInput => sampled({ metric: 'accuracy', value: 0.875 }, { n: 1000, correct: 880 })
+
+  it('hostile:F5 confidence 0.05 (alpha typed for 0.95) throws RangeError instead of flipping overstated to supported', () => {
+    expect(assessAccuracyClaim(claim875()).verdict).toBe('overstated')
+    for (const confidence of [0.05, 0.0001, 1e-9, 0.4999999999999999]) {
+      expect(() => assessAccuracyClaim(claim875(), { confidence }), String(confidence)).toThrow(RangeError)
+    }
+  })
+
+  it('hostile:F5 the message names the option and the floor', () => {
+    expect(() => assessAccuracyClaim(claim875(), { confidence: 0.05 })).toThrow(/options\.confidence.*0\.5/)
+  })
+
+  it('hostile:F5 one half and above are still accepted, and wilsonInterval keeps its full range', () => {
+    for (const confidence of [0.5, 0.57, 0.68, 0.9, 0.95, 0.999, 0.9999999]) {
+      expect(() => assessAccuracyClaim(claim875(), { confidence }), String(confidence)).not.toThrow()
+    }
+    expect(wilsonInterval(5, 10, { confidence: 0.05 }).z).toBeGreaterThan(0)
+    expect(wilsonInterval(5, 10, { confidence: 1e-9 }).low).toBeLessThanOrEqual(0.5)
+  })
+})

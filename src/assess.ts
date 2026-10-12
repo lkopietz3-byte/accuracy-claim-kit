@@ -30,6 +30,9 @@ import {
 import { foldText, MAX_LABEL_LENGTH, MAX_TEXT_LENGTH, mentionsName, readName } from './text.js'
 import { DEFAULT_CONFIDENCE, wilsonWithZ, zForConfidence, zForTail } from './wilson.js'
 
+/** Lowest confidence level `assessAccuracyClaim` accepts. `wilsonInterval` takes any level strictly between 0 and 1. */
+const MIN_ASSESS_CONFIDENCE = 0.5
+
 /** Smallest sample that gets a verdict unless options.minN says otherwise. */
 export const DEFAULT_MIN_N = 30
 
@@ -266,6 +269,11 @@ export function assessAccuracyClaim(
   const minAgreementRaw: unknown = options === undefined ? undefined : options.minAgreement
   const confidence =
     confidenceRaw === undefined ? DEFAULT_CONFIDENCE : readOpenUnit(confidenceRaw, 'options.confidence')
+  // A level below one half is a typo (0.05 for 0.95): its "interval" is narrower
+  // than the data's own noise and an "at least" statement built on it means nothing.
+  if (confidence < MIN_ASSESS_CONFIDENCE) {
+    throw new RangeError(`options.confidence must be at least ${String(MIN_ASSESS_CONFIDENCE)} for a verdict (0.95 is the default); got ${String(confidence)}`)
+  }
   const z = zForConfidence(confidence)
   const minN = minNRaw === undefined ? DEFAULT_MIN_N : readCount(minNRaw, 'options.minN', 1)
   const minAgreement =

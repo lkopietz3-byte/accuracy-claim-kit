@@ -121,7 +121,7 @@ export interface AccuracyClaimInput {
 }
 
 export interface AssessOptions {
-  /** Two-sided confidence level for the Wilson interval, strictly between 0 and 1. Default 0.95. */
+  /** Two-sided confidence level for the Wilson interval, from 0.5 up to (not including) 1. Default 0.95. A lower level throws: it is almost always a typo. */
   confidence?: number | undefined
   /** Smallest sample size that can get a verdict. Default 30. Whole number, at least 1. */
   minN?: number | undefined
