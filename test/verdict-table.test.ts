@@ -667,23 +667,28 @@ describe('hostile inputs', () => {
 })
 
 describe('inputs are read once', () => {
-  /** Wraps a value in Proxies that count property reads, recursively. */
-  function counting<T extends object>(target: T, counts: Map<string, number>, path = ''): T {
+  /**
+   * Wraps a value in Proxies that count property reads, recursively. Keys may be
+   * listed (ownKeys) once per plain object so unknown keys can be rejected; `has`
+   * is never used.
+   */
+  function counting<T extends object>(target: T, counts: Map<string, number>, path = '', listed = new Map<string, number>()): T {
     return new Proxy(target, {
       get(obj, key, receiver) {
         const name = `${path}.${String(key)}`
         counts.set(name, (counts.get(name) ?? 0) + 1)
         const value: unknown = Reflect.get(obj, key, receiver)
         if (typeof value === 'object' && value !== null && typeof key === 'string') {
-          return counting(value, counts, name)
+          return counting(value, counts, name, listed)
         }
         return value
       },
       has() {
         throw new Error('has trap must not be used')
       },
-      ownKeys() {
-        throw new Error('ownKeys trap must not be used')
+      ownKeys(obj) {
+        listed.set(path, (listed.get(path) ?? 0) + 1)
+        return Reflect.ownKeys(obj)
       },
     })
   }
@@ -700,16 +705,22 @@ describe('inputs are read once', () => {
     retractions: { count: 2, includedInSample: true },
   }
 
-  it('reads every property of a Proxy input at most once, and never lists keys', () => {
+  it('reads every property of a Proxy input at most once, and lists the keys of each object once', () => {
     const counts = new Map<string, number>()
-    const opts = counting({ confidence: 0.9, minN: 30, minAgreement: 0.5 }, counts, 'options')
-    const r = assessAccuracyClaim(counting(full, counts, 'input'), opts)
+    const listed = new Map<string, number>()
+    const opts = counting({ confidence: 0.9, minN: 30, minAgreement: 0.5 }, counts, 'options', listed)
+    const r = assessAccuracyClaim(counting(full, counts, 'input', listed), opts)
     expect(r.verdict).toBeDefined()
     for (const [name, count] of counts) {
       // array "length" is read once per array, indexes once each
       expect(count, name).toBe(1)
     }
     expect(counts.size).toBeGreaterThan(20)
+    // each plain object has its own keys listed exactly once (arrays are walked by index)
+    for (const [path, count] of listed) expect(count, path).toBe(1)
+    expect([...listed.keys()].sort()).toEqual(
+      ['input', 'input.claim', 'input.provenance', 'input.provenance.agreement', 'input.retractions', 'input.sample', 'input.strata.0', 'input.strata.1', 'options'].sort(),
+    )
   })
 
   it('judges the first value of a getter that changes on every read', () => {
@@ -784,18 +795,22 @@ describe('inputs are read once', () => {
     )
   })
 
-  it('ignores toJSON, then and unrelated keys', () => {
-    const noisy = {
-      ...input(),
+  it('never calls toJSON or then, and rejects unrelated own keys', () => {
+    const trap = {
       toJSON(): never {
         throw new Error('toJSON must not be called')
       },
       then(): never {
         throw new Error('then must not be called')
       },
-      extra: { surprise: true },
     }
-    expect(assessAccuracyClaim(noisy).verdict).toBe('supported')
+    // on the prototype they are not keys of the input at all, and are never called
+    const inherited = Object.create(trap) as AccuracyClaimInput
+    Object.assign(inherited, input())
+    expect(assessAccuracyClaim(inherited).verdict).toBe('supported')
+    // as own keys they are unknown keys like any other: rejected, never called
+    expect(() => assessAccuracyClaim({ ...input(), ...trap })).toThrow(/unknown key "toJSON"/)
+    expect(() => assessAccuracyClaim({ ...input(), extra: { surprise: true } } as AccuracyClaimInput)).toThrow(/unknown key "extra"/)
   })
 
   it('does not change a frozen input and returns the same output twice', () => {

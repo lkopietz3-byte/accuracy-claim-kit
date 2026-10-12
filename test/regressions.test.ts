@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { assessAccuracyClaim } from '../src/index.js'
 import type { AccuracyAssessment, AccuracyClaimInput, AssessOptions } from '../src/index.js'
-import { cohenKappa, gwetAC1, percentAgreement } from '../src/index.js'
+import { cohenKappa, gwetAC1, percentAgreement, wilsonInterval } from '../src/index.js'
 import { foldText, mentionsName } from '../src/text.js'
 import { vectors } from './vectors.js'
 
@@ -440,6 +440,151 @@ describe('hostile:F2 label and stratum-name length is capped', () => {
   it('hostile:F2 numbers and booleans are labels of no length; strings at the cap are still fine', () => {
     expect(percentAgreement([[1, 1], [true, false]]).status).toBe('defined')
     expect(percentAgreement([['x'.repeat(1000), 'x'.repeat(1000)]]).status).toBe('defined')
+  })
+})
+
+describe('hostile:F4 false-pass:F7 docs-release:D1 an unknown key throws instead of switching a gate off', () => {
+  const honest = (): AccuracyClaimInput => ({
+    claim: { metric: 'accuracy', value: 0.998, display: '99.8%' },
+    sample: { n: 500, correct: 499 },
+    provenance: { source: 'human' },
+    sampling: 'random',
+  })
+  const withKey = (key: string, value: unknown): AccuracyClaimInput => ({ ...honest(), [key]: value })
+  const retractions = { count: 3, includedInSample: false }
+
+  // [what it is, call, the key reported, the nearest valid key (or null)]
+  const typos: [string, () => unknown, string, string | null][] = [
+    ['input.retraction', () => assessAccuracyClaim(withKey('retraction', retractions)), 'retraction', 'retractions'],
+    ['input.retractons (D1)', () => assessAccuracyClaim(withKey('retractons', retractions)), 'retractons', 'retractions'],
+    ['input.populations', () => assessAccuracyClaim(withKey('populations', { claimed: 'a', evaluated: 'b' })), 'populations', 'population'],
+    ['input.sampleing', () => assessAccuracyClaim({ ...honest(), sampling: undefined, sampleing: 'x' } as unknown as AccuracyClaimInput), 'sampleing', 'sampling'],
+    ['input.scope', () => assessAccuracyClaim(withKey('scope', { claimed: 'a', evaluated: 'b' })), 'scope', null],
+    ['input.stratum', () => assessAccuracyClaim(withKey('stratum', [{ name: 'a', n: 500, correct: 499 }])), 'stratum', 'strata'],
+    ['input.evaluatedat', () => assessAccuracyClaim(withKey('evaluatedat', '2020-01-01')), 'evaluatedat', 'evaluatedAt'],
+    ['options.maxAgeDay', () => assessAccuracyClaim(honest(), { maxAgeDay: 30, now: '2026-10-12' } as AssessOptions), 'maxAgeDay', 'maxAgeDays'],
+    ['options.maxAge', () => assessAccuracyClaim(honest(), { maxAge: 30, now: '2026-10-12' } as AssessOptions), 'maxAge', 'maxAgeDays'],
+    ['options.minAgreemnt', () => assessAccuracyClaim(honest(), { minAgreemnt: 0.8 } as AssessOptions), 'minAgreemnt', 'minAgreement'],
+    ['options.min_agreement', () => assessAccuracyClaim(honest(), { min_agreement: 0.8 } as AssessOptions), 'min_agreement', 'minAgreement'],
+    ['options.minn', () => assessAccuracyClaim(honest(), { minn: 5000 } as AssessOptions), 'minn', 'minN'],
+    ['options.min_n', () => assessAccuracyClaim(honest(), { min_n: 5000 } as AssessOptions), 'min_n', 'minN'],
+    ['options.requireScoped', () => assessAccuracyClaim(honest(), { requireScoped: true } as AssessOptions), 'requireScoped', 'requireScope'],
+    ['options.conservativ', () => assessAccuracyClaim(honest(), { conservativ: true } as AssessOptions), 'conservativ', 'conservative'],
+    ['options.strictPrecison (D1)', () => assessAccuracyClaim(honest(), { strictPrecison: true } as AssessOptions), 'strictPrecison', 'strictPrecision'],
+    ['options.confidnce', () => assessAccuracyClaim(honest(), { confidnce: 0.9 } as AssessOptions), 'confidnce', 'confidence'],
+    ['claim.interval', () => assessAccuracyClaim({ ...honest(), claim: { ...honest().claim, interval: [0.999, 1] } as AccuracyClaimInput['claim'] }), 'interval', null],
+    ['claim.dispaly', () => assessAccuracyClaim({ ...honest(), claim: { metric: 'accuracy', value: 0.998, dispaly: '99.8%' } as unknown as AccuracyClaimInput['claim'] }), 'dispaly', 'display'],
+    ['sample.total', () => assessAccuracyClaim({ ...honest(), sample: { n: 500, correct: 499, total: 100_000 } as AccuracyClaimInput['sample'] }), 'total', null],
+    ['sample.errros', () => assessAccuracyClaim({ ...honest(), sample: { n: 500, correct: 499, errros: 1 } as AccuracyClaimInput['sample'] }), 'errros', 'errors'],
+    ['provenance.rater', () => assessAccuracyClaim({ ...honest(), provenance: { source: 'human', rater: 2 } as AccuracyClaimInput['provenance'] }), 'rater', 'raters'],
+    ['provenance.agrement', () => assessAccuracyClaim({ ...honest(), provenance: { source: 'human', agrement: { statistic: 'cohen-kappa', value: 0.1 } } as AccuracyClaimInput['provenance'] }), 'agrement', 'agreement'],
+    ['provenance.agreement.valu', () => assessAccuracyClaim({ ...honest(), provenance: { source: 'human', agreement: { statistic: 'cohen-kappa', valu: 0.1 } } as unknown as AccuracyClaimInput['provenance'] }), 'valu', 'value'],
+    ['retractions.included', () => assessAccuracyClaim(withKey('retractions', { count: 22, included: false })), 'included', 'includedInSample'],
+    ['retractions.includedInSampel', () => assessAccuracyClaim(withKey('retractions', { count: 22, includedInSample: false, includedInSampel: true })), 'includedInSampel', 'includedInSample'],
+    ['benchmark.title', () => assessAccuracyClaim({ ...honest(), sampling: 'complete', benchmark: { name: 'Foo', title: 'x' } as AccuracyClaimInput['benchmark'] }), 'title', null],
+    ['population.claim', () => assessAccuracyClaim(withKey('population', { claim: 'a', claimed: 'a', evaluated: 'a' })), 'claim', 'claimed'],
+    ['strata[1].corect', () => assessAccuracyClaim({ ...honest(), sampling: 'stratified', strata: [{ name: 'a', n: 250, correct: 250 }, { name: 'b', n: 250, correct: 249, corect: 1 }] as unknown as AccuracyClaimInput['strata'] }), 'corect', 'correct'],
+    ['wilsonInterval confidnce (D1)', () => wilsonInterval(5, 10, { confidnce: 0.99 } as never), 'confidnce', 'confidence'],
+    ['gwetAC1 catagories (D1)', () => gwetAC1([['a', 'a'], ['a', 'b']], { catagories: 5 } as never), 'catagories', 'categories'],
+  ]
+  for (const [what, call, key, nearest] of typos) {
+    it(`hostile:F4 ${what} throws a TypeError naming the key${nearest === null ? '' : ' and the nearest valid key'}`, () => {
+      let error: unknown
+      try {
+        call()
+      } catch (e) {
+        error = e
+      }
+      expect(error).toBeInstanceOf(TypeError)
+      const message = (error as TypeError).message
+      expect(message).toContain(`"${key}"`)
+      if (nearest !== null) expect(message).toContain(`did you mean "${nearest}"`)
+      else expect(message).not.toContain('did you mean')
+      expect(message).toMatch(/Allowed keys: /)
+    })
+  }
+
+  it('hostile:F4 every key the kit does read is still accepted, including its own results as agreement input', () => {
+    const kappa = cohenKappa([['a', 'a'], ['b', 'b'], ['a', 'b'], ['a', 'a']])
+    const full: AccuracyClaimInput = {
+      claim: { metric: 'accuracy', value: 0.99, display: '99%', text: 'On Foo set' },
+      sample: { n: 1000, correct: 990, errors: 10 },
+      provenance: { source: 'human', raters: 2, agreement: kappa },
+      sampling: 'stratified',
+      strata: [{ name: 'a', n: 600, correct: 594, errors: 6 }, { name: 'b', n: 400, correct: 396, errors: 4 }],
+      retractions: { count: 1, includedInSample: true },
+      population: { claimed: 'x', evaluated: 'x' },
+      evaluatedAt: '2026-10-01',
+    }
+    const options: AssessOptions = { confidence: 0.9, minN: 30, minAgreement: 0.1, maxAgeDays: 90, now: '2026-10-12', strictPrecision: false, conservative: false, requireScope: true }
+    expect(() => assessAccuracyClaim(full, options)).not.toThrow()
+    const bench = census({ metric: 'accuracy', value: 0.99 }, { n: 1000, correct: 990 })
+    expect(() => assessAccuracyClaim(bench)).not.toThrow()
+    expect(() => wilsonInterval(5, 10, { confidence: 0.9 })).not.toThrow()
+    expect(() => gwetAC1([['a', 'b']], { categories: 3 })).not.toThrow()
+    expect(() => assessAccuracyClaim(full, {})).not.toThrow()
+  })
+
+  it('hostile:F4 undefined values for a known key and symbol or non-enumerable keys are not unknown keys', () => {
+    const base = {
+      claim: { metric: 'accuracy', value: 0.98, display: undefined, text: undefined },
+      sample: { n: 1000, correct: 990, errors: undefined },
+      provenance: { source: 'human', raters: undefined, agreement: undefined },
+      sampling: 'random',
+      strata: undefined,
+      retractions: undefined,
+      benchmark: undefined,
+      population: undefined,
+      evaluatedAt: undefined,
+    } as AccuracyClaimInput
+    Object.defineProperty(base, 'hidden', { value: 1, enumerable: false })
+    Object.defineProperty(base, Symbol('s'), { value: 1, enumerable: true })
+    expect(assessAccuracyClaim(base, { confidence: undefined, minN: undefined, minAgreement: undefined, maxAgeDays: undefined, now: undefined }).verdict).toBe('supported')
+  })
+
+  it('hostile:F4 a very long unknown key is cut in the message and costs no suggestion search', () => {
+    const key = 'k'.repeat(100_000)
+    let error: unknown
+    try {
+      assessAccuracyClaim(withKey(key, 1))
+    } catch (e) {
+      error = e
+    }
+    expect(error).toBeInstanceOf(TypeError)
+    expect((error as TypeError).message.length).toBeLessThan(400)
+    expect(cpuMs(() => { try { assessAccuracyClaim(withKey(key, 1)) } catch { /* expected */ } })).toBeLessThan(20)
+  })
+
+  it('hostile:F4 a result lists which gates ran', () => {
+    const none = assessAccuracyClaim(honest())
+    expect(none.checks).toEqual({ retractions: 'not-supplied', scope: 'not-supplied', age: 'not-supplied', agreement: 'not-supplied', strata: 'not-supplied' })
+    const all = assessAccuracyClaim(
+      {
+        ...honest(),
+        sampling: 'stratified',
+        strata: [{ name: 'a', n: 250, correct: 250 }, { name: 'b', n: 250, correct: 249 }],
+        retractions: { count: 0, includedInSample: true },
+        population: { claimed: 'x', evaluated: 'x' },
+        evaluatedAt: '2026-10-01',
+        provenance: { source: 'human', agreement: { statistic: 'cohen-kappa', value: 0.9 } },
+      },
+      { maxAgeDays: 30, now: '2026-10-12', minAgreement: 0.5 },
+    )
+    expect(all.checks).toEqual({ retractions: 'applied', scope: 'applied', age: 'applied', agreement: 'applied', strata: 'applied' })
+    // a statistic that is only echoed, or an evaluation date with no maximum age, is not a gate
+    const echoed = assessAccuracyClaim({ ...honest(), evaluatedAt: '2026-10-01', provenance: { source: 'human', agreement: { statistic: 'cohen-kappa', value: 0.9 } } })
+    expect(echoed.checks.age).toBe('not-supplied')
+    expect(echoed.checks.agreement).toBe('not-supplied')
+  })
+
+  it('hostile:F4 refused and complete-set results carry the checks too', () => {
+    const refused = assessAccuracyClaim({ ...honest(), provenance: { source: 'model' }, retractions: { count: 1, includedInSample: true } })
+    expect(refused.verdict).toBe('refused')
+    expect(refused.checks.retractions).toBe('applied')
+    const set = assessAccuracyClaim(census({ metric: 'accuracy', value: 0.99 }, { n: 1000, correct: 990 }, 'Foo set', { population: { claimed: 'x', evaluated: 'x' } }))
+    expect(set.basis).toBe('census')
+    expect(set.checks.scope).toBe('applied')
+    expect(set.checks.strata).toBe('not-supplied')
   })
 })
 

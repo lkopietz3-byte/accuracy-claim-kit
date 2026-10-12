@@ -21,6 +21,8 @@ export type {
   Benchmark,
   Claim,
   ClaimMetric,
+  GateChecks,
+  GateStatus,
   LabelProvenance,
   LabelSource,
   PopulationScope,

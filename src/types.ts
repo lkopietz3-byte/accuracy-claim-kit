@@ -180,6 +180,25 @@ export type ReasonCode =
   // informational, never changes the verdict
   | 'claim-worse-than-counts'
 
+/** Whether an optional check ran for this call. */
+export type GateStatus = 'applied' | 'not-supplied'
+
+/**
+ * Which optional checks the call ran, so a check that was left out is visible
+ * in the result. `retractions`: a `retractions` block was supplied. `scope`: a
+ * `population` was supplied. `age`: `options.maxAgeDays` was set. `agreement`:
+ * `options.minAgreement` was set (a statistic that is only echoed is not a
+ * check). `strata`: `strata` were supplied for a sample (a complete set does
+ * not compare strata).
+ */
+export interface GateChecks {
+  retractions: GateStatus
+  scope: GateStatus
+  age: GateStatus
+  agreement: GateStatus
+  strata: GateStatus
+}
+
 export interface AccuracyAssessment {
   verdict: AccuracyVerdict
   /** At least one code. A refusal lists every failed precondition. */
@@ -199,6 +218,8 @@ export interface AccuracyAssessment {
   n: number | null
   /** How the printed `display` was read, or null when there was none. */
   parsedDisplay: { form: 'percent' | 'approx' | 'floor' | 'ceiling' | 'range' | 'one-in-n'; figure: number; decimals: number | null } | null
+  /** Which optional checks ran: `applied`, or `not-supplied` when the input or option that switches the check on was left out. */
+  checks: GateChecks
   /** `wilson-interval`: judged against an interval. `census`: compared with the exact count of a complete set. `none`: refused. */
   basis: 'wilson-interval' | 'census' | 'none'
   /** Wilson interval for the claimed metric (accuracy, or error rate). Null when refused or for a census. */

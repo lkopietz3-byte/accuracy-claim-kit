@@ -11,6 +11,7 @@ import type {
   AccuracyVerdict,
   AssessOptions,
   ClaimMetric,
+  GateChecks,
   UnsupportedMetric,
   LabelSource,
   ReasonCode,
@@ -22,6 +23,7 @@ import {
   readCount,
   readFiniteInRange,
   readLength,
+  assertKnownKeys,
   readOpenUnit,
   requireRecord,
 } from './validate.js'
@@ -69,6 +71,18 @@ const METRIC_PHRASE: Record<ClaimMetric, string> = {
 /** What a bare value (no display) is read at; nothing was printed, so the text must not say so. */
 const VALUE_PRECISION = 'the precision of the value (a whole percent at the coarsest)'
 const SUPPORTED_LIST = 'accuracy, error-rate, precision, recall, false-positive-rate and false-negative-rate'
+// The keys each caller-supplied object may carry. Anything else is a typo that
+// would silently switch a check off, so it throws.
+const OPTION_KEYS = ['confidence', 'minN', 'minAgreement', 'maxAgeDays', 'now', 'strictPrecision', 'conservative', 'requireScope'] as const
+const INPUT_KEYS = ['claim', 'sample', 'provenance', 'sampling', 'strata', 'retractions', 'benchmark', 'population', 'evaluatedAt'] as const
+const CLAIM_KEYS = ['metric', 'value', 'display', 'text'] as const
+const SAMPLE_KEYS = ['n', 'correct', 'errors'] as const
+const STRATUM_KEYS = ['name', 'n', 'correct', 'errors'] as const
+const PROVENANCE_KEYS = ['source', 'raters', 'agreement'] as const
+const AGREEMENT_KEYS = ['statistic', 'status', 'value', 'n', 'agreements', 'categories', 'reason'] as const
+const RETRACTION_KEYS = ['count', 'includedInSample'] as const
+const BENCHMARK_KEYS = ['name'] as const
+const POPULATION_KEYS = ['claimed', 'evaluated'] as const
 const STATISTICS: readonly AgreementStatistic[] = ['percent-agreement', 'cohen-kappa', 'gwet-ac1']
 const STATISTIC_LABEL: Record<AgreementStatistic, string> = {
   'percent-agreement': 'percent agreement',
@@ -94,6 +108,7 @@ interface Counts {
 function readSampleCounts(raw: unknown): Counts | null {
   if (raw === undefined) return null
   const rec = requireRecord(raw, 'sample')
+  assertKnownKeys(rec, SAMPLE_KEYS, 'sample')
   const nRaw: unknown = rec.n
   const correctRaw: unknown = rec.correct
   const errorsRaw: unknown = rec.errors
@@ -132,6 +147,7 @@ interface Agreement {
 
 function readAgreement(raw: unknown): Agreement {
   const rec = requireRecord(raw, 'provenance.agreement')
+  assertKnownKeys(rec, AGREEMENT_KEYS, 'provenance.agreement')
   const statisticRaw: unknown = rec.statistic
   const statusRaw: unknown = rec.status
   const valueRaw: unknown = rec.value
@@ -166,6 +182,7 @@ function readStrata(raw: unknown): Stratum[] {
   for (let i = 0; i < length; i++) {
     const entry: unknown = (raw as unknown[])[i]
     const rec = requireRecord(entry, `strata[${i}]`)
+    assertKnownKeys(rec, STRATUM_KEYS, `strata[${i}]`)
     const nameRaw: unknown = rec.name
     if (typeof nameRaw !== 'string') throw new TypeError(`strata[${i}].name must be a string`)
     if (nameRaw === '') throw new RangeError(`strata[${i}].name must not be empty`)
@@ -243,6 +260,7 @@ export function assessAccuracyClaim(
   if (options !== undefined && !isRecord(options)) {
     throw new TypeError('options must be an object')
   }
+  if (options !== undefined) assertKnownKeys(options, OPTION_KEYS, 'options')
   const confidenceRaw: unknown = options === undefined ? undefined : options.confidence
   const minNRaw: unknown = options === undefined ? undefined : options.minN
   const minAgreementRaw: unknown = options === undefined ? undefined : options.minAgreement
@@ -277,6 +295,7 @@ export function assessAccuracyClaim(
   const strictPrecision = strictPrecisionRaw === true || conservative
 
   const root = requireRecord(input, 'input')
+  assertKnownKeys(root, INPUT_KEYS, 'input')
   const claimRaw: unknown = root.claim
   const sampleRaw: unknown = root.sample
   const provenanceRaw: unknown = root.provenance
@@ -288,6 +307,7 @@ export function assessAccuracyClaim(
   const evaluatedAtRaw: unknown = root.evaluatedAt
 
   const claimRec = requireRecord(claimRaw, 'claim')
+  assertKnownKeys(claimRec, CLAIM_KEYS, 'claim')
   const metricRaw: unknown = claimRec.metric
   const valueRaw: unknown = claimRec.value
   const displayRaw: unknown = claimRec.display
@@ -333,6 +353,7 @@ export function assessAccuracyClaim(
   const counts = readSampleCounts(sampleRaw)
 
   const provRec = requireRecord(provenanceRaw, 'provenance')
+  assertKnownKeys(provRec, PROVENANCE_KEYS, 'provenance')
   const sourceRaw: unknown = provRec.source
   const ratersRaw: unknown = provRec.raters
   const agreementRaw: unknown = provRec.agreement
@@ -346,6 +367,7 @@ export function assessAccuracyClaim(
   let benchmarkName: string | undefined
   if (benchmarkRaw !== undefined) {
     const rec = requireRecord(benchmarkRaw, 'benchmark')
+    assertKnownKeys(rec, BENCHMARK_KEYS, 'benchmark')
     const nameRaw: unknown = rec.name
     benchmarkName = readName(nameRaw, 'benchmark.name')
     if (!isFixedSet) {
@@ -356,6 +378,7 @@ export function assessAccuracyClaim(
   let population: { claimed: string; evaluated: string } | undefined
   if (populationRaw !== undefined) {
     const rec = requireRecord(populationRaw, 'population')
+    assertKnownKeys(rec, POPULATION_KEYS, 'population')
     const claimedRaw: unknown = rec.claimed
     const evaluatedRaw: unknown = rec.evaluated
     population = {
@@ -387,6 +410,7 @@ export function assessAccuracyClaim(
   let retractionsIncluded = true
   if (retractionsRaw !== undefined) {
     const rec = requireRecord(retractionsRaw, 'retractions')
+    assertKnownKeys(rec, RETRACTION_KEYS, 'retractions')
     const countRaw: unknown = rec.count
     const includedRaw: unknown = rec.includedInSample
     retractionCount = readCount(countRaw, 'retractions.count', 0)
@@ -414,6 +438,16 @@ export function assessAccuracyClaim(
     }
   }
   const parsedDisplay = figure === undefined ? null : figure.info
+
+  // Which optional checks this call actually ran. A gate that was asked for
+  // ('applied') is different from one that was left out ('not-supplied').
+  const checks: GateChecks = {
+    retractions: retractionsRaw !== undefined ? 'applied' : 'not-supplied',
+    scope: population !== undefined ? 'applied' : 'not-supplied',
+    age: maxAgeDays !== undefined ? 'applied' : 'not-supplied',
+    agreement: minAgreement !== undefined ? 'applied' : 'not-supplied',
+    strata: strata !== undefined && !isFixedSet ? 'applied' : 'not-supplied',
+  }
 
   // ---- preconditions -----------------------------------------------------
   const refusals: ReasonCode[] = []
@@ -549,6 +583,7 @@ export function assessAccuracyClaim(
       n: counts === null ? null : counts.n,
       basis: 'none',
       parsedDisplay,
+      checks,
       interval: null,
       conservativeBound: null,
       suggestedStatement: `No ${metricWord} figure can be supported from this evidence: ${phrases.join('; ')}.`,
@@ -617,6 +652,7 @@ export function assessAccuracyClaim(
       n,
       basis: 'census',
       parsedDisplay,
+      checks,
       interval: null,
       conservativeBound: null,
       suggestedStatement: `${counted} on ${name} (${setWord}, ${labelWord}${datePart}): ${exactText} ${metricName === 'accurate' ? 'accuracy' : metricName}. This describes that set only; it is not an estimate for other data${censusPrecisionNote}`,
@@ -756,6 +792,7 @@ export function assessAccuracyClaim(
     n,
     basis: 'wilson-interval',
     parsedDisplay,
+    checks,
     interval,
     conservativeBound,
     suggestedStatement: `${headline} (${parts.join(', ')})${precisionNote}`,

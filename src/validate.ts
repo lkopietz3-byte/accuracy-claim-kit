@@ -77,3 +77,67 @@ export function clip(text: string, max = 60): string {
   if (code >= 0xd800 && code <= 0xdbff) end -= 1
   return `${text.slice(0, end)}...`
 }
+
+/** Keys longer than this are reported but never searched for a near match. */
+const MAX_SUGGEST_LENGTH = 64
+
+/** Lower case with everything but letters and digits removed, so "min_agreement" and "minAgreement" compare equal. */
+function simplify(text: string): string {
+  return text.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '')
+}
+
+/** Levenshtein distance between two short strings. */
+function editDistance(a: string, b: string): number {
+  let previous = Array.from({ length: b.length + 1 }, (_, j) => j)
+  for (let i = 1; i <= a.length; i++) {
+    const row = [i]
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a.charCodeAt(i - 1) === b.charCodeAt(j - 1) ? 0 : 1
+      row.push(Math.min((previous[j] as number) + 1, (row[j - 1] as number) + 1, (previous[j - 1] as number) + cost))
+    }
+    previous = row
+  }
+  return previous[b.length] as number
+}
+
+/** The allowed key a misspelled `key` most likely meant, or undefined when nothing is close. */
+export function nearestKey(key: string, allowed: readonly string[]): string | undefined {
+  if (key.length > MAX_SUGGEST_LENGTH) return undefined
+  const wanted = simplify(key)
+  if (wanted === '') return undefined
+  let best: string | undefined
+  let bestScore = Infinity
+  for (const candidate of allowed) {
+    const other = simplify(candidate)
+    const raw = editDistance(wanted, other)
+    let distance = raw
+    // "maxAge" for "maxAgeDays": one name inside the other
+    if (Math.min(wanted.length, other.length) >= 5 && (wanted.includes(other) || other.includes(wanted))) {
+      distance = Math.min(distance, 1)
+    }
+    const limit = wanted.length <= 4 ? 1 : 2
+    // the closest wins; a tie goes to the one that differs least as written
+    const score = distance * 1000 + raw
+    if (distance <= limit && score < bestScore) {
+      best = candidate
+      bestScore = score
+    }
+  }
+  return best
+}
+
+/**
+ * Throws a TypeError naming the first own enumerable key of `value` that is not
+ * in `allowed`, with the closest allowed key when there is one. A misspelled
+ * optional key ("retraction", "maxAgeDay") would otherwise be ignored and turn
+ * the check it configures off. Keys are listed once and no value is read, so a
+ * getter is never triggered; inherited and symbol keys are not looked at.
+ */
+export function assertKnownKeys(value: Record<string, unknown>, allowed: readonly string[], label: string): void {
+  for (const key of Object.keys(value)) {
+    if (allowed.includes(key)) continue
+    const near = nearestKey(key, allowed)
+    const hint = near === undefined ? '.' : `; did you mean "${near}"?`
+    throw new TypeError(`${label} has an unknown key "${clip(key)}"${hint} Allowed keys: ${allowed.join(', ')}.`)
+  }
+}
