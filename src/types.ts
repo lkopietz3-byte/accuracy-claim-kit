@@ -112,7 +112,7 @@ export interface AccuracyClaimInput {
   sampling: SamplingMethod
   strata?: readonly Stratum[] | undefined
   retractions?: Retractions | undefined
-  /** Required (and only allowed) with `sampling: 'complete'`. */
+  /** Required with `sampling: 'complete'` or `'held-out-split'`; rejected with any other sampling. */
   benchmark?: Benchmark | undefined
   /** Claimed versus evaluated population; a mismatch is refused. */
   population?: PopulationScope | undefined

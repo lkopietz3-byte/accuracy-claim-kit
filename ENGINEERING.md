@@ -28,7 +28,11 @@ Declared dependencies are TypeScript, ESLint, Vitest and packaging tools in `pac
 
 ```sh
 npm run verify
+npm run attw
+npm run audit:dependencies
 ```
+
+`attw` checks the packed package's type resolution (the `cjs-resolves-to-esm` rule is ignored on purpose: the package is ESM only). `audit:dependencies` audits dev tooling only; there are no runtime dependencies.
 
 The verdict table (`test/verdict-table.test.ts`) is the regression record: honest inputs that must pass and bad inputs that must be flagged. Numeric vectors (`test/numerics.test.ts`) come from `test/fixtures/generate_vectors.py`, an independent standard-library implementation (60-digit decimal for Wilson, exact fractions for agreement, `NormalDist().inv_cdf` for z).
 

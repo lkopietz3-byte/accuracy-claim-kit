@@ -141,7 +141,7 @@ What is checked for a complete set:
 - **Precision**: digits beyond what `n` resolves (more than `d` percent decimals when `10^(d+2)` exceeds `10 n`) are `precision-too-fine`.
 - **Scope wording**: `claim.text` must mention `benchmark.name` (compared after Unicode compatibility folding, lower-casing and collapsing whitespace; look-alike letters from other scripts are not folded). A score on a fixed set worded as a general claim ("our model is 79.9% accurate") is refused as `claim-not-scoped-to-benchmark`. To make a general claim, use a random sample and the interval.
 - There is no minimum `n` for a complete set, and strata are not checked for heterogeneity. Label source, retractions, agreement gates, evaluation age and population scope apply as usual.
-- `benchmark` is rejected (`RangeError`) with any other `sampling`.
+- `benchmark` is rejected (`RangeError`) with any `sampling` other than `complete` or `held-out-split`.
 
 ## Age and scope
 
@@ -218,7 +218,7 @@ assessAccuracyClaim({
   sampling: 'random' | 'stratified' | 'ranked' | 'convenience' | 'unknown' | 'complete' | 'held-out-split' | 'cross-validation',
   strata?: [{ name, n, correct? , errors? }],                      // required with 'stratified'; must add up to the sample
   retractions?: { count, includedInSample },
-  benchmark?: { name },                                            // required with 'complete', rejected otherwise
+  benchmark?: { name },                                            // for 'complete' and 'held-out-split'; rejected with any other sampling
   population?: { claimed, evaluated },
   evaluatedAt?: 'YYYY-MM-DD',
 }, { confidence?, minN?, minAgreement?, maxAgeDays?, now?, requireScope?, conservative?, strictPrecision? })
@@ -278,7 +278,7 @@ Gwet     pi_k = (a_k + b_k) / (2N)
 
 - It does not judge whether the labels are right. "Human labels" is a declaration you make; the kit cannot see who labeled anything.
 - It cannot detect sampling fraud or a sample that was filtered before you counted it. `sampling: 'random'` is taken at your word.
-- A `supported` verdict is not proof that the system is accurate. It says only that the claim is no more favorable than the lower end of an interval computed from counts you supplied. The interval describes sampling noise alone; it does not cover label errors, drift, a different population in production, or choosing the best of several runs.
+- A `supported` verdict is not proof that the system is accurate. It says only that the claim is no more favorable than the lower end of an interval computed from counts you supplied, or is an honest report of the rate you observed (`matches-observed-rate`). The interval describes sampling noise alone; it does not cover label errors, drift, a different population in production, or choosing the best of several runs.
 - The Wilson interval treats the pooled counts as one simple random sample. A stratified sample with unequal sampling rates is not a simple random sample; the interval is not reweighted, so use per-stratum results for those.
 - It does not compare two systems, test significance between them, or estimate calibration.
 - It does not give advice, legal conclusions, or compliance conclusions.
@@ -295,7 +295,7 @@ Gwet     pi_k = (a_k + b_k) / (2N)
 
 ## Tests and vectors
 
-`npm run verify` runs lint, type check, tests, the build and a packaging check that installs the packed tarball into a clean project.
+`npm run verify` runs lint, type check, tests, the build and a packaging check that installs the packed tarball into a clean project. `npm run attw` checks the type resolution of the packed package, and `npm run audit:dependencies` audits the dev tooling in the lockfile (it needs registry access).
 
 Expected values come from `test/fixtures/generate_vectors.py`, which uses only the Python standard library (`math`, `decimal`, `fractions`, `random` with a fixed seed, `statistics.NormalDist`). The Wilson reference runs in 60-digit decimal arithmetic; agreement statistics run in exact rational arithmetic. The committed output is `test/fixtures/vectors.json`.
 
@@ -308,12 +308,19 @@ Where published values were available they are included and labeled in the fixtu
 ## Layout
 
 ```
-src/wilson.ts       Wilson interval, z for a confidence level
-src/normal.ts       inverse normal CDF
-src/agreement.ts    percent agreement, Cohen's kappa, Gwet's AC1
-src/assess.ts       assessAccuracyClaim
-src/format.ts       cautious rounding, display precision rule
-src/validate.ts     input readers
-test/               verdict table, numeric vectors, hostile inputs
-scripts/            package verification and consumer probes
+src/index.ts       public exports
+src/types.ts       input, option and result types
+src/wilson.ts      Wilson interval, z for a confidence level
+src/normal.ts      inverse normal CDF
+src/agreement.ts   percent agreement, Cohen's kappa, Gwet's AC1
+src/assess.ts      assessAccuracyClaim
+src/display.ts     printed-form parser (percent, bounds, ranges, 1 in N)
+src/census.ts      exact comparison for complete sets and held-out splits
+src/exact.ts       exact (BigInt) comparison of a double with decimal digits
+src/format.ts      cautious rounding, display precision rule
+src/dates.ts       YYYY-MM-DD checks for age limits
+src/text.ts        identifier folding for scope and benchmark names
+src/validate.ts    input readers
+test/              verdict table, numeric vectors, hostile inputs
+scripts/           package verification and consumer probes
 ```

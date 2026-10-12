@@ -12,6 +12,8 @@ Does this accuracy or error-rate number have the evidence to carry it? Wilson in
 - `npm run typecheck`
 - `npm run test`
 - `npm run build`
+- `npm run attw` checks type resolution of the packed package.
+- `npm run audit:dependencies` audits the lockfile (needs registry access).
 - `npm run verify:package` packs and installs the tarball offline; run `npm run build` first.
 
 ## Rules
