@@ -16,6 +16,7 @@ import type {
 } from '../src/index.js'
 import { gwetAC1, percentAgreement } from '../src/index.js'
 import { pctCeil, pctFloor } from '../src/format.js'
+import { GROWTH_LIMIT, growthRatio } from './cpu-growth.js'
 import { vectors } from './vectors.js'
 
 // Verdict regression table. Each row is one honest input that must pass or one
@@ -921,43 +922,32 @@ describe('other realms and array proxies', () => {
 })
 
 describe('scales linearly on hostile sizes', () => {
-  function cpuMs(work: () => void): number {
-    const before = process.cpuUsage()
-    work()
-    const after = process.cpuUsage(before)
-    return (after.user + after.system) / 1000
-  }
-
-  function best(work: () => void): number {
-    work() // warm up
-    return Math.min(cpuMs(work), cpuMs(work), cpuMs(work))
-  }
-
-  it('kappa, AC1 and percent agreement: 20k vs 80k pairs stay under 16x', () => {
+  it('kappa, AC1 and percent agreement: 20k vs 80k pairs stay under the 10x growth limit', () => {
     const make = (n: number): [string, string][] =>
       Array.from({ length: n }, (_, i) => [`c${i % 7}`, `c${(i * 3) % 5}`] as [string, string])
-    const small = make(20_000)
-    const big = make(80_000)
-    const run = (p: [string, string][]) => (): void => {
-      cohenKappa(p)
-    }
-    const t1 = Math.max(best(run(small)), 0.5)
-    const t2 = best(run(big))
-    expect(t2 / t1).toBeLessThan(16)
+    const ratio = growthRatio((n) => {
+      const p = make(n)
+      return () => {
+        cohenKappa(p)
+      }
+    }, 20_000, 80_000)
+    expect(ratio).toBeLessThan(GROWTH_LIMIT)
   })
 
-  it('strata: 20k vs 80k strata stay under 16x', () => {
+  it('strata: 20k vs 80k strata stay under the 10x growth limit', () => {
     const make = (k: number): AccuracyClaimInput =>
       input({
         claim: accuracy(0.5),
         sample: { n: 100 * k, correct: 95 * k },
         strata: Array.from({ length: k }, (_, i) => ({ name: `s${i}`, n: 100, correct: 95 })),
       })
-    const small = make(20_000)
-    const big = make(80_000)
-    const t1 = Math.max(best(() => assessAccuracyClaim(small)), 0.5)
-    const t2 = best(() => assessAccuracyClaim(big))
-    expect(t2 / t1).toBeLessThan(16)
+    const ratio = growthRatio((k) => {
+      const x = make(k)
+      return () => {
+        assessAccuracyClaim(x)
+      }
+    }, 20_000, 80_000)
+    expect(ratio).toBeLessThan(GROWTH_LIMIT)
   })
 
   it('a 100k-character name or display is cut or rejected in constant time', () => {

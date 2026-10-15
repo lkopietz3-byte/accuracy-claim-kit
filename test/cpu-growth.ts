@@ -20,28 +20,63 @@ export function bestCpuMs(work: () => void, trials = 5): number {
   return best
 }
 
-/** Runs that are timed per size: the best of three. */
-export const GROWTH_TRIALS = 3
+/**
+ * Growth ratios at or above this fail, for a 4x step in input size. Linear code
+ * reads about 4 and quadratic code about 16, so 10 sits between them. The
+ * "hostile:F1 the growth harness still fails a quadratic function" test in
+ * regressions.test.ts proves the limit still catches a quadratic function, so it
+ * cannot be loosened into a check that passes everything.
+ */
+export const GROWTH_LIMIT = 10
 
 /**
- * The most the CPU time may grow when the input grows 4x. Linear growth reads
- * about 4 and quadratic growth reads 16, so 10 sits between them with room for
- * noise. The worst linear reading seen on a GitHub runner was 7.9 (Node 20.19.0,
- * 500 against 2000 characters, 10 calls per run, best of 4); Node 26 on a laptop
- * reads 3 to 5.
+ * Why each measurement repeats the work: process.cpuUsage() counts CPU in
+ * scheduler ticks of 1 to 4 ms on a Linux runner, so a call that costs a few
+ * milliseconds is mostly tick rounding and fixed overhead. CI failures that led
+ * to this harness (GitHub Actions, one call or a fixed 40 calls per run):
+ *   - Node 26.3.0: the meta-test's quadratic function read 9.07 against a limit
+ *     of 10 ("expected 9.068391345249294 to be greater than or equal to 10").
+ *   - Node 20.19.0: a linear function read 7.9 in an earlier round.
+ * Repeating the call until the small input costs at least MIN_SECONDS of CPU
+ * makes the rounding error a few percent and leaves the ratio unchanged,
+ * because both sizes repeat equally.
  */
-export const GROWTH_LIMIT_FOR_4X = 10
+const MIN_SECONDS = 0.06
+const MAX_REPEATS = 100_000
+const RUNS = 5
+/** Guards the division when the smaller input is almost free. */
+const FLOOR_SECONDS = 0.002
 
-/** The smallest CPU time, in ms, that a size may be measured as: it keeps a timer tick from inflating the ratio. */
-export const GROWTH_FLOOR_MS = 2
+/** Best-of-`runs` CPU seconds (user + system) for `repeats` calls of `fn`. */
+export function cpuSeconds(fn: () => void, repeats = 1, runs = RUNS): number {
+  let best = Infinity
+  for (let i = 0; i < runs; i++) {
+    const before = process.cpuUsage()
+    for (let k = 0; k < repeats; k++) fn()
+    const used = process.cpuUsage(before)
+    best = Math.min(best, (used.user + used.system) / 1e6)
+  }
+  return best
+}
 
 /**
- * CPU time at `big` over CPU time at `small`. `makeRun(size)` builds the input
- * and returns the work to time, so building the input is not timed. Pick the
- * work per run so the small size takes at least ten milliseconds or so.
+ * CPU time at `big` over CPU time at `small` (a 4x step in the tests). `make(size)`
+ * builds the input and returns the work to time, so building the input is not
+ * timed. The work repeats until the small size costs at least MIN_SECONDS.
  */
-export function growthRatio(makeRun: (size: number) => () => void, small: number, big: number): number {
-  const t1 = Math.max(bestCpuMs(makeRun(small), GROWTH_TRIALS), GROWTH_FLOOR_MS)
-  const t2 = bestCpuMs(makeRun(big), GROWTH_TRIALS)
-  return t2 / t1
+export function growthRatio(make: (size: number) => () => void, small: number, big: number): number {
+  const runSmall = make(small)
+  const runBig = make(big)
+  runSmall()
+  runBig()
+  // The fastest of a few warm calls in wall-clock time: a pause from another
+  // process only makes a call look slower, so the minimum keeps the repeat count stable.
+  let wall = Infinity
+  for (let i = 0; i < 5; i++) {
+    const started = performance.now()
+    runSmall()
+    wall = Math.min(wall, (performance.now() - started) / 1000)
+  }
+  const repeats = Math.min(MAX_REPEATS, Math.max(1, Math.ceil(MIN_SECONDS / Math.max(wall, 1e-6))))
+  return cpuSeconds(runBig, repeats) / Math.max(cpuSeconds(runSmall, repeats), FLOOR_SECONDS)
 }

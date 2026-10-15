@@ -6,7 +6,7 @@ import { cohenKappa, gwetAC1, percentAgreement, wilsonInterval } from '../src/in
 import { foldText, mentionsName } from '../src/text.js'
 import { confidenceLabel } from '../src/format.js'
 import { vectors } from './vectors.js'
-import { bestCpuMs, cpuMs, GROWTH_LIMIT_FOR_4X, growthRatio } from './cpu-growth.js'
+import { bestCpuMs, cpuMs, GROWTH_LIMIT, growthRatio } from './cpu-growth.js'
 
 // Regression rows for the findings of the round 1 audit. Every row name starts
 // with the finding id it pins, so `vitest -t "field:F1"` runs one finding.
@@ -324,39 +324,46 @@ describe('hostile:F1 and codex:CX-1 the name matcher is linear in the claim text
   it('hostile:F1 codex:CX-1 CPU time grows less than 10x for 4x the text (500 and 2000 characters)', () => {
     // fail fast, before the repeated loops, if one call is already slow
     expect(cpuMs(() => assessAccuracyClaim(heavy(2000)))).toBeLessThan(250)
-    // 40 calls per run put the 500-character run near 15 ms of CPU, well above timer noise
     const ratio = growthRatio((length) => {
       const input = heavy(length)
       return () => {
-        for (let i = 0; i < 40; i++) assessAccuracyClaim(input)
+        assessAccuracyClaim(input)
       }
     }, 500, 2000)
-    expect(ratio).toBeLessThan(GROWTH_LIMIT_FOR_4X)
+    expect(ratio).toBeLessThan(GROWTH_LIMIT)
   })
 
   it('hostile:F1 a text full of matches that are all rejected is linear too', () => {
     const ratio = growthRatio((reps) => {
       const text = 'ab'.repeat(reps)
       return () => {
-        for (let i = 0; i < 40; i++) mentionsName(text, 'b')
+        mentionsName(text, 'b')
       }
     }, 5000, 20_000)
-    expect(ratio).toBeLessThan(GROWTH_LIMIT_FOR_4X)
+    expect(ratio).toBeLessThan(GROWTH_LIMIT)
   })
 
   it('hostile:F1 the growth harness still fails a quadratic function at the same limit, and passes a linear one', () => {
     let sink = 0
+    // CI (Node 26.3.0) read the old, cheaper quadratic function as 9.07 against the limit of 10, because its
+    // fixed overhead dominated the small size. This one does about 16 million steps at size 500, and the
+    // harness repeats it, so the ratio sits near 16.
     const quadratic = (size: number) => (): void => {
-      for (let i = 0; i < size; i++) for (let j = 0; j < size * 16; j++) sink = (sink + (i ^ j)) | 0
+      for (let i = 0; i < size; i++) for (let j = 0; j < size * 64; j++) sink = (sink + (i ^ j)) | 0
+    }
+    // a cheap quadratic function (a few microseconds per call at size 20) needs thousands of repeats to measure
+    const cheapQuadratic = (size: number) => (): void => {
+      for (let i = 0; i < size; i++) for (let j = 0; j < size * 4; j++) sink = (sink + (i ^ j)) | 0
     }
     const linear = (size: number) => (): void => {
       for (let i = 0; i < size * 4000; i++) sink = (sink + i) | 0
     }
-    // 4x the size: about 16x the CPU time for the quadratic function, about 4x for the linear one
-    expect(growthRatio(quadratic, 500, 2000)).toBeGreaterThanOrEqual(GROWTH_LIMIT_FOR_4X)
-    expect(growthRatio(linear, 500, 2000)).toBeLessThan(GROWTH_LIMIT_FOR_4X)
+    // 4x the size: about 16x the CPU time for a quadratic function, about 4x for the linear one
+    expect(growthRatio(quadratic, 500, 2000)).toBeGreaterThanOrEqual(GROWTH_LIMIT + 4)
+    expect(growthRatio(cheapQuadratic, 20, 80)).toBeGreaterThanOrEqual(GROWTH_LIMIT + 2)
+    expect(growthRatio(linear, 500, 2000)).toBeLessThan(GROWTH_LIMIT)
     expect(typeof sink).toBe('number')
-  }, 30_000) // about 1 s of CPU on a quiet machine; a loaded runner needs more than the default 5 s
+  }, 120_000) // the quadratic runs repeat until the small size costs 60 ms, so the big size costs about 1 s per run
 })
 
 describe('hostile:F3 a benchmark name needs a letter or a digit', () => {
@@ -882,17 +889,14 @@ describe('false-pass:F4 a figure in claim.text that differs from the figure judg
   it('false-pass:F4 the flag is listed once however many figures differ, and the text scan is linear', () => {
     const many = setCensus('99.9% 98.9% 97.9% 96.9% on the Foo set')
     expect(many.reasons).toEqual(['census-matches-count', 'text-figure-differs'])
-    const cpu = (copies: number): number => {
+    // claim.text is capped at 2000 characters, so 320 copies (1,934 characters) is the largest 4x step; the old 100 and 300 were a 3x step
+    const ratio = growthRatio((copies) => {
       const text = `${'99.9% '.repeat(copies)}on the Foo set`
-      const t0 = process.cpuUsage()
-      setCensus(text)
-      const t = process.cpuUsage(t0)
-      return t.user + t.system
-    }
-    cpu(10)
-    const small = Math.max(cpu(100), 1000)
-    const big = cpu(300)
-    expect(big / small).toBeLessThan(12)
+      return () => {
+        setCensus(text)
+      }
+    }, 80, 320)
+    expect(ratio).toBeLessThan(GROWTH_LIMIT)
   })
 })
 
