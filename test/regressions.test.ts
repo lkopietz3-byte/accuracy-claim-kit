@@ -703,7 +703,7 @@ describe('false-pass:F9 docs-release:D2 the suggested statement leads with its s
 
   it('false-pass:F9 docs-release:D2 the worked example reads as a statement about the sample', () => {
     expect(honest().suggestedStatement).toBe(
-      'On this sample, at least 98.87% accurate (95% Wilson interval 98.87% to 99.97%, n = 500, human labels, random sample); the interval covers sampling error only; print it to at most 0 decimal place(s)',
+      'On this sample, at least 98.87% accurate (95% Wilson interval 98.87% to 99.97%, n = 500, human labels, random sample); the interval covers sampling error only; print it as a whole percent',
     )
   })
 
@@ -1405,5 +1405,97 @@ describe('hostile:F11 a confidence level in e-notation is labeled from its digit
       expect(r.suggestedStatement).not.toMatch(/e[+-]?\d/)
       expect(r.suggestedStatement).not.toMatch(/100% Wilson/)
     }
+  })
+})
+
+describe('field:F4 a claim of 100% (or 0%) says why a sample cannot carry it, and what it can', () => {
+  const hundred = (n: number, display = '100%'): AccuracyAssessment =>
+    assessAccuracyClaim(sampled({ metric: 'accuracy', value: 1, display }, { n, correct: n }))
+
+  it('field:F4 290 of 290 claimed as 100%: still overstated, and the sentence names certainty and the figure that can be said', () => {
+    const r = hundred(290)
+    expect(outcome(r)).toBe('overstated [claim-beyond-conservative-bound]')
+    expect(r.explanation[0]).toContain('cannot be stated from a sample')
+    expect(r.explanation[0]).toContain('290 of 290')
+    expect(r.explanation[0]).toContain('98.692%')
+    expect(r.explanation[0]).not.toContain('inside the 95% Wilson interval but above')
+    expect(r.suggestedStatement).toMatch(/^On this sample, at least 98\.69% accurate/)
+    expect(r.suggestedStatement).not.toContain('print it to')
+  })
+
+  it('field:F4 zero errors claimed as 0%: the same, from the other side', () => {
+    const r = assessAccuracyClaim(sampled({ metric: 'error-rate', value: 0, display: '0%' }, { n: 290, errors: 0 }))
+    expect(outcome(r)).toBe('overstated [claim-beyond-conservative-bound]')
+    expect(r.explanation[0]).toContain('cannot be stated from a sample')
+    expect(r.explanation[0]).toContain('0 of 290')
+    expect(r.explanation[0]).toContain('1.308%')
+    expect(r.suggestedStatement).toMatch(/^On this sample, at most 1\.31% error rate/)
+  })
+
+  it('field:F4 only a claim of exactly 100% or 0% gets that sentence; a rounding is judged as before', () => {
+    const near = assessAccuracyClaim(sampled({ metric: 'accuracy', value: 0.999, display: '99.9%' }, { n: 290, correct: 290 }))
+    expect(near.explanation[0]).not.toContain('cannot be stated from a sample')
+    expect(near.explanation[0]).toContain('inside the 95% Wilson interval')
+    // a 100% claim that the counts contradict keeps the contradiction wording
+    const wrong = assessAccuracyClaim(sampled({ metric: 'accuracy', value: 1, display: '100%' }, { n: 290, correct: 250 }))
+    expect(outcome(wrong)).toBe('contradicted [claim-outside-interval]')
+  })
+
+  it('field:F4 under strictPrecision or conservative the sentence and the reason are the same', () => {
+    expect(outcome(assessAccuracyClaim(sampled({ metric: 'accuracy', value: 1, display: '100%' }, { n: 290, correct: 290 }), { conservative: true }))).toBe('overstated [claim-beyond-conservative-bound]')
+  })
+})
+
+describe('field:F5 a bound printed rounded to the nearest digit that lands just past the interval says to round down', () => {
+  const floor = (display: string, value: number, correct: number, n = 590): AccuracyAssessment =>
+    assessAccuracyClaim(sampled({ metric: 'accuracy', value, display }, { n, correct }))
+
+  it('field:F5 589 of 590 with a published lower bound of 99.1% is overstated by a rounding-sized shortfall, and the figure to print is 99.0%', () => {
+    const r = floor('99.1%+', 0.991, 589)
+    expect(outcome(r)).toBe('overstated [claim-beyond-conservative-bound]')
+    expect(r.explanation[0]).toContain('99.046%')
+    expect(r.explanation[0]).toContain('rounding of the last printed digit')
+    expect(r.explanation[0]).toContain('print the bound rounded down: 99.0%')
+  })
+
+  it('field:F5 the mirror for an upper bound: round up', () => {
+    const r = assessAccuracyClaim(sampled({ metric: 'error-rate', value: 0.0095, display: '0.95%' + '' }, { n: 5000, errors: 20 }))
+    expect(r.verdict).not.toBe('refused')
+    const bound = assessAccuracyClaim(sampled({ metric: 'error-rate', value: 0.006, display: 'at most 0.6%' }, { n: 5000, errors: 20 }))
+    expect(bound.verdict).toBe('overstated')
+    expect(bound.explanation[0]).toMatch(/print the bound rounded up: 0\.\d%/)
+  })
+
+  it('field:F5 a bound that misses by more than one last digit gets no hint, and neither does a point figure', () => {
+    const far = floor('99.5%+', 0.995, 589)
+    expect(far.explanation[0]).not.toContain('rounded down')
+    const point = floor('99.1%', 0.991, 589)
+    expect(point.explanation[0]).not.toContain('rounded down')
+  })
+})
+
+describe('docs-release:D7 decimal places are counted in words a person would write', () => {
+  it('docs-release:D7 zero decimals is "whole percents", one is singular, the rest plural, in the explanation and the statement', () => {
+    const at = (display: string, n: number, correct: number): AccuracyAssessment =>
+      assessAccuracyClaim(sampled({ metric: 'accuracy', value: Number(display.replace('%', '')) / 100, display }, { n, correct }))
+    const whole = at('99.8%', 500, 499)
+    expect(whole.explanation[1]).toBe('The figure is printed to 1 decimal place, but the interval is 1.09 percentage points wide and supports whole percents only.')
+    expect(whole.suggestedStatement).toMatch(/; print it as a whole percent$/)
+    const one = at('99.95%', 2000, 1999)
+    expect(one.explanation.join(' ')).toContain('printed to 2 decimal places')
+    expect(one.suggestedStatement).toMatch(/; print it to at most 1 decimal place$/)
+    const many = at('99.9500%', 2000, 1999)
+    expect(many.suggestedStatement).toMatch(/; print it to at most 1 decimal place$/)
+    expect(many.explanation.join(' ')).toContain('printed to 4 decimal places')
+    expect(JSON.stringify([whole, one, many])).not.toContain('place(s)')
+  })
+
+  it('docs-release:D7 the complete-set sentence reads the same way', () => {
+    const r = assessAccuracyClaim(census({ metric: 'accuracy', value: 0.799, display: '79.9000%' }, { n: 50_000, correct: 39_950 }, 'Foo set'))
+    expect(r.explanation.join(' ')).toContain('printed to 4 decimal places; 50000 items resolve at most 3 decimal places')
+    expect(r.suggestedStatement).toMatch(/; print it to at most 3 decimal places$/)
+    const small = assessAccuracyClaim(census({ metric: 'accuracy', value: 0.9, display: '90.0%' }, { n: 10, correct: 9 }, 'Foo set'))
+    expect(small.explanation.join(' ')).toContain('printed to 1 decimal place; 10 items resolve whole percents only')
+    expect(small.suggestedStatement).toMatch(/; print it as a whole percent$/)
   })
 })

@@ -281,6 +281,19 @@ const SAMPLE_WORD: Partial<Record<SamplingMethod, string>> = {
   'cross-validation': 'cross-validation estimate',
 }
 
+/** "1 decimal place", "2 decimal places"; whole percents have none. */
+function placesWord(decimals: number): string {
+  return decimals === 1 ? '1 decimal place' : `${String(decimals)} decimal places`
+}
+/** What a precision limit allows: "whole percents only", "at most 1 decimal place". */
+function supportsWord(decimals: number): string {
+  return decimals === 0 ? 'whole percents only' : `at most ${placesWord(decimals)}`
+}
+/** The statement's advice on how to print the figure. */
+function printAdvice(decimals: number): string {
+  return decimals === 0 ? '; print it as a whole percent' : `; print it to at most ${placesWord(decimals)}`
+}
+
 /**
  * The informational note for a figure in `claim.text` that is not the figure
  * judged (`text-figure-differs`), or null. The text is only scanned: a verdict
@@ -719,8 +732,8 @@ export function assessAccuracyClaim(
         censusVerdict = 'overstated'
       }
       censusReasons.push('precision-too-fine')
-      censusNotes.push(`The figure is printed to ${String(displayDecimals)} decimal place(s); ${String(n)} items resolve at most ${String(countDecimals(n))}.`)
-      censusPrecisionNote = `; print it to at most ${String(countDecimals(n))} decimal place(s)`
+      censusNotes.push(`The figure is printed to ${placesWord(displayDecimals)}; ${String(n)} items resolve ${supportsWord(countDecimals(n))}.`)
+      censusPrecisionNote = printAdvice(countDecimals(n))
     }
     const censusTextNote = textFigureNote(claimText, claimed, assessed, higherIsBetter)
     if (censusTextNote !== null) {
@@ -821,11 +834,30 @@ export function assessAccuracyClaim(
   } else {
     verdict = 'overstated'
     reasons.push('claim-beyond-conservative-bound')
-    explanation.push(
-      higherIsBetter
+    if (absolute) {
+      // 100% (or 0%) is certainty: no sample reaches it, even when every item agreed.
+      explanation.push(
+        higherIsBetter
+          ? `${subject} cannot be stated from a sample: an interval never reaches 100%, even when every item was right (${observedText}). The most the evidence supports is ${bottom}, the lower end of the ${cl} Wilson interval.`
+          : `${subject}${qualifier} cannot be stated from a sample: an interval never reaches 0%, even when no item was wrong (${observedText}). The least the evidence supports is ${top}, the upper end of the ${cl} Wilson interval.`,
+      )
+    } else {
+      let sentence = higherIsBetter
         ? `${subject} is inside the ${cl} Wilson interval but above its lower end (${bottom}), which is the most the evidence supports.`
-        : `${subject}${qualifier} is inside the ${cl} Wilson interval but below its upper end (${top}), which is the least the evidence supports.`,
-    )
+        : `${subject}${qualifier} is inside the ${cl} Wilson interval but below its upper end (${top}), which is the least the evidence supports.`
+      // A bound printed rounded to the nearest digit ("99.1%+" from a limit of 99.046%) can land
+      // just past the limit; the figure to print is the limit rounded in the cautious direction.
+      const printedDecimals = figure !== undefined && figure.bound !== null ? figure.info.decimals : null
+      if (printedDecimals !== null && figure !== undefined) {
+        const oneUnit = 10 ** -(printedDecimals + 2)
+        if (higherIsBetter && figure.bound === 'floor' && assessed - w.low < oneUnit) {
+          sentence += ` The shortfall is within the rounding of the last printed digit, so print the bound rounded down: ${pctFloor(w.low, printedDecimals)}.`
+        } else if (!higherIsBetter && figure.bound === 'ceiling' && w.high - assessed < oneUnit) {
+          sentence += ` The shortfall is within the rounding of the last printed digit, so print the bound rounded up: ${pctCeil(w.high, printedDecimals)}.`
+        }
+      }
+      explanation.push(sentence)
+    }
   }
 
   if (figure !== undefined && figure.bandNote !== null) {
@@ -836,7 +868,7 @@ export function assessAccuracyClaim(
   if (displayDecimals !== null) {
     const allowed = maxDisplayDecimals(w.high - w.low)
     if (displayDecimals > allowed) {
-      const text = `The figure is printed to ${String(displayDecimals)} decimal place(s), but the interval is ${pctNearest(w.high - w.low, 2).replace('%', '')} percentage points wide and supports at most ${String(allowed)} decimal place(s).`
+      const text = `The figure is printed to ${placesWord(displayDecimals)}, but the interval is ${pctNearest(w.high - w.low, 2).replace('%', '')} percentage points wide and supports ${supportsWord(allowed)}.`
       if (strictPrecision && verdict === 'supported') {
         // The value itself is fine; only the printed precision overreaches.
         reasons.length = 0
@@ -845,7 +877,7 @@ export function assessAccuracyClaim(
       }
       reasons.push('precision-too-fine')
       explanation.push(text)
-      precisionNote = `; print it to at most ${String(allowed)} decimal place(s)`
+      precisionNote = printAdvice(allowed)
     }
   }
 

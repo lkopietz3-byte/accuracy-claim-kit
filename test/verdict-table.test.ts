@@ -349,7 +349,7 @@ describe('suggested statements', () => {
     const r = assessAccuracyClaim(input({ claim: accuracy(0.998, '99.8%'), sample: { n: 500, correct: 499 } }))
     // The lower limit is 98.8759...%, so it prints as 98.8, not 98.9.
     expect(r.suggestedStatement).toBe(
-      'On this sample, at least 98.87% accurate (95% Wilson interval 98.87% to 99.97%, n = 500, human labels, random sample); the interval covers sampling error only; print it to at most 0 decimal place(s)',
+      'On this sample, at least 98.87% accurate (95% Wilson interval 98.87% to 99.97%, n = 500, human labels, random sample); the interval covers sampling error only; print it as a whole percent',
     )
   })
 
@@ -1387,7 +1387,7 @@ describe('benchmark-scoped (complete-set) claims', () => {
     const r = assessAccuracyClaim(input)
     expect(r.verdict).toBe('supported')
     expect(r.reasons).toEqual(['census-matches-count', 'precision-too-fine'])
-    expect(r.suggestedStatement).toMatch(/; print it to at most 3 decimal place\(s\)$/)
+    expect(r.suggestedStatement).toMatch(/; print it to at most 3 decimal places$/)
     const strict = assessAccuracyClaim(input, { strictPrecision: true })
     expect(strict.verdict).toBe('overstated')
     expect(strict.reasons).toEqual(['precision-too-fine'])
@@ -1795,8 +1795,8 @@ describe('an honest report of the observed rate is supported by default', () => 
     const r = assessU(claim, sample)
     expect(r.verdict).toBe('supported')
     expect(r.reasons).toEqual(['matches-observed-rate', 'precision-too-fine'])
-    expect(r.explanation[1]).toContain('supports at most 0 decimal place(s)')
-    expect(r.suggestedStatement).toMatch(/; print it to at most 0 decimal place\(s\)$/)
+    expect(r.explanation[1]).toContain('supports whole percents only')
+    expect(r.suggestedStatement).toMatch(/; print it as a whole percent$/)
     const strict = assessU(claim, sample, {}, { strictPrecision: true })
     expect(strict.verdict).toBe('overstated')
     expect(strict.reasons).toEqual(['precision-too-fine'])
