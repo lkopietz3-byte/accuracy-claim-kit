@@ -452,7 +452,7 @@ export function assessAccuracyClaim(
     claimText = textRaw
   }
 
-  const sampleCounts = readSampleCounts(sampleRaw)
+  const counts = readSampleCounts(sampleRaw)
 
   const provRec = requireRecord(provenanceRaw, 'provenance')
   assertKnownKeys(provRec, PROVENANCE_KEYS, 'provenance')
@@ -499,7 +499,6 @@ export function assessAccuracyClaim(
   }
 
   const strata = strataRaw === undefined ? undefined : readStrata(strataRaw)
-  const counts = sampleCounts
   // The strata's own totals, as text for a refusal that asks for the pooled counts (null when none or too big to say)
   let strataTotals: string | null = null
   if (strata !== undefined) {
@@ -510,8 +509,8 @@ export function assessAccuracyClaim(
       sumN += BigInt(s.n)
       sumCorrect += BigInt(s.correct)
     }
-    if (sampleCounts !== null) {
-      if (sumN !== BigInt(sampleCounts.n) || sumCorrect !== BigInt(sampleCounts.correct)) {
+    if (counts !== null) {
+      if (sumN !== BigInt(counts.n) || sumCorrect !== BigInt(counts.correct)) {
         throw new RangeError('strata counts must add up to the sample counts')
       }
     } else if (sumN <= BigInt(MAX_COUNT)) {
