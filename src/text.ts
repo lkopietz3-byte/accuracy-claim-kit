@@ -43,16 +43,20 @@ export function foldText(text: string): string {
 // eslint-disable-next-line no-control-regex
 const UNSAFE_TEXT = /[\u0000-\u0008\u000a-\u001f\u007f-\u009f\u2028\u2029\u202a-\u202e\u2066-\u2069]/u
 
+const LINE_BREAK = /[\n\r\u0085\u2028\u2029]/u
+
 /**
  * Throws RangeError when `value` holds a control or bidirectional-formatting
  * character, naming the field, the code point and where it sits (never echoing
- * the string itself).
+ * the string itself). `lineAdvice` is added when the character is a line break,
+ * for a field a caller is likely to paste from wrapped text.
  */
-export function assertPlainText(value: string, name: string): void {
+export function assertPlainText(value: string, name: string, lineAdvice?: string): void {
   const found = UNSAFE_TEXT.exec(value)
   if (found === null) return
   const code = (found[0].codePointAt(0) as number).toString(16).toUpperCase().padStart(4, '0')
-  throw new RangeError(`${name} must not contain a control or bidirectional-formatting character (U+${code} at position ${String(found.index)})`)
+  const advice = lineAdvice !== undefined && LINE_BREAK.test(found[0]) ? `; ${lineAdvice}` : ''
+  throw new RangeError(`${name} must not contain a control or bidirectional-formatting character (U+${code} at position ${String(found.index)})${advice}`)
 }
 
 const WORDISH = /[\p{L}\p{N}\p{M}]/u

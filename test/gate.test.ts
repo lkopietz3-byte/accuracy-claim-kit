@@ -191,3 +191,44 @@ describe('gate-hostile:F4 "1 in 1" is 100%, an absolute claim that matches only 
     expect(outcome(half)).toBe('supported [census-matches-count]')
   })
 })
+
+describe('gate-review:R5-F3 a claim.text with a line break throws a message that says how to fix it, and the wording is never echoed', () => {
+  const wrapped = 'Our detector is 90% accurate on\nthe held-out set.'
+
+  it('gate-review:R5-F3 the error names the field and the character, and says to put the claim on one line', () => {
+    for (const text of [wrapped, wrapped.replace('\n', '\r\n'), wrapped.replace('\n', '\r'), wrapped.replace('\n', ' ')]) {
+      let error: unknown
+      try {
+        assessAccuracyClaim(sampled({ metric: 'accuracy', value: 0.9, text }, { n: 1000, correct: 900 }))
+      } catch (e) {
+        error = e
+      }
+      const message = (error as RangeError).message
+      expect(error).toBeInstanceOf(RangeError)
+      expect(message).toContain('claim.text')
+      expect(message).toMatch(/one line/)
+    }
+    const joined = assessAccuracyClaim(sampled({ metric: 'accuracy', value: 0.9, text: wrapped.replace(/\s+/g, ' ') }, { n: 1000, correct: 900 }))
+    expect(joined.verdict).toBe('supported')
+  })
+
+  it('gate-review:R5-F3 a control character that is not a line break gets no line advice', () => {
+    let error: unknown
+    try {
+      assessAccuracyClaim(sampled({ metric: 'accuracy', value: 0.9, text: 'a‮b' }, { n: 1000, correct: 900 }))
+    } catch (e) {
+      error = e
+    }
+    expect((error as RangeError).message).not.toMatch(/one line/)
+  })
+
+  it('gate-review:R5-F3 claim.text reaches no explanation or statement as written: only figures read from it are quoted', () => {
+    const text = 'Zorblax detector, 90% accurate on the held-out Quuxset (verified last week by the lab)'
+    const r = assessAccuracyClaim(sampled({ metric: 'accuracy', value: 0.9, text }, { n: 1000, correct: 900 }))
+    const json = JSON.stringify(r)
+    for (const word of ['Zorblax', 'Quuxset', 'verified', 'last week']) expect(json).not.toContain(word)
+    const differing = assessAccuracyClaim(sampled({ metric: 'accuracy', value: 0.9, text: 'Zorblax gets 95% on Quuxset' }, { n: 1000, correct: 900 }))
+    expect(JSON.stringify(differing)).not.toContain('Zorblax')
+    expect(differing.reasons).toContain('text-figure-differs')
+  })
+})

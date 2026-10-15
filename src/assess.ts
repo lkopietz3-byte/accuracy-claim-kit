@@ -432,7 +432,7 @@ export function assessAccuracyClaim(
   if (textRaw !== undefined) {
     if (typeof textRaw !== 'string') throw new TypeError('claim.text must be a string')
     if (textRaw.length > MAX_TEXT_LENGTH) throw new RangeError(`claim.text must be at most ${String(MAX_TEXT_LENGTH)} characters`)
-    assertPlainText(textRaw, 'claim.text')
+    assertPlainText(textRaw, 'claim.text', 'put the claim on one line (join the lines with spaces) before passing it')
     claimText = textRaw
   }
 
