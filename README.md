@@ -370,6 +370,8 @@ The tables run from 2 to 8 categories and 1 to 1,000 items, with skewed, diagona
 
 A slice of the corpus (547 cases) runs in the test suite (`test/field-corpus.test.ts`).
 
+A separate holdout (`bench/holdout/`) has 103 public claims with printed counts from 30 open-access papers and one vendor benchmark page, none from the FDA corpus. Each was labeled by hand from the README's rules and the label committed before the kit ran on it. The kit's verdict equals the label on 103 of 103 (73 supported, 24 refused, 4 contradicted, 2 overstated). The six contradicted or overstated rows are five percentages that are not the rate their own counts give (four truncated instead of rounded, one mistyped) and one vendor sentence. 71 of the 103 are scores over a fixed set, so the interval is exercised by only 6 claims; `bench/holdout/README.md` says what the result does not show.
+
 ### Vectors
 
 Expected values for the printed-form, complete-set and noisy-value grids come from `test/fixtures/generate_vectors.py`, which uses only the Python standard library (`math`, `decimal`, `fractions`, `random` with a fixed seed, `statistics.NormalDist`). The Wilson reference runs in 60-digit decimal arithmetic; agreement statistics run in exact rational arithmetic. The committed output is `test/fixtures/vectors.json`.

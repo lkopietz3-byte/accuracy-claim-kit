@@ -70,4 +70,5 @@ for (const r of dis) console.log('DISAGREE', r.id, 'label', JSON.stringify(r.wan
 const reasonDis = rows.filter((r) => r.agreeVerdict && !r.agreeReasons)
 console.log(`same verdict, different reason codes: ${reasonDis.length}`)
 for (const r of reasonDis) console.log('REASONS', r.id, 'label', JSON.stringify(r.want.reasons), 'kit', JSON.stringify(r.got.reasons))
+if (dis.length > 0) process.exitCode = 1 // a disagreement is a finding to explain, not a number to adjust
 if (process.argv.includes('--write')) fs.writeFileSync(path.join(here, 'results.jsonl'), rows.map((r) => JSON.stringify(r)).join('\n') + '\n')

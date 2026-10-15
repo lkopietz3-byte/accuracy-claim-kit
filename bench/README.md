@@ -3,16 +3,16 @@
 This folder lets anyone check what the kit does on real published figures, and re-run the numbers quoted in the README. It is not shipped in the npm package (`files` in `package.json` lists only `dist`, the README and the changelog).
 
 ```sh
-npm run bench     # builds, regenerates the cases with the Python oracle, runs the kit, checks the headline numbers
+npm run bench     # builds, regenerates the cases with the Python oracle, runs the kit, checks the headline numbers, then runs the holdout
 ```
 
-`npm run bench` needs `python3` (standard library only) and Node 20 or newer. It exits 1 if a headline number in `expected.json` changes.
+`npm run bench` needs `python3` (standard library only) and Node 20 or newer. It exits 1 if a headline number in `expected.json` changes or if the kit disagrees with a holdout label.
 
 ## What is compared with what
 
 Each case is a claim built from a count and a printed percentage that appear in a public document, and each has a verdict decided by `oracle.py` before the kit sees it. The oracle is a second implementation of the kit's documented rules: Wilson intervals in 60-digit decimal arithmetic, rate equality in exact fractions, written from the README's verdict table and sharing no code with `src/`.
 
-That caveat matters. Agreement with the oracle shows the kit does what its README says. It does not show that the README's rules are the right ones, and the oracle shares its author with the kit. The holdout (`holdout/`) is the check that does not depend on the oracle: its verdicts were decided by hand from the rules and from reading each source, and written down before the kit ran.
+That caveat matters. Agreement with the oracle shows the kit does what its README says. It does not show that the README's rules are the right ones, and the oracle shares its author with the kit. The holdout (`holdout/`) is the check that does not use the oracle: its verdicts were decided from the rules and from reading each source, and written down before the kit ran.
 
 ## The FDA corpus (`fda/`)
 
@@ -50,4 +50,4 @@ See `SOURCES.json`: every source URL, the license or terms of each source, what 
 
 ## The holdout (`holdout/`)
 
-Public accuracy claims from a family the FDA corpus does not cover, labeled by hand before the kit was run. See `holdout/README.md`.
+103 public accuracy claims with printed counts from 30 open-access papers and a vendor benchmark page, none from the FDA corpus, labeled by hand before the kit was run: the kit agrees on 103 of 103 (73 supported, 24 refused, 4 contradicted, 2 overstated). `node bench/holdout/run.mjs` reproduces it; `holdout/README.md` says what it does not show.
