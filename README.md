@@ -1,37 +1,67 @@
 # Accuracy Claim Kit
 
-Substantiation for a published accuracy or error-rate number. You give it the counts behind the figure, who labeled the items, how they were chosen, and optionally what the claim covers and when it was measured. It tells you whether those counts can carry the figure, and writes the most the evidence supports as a plain statement you can publish instead.
+Does this accuracy or error-rate number have the evidence to carry it? You give the kit the counts behind a published figure, who labeled the items and how they were chosen. It says whether those counts can carry the figure, and writes the most the evidence supports as a plain statement you can publish instead.
 
-It is for people who publish a figure from their own evaluation: an AI-eval author, a team with a model or detector in production, a maintainer writing a benchmark README or a methodology page. It does one job: checking one number against its own evidence. Most real claims fail on a missing declaration (nobody wrote down who labeled, how items were picked, or what was measured), so expect "refused" often and read it as "write this down", not "false".
+It is for people who publish a figure from their own evaluation: an AI-eval author, a team with a model or detector in production, a maintainer writing a benchmark README or a methodology page. Most real claims fail on a missing declaration (nobody wrote down who labeled, how items were picked, or what was measured), so expect `refused` often and read it as "write this down", not "false".
 
-What it does not do: it does not judge whether labels are correct, detect a sample that was quietly filtered, compare systems, or make any legal or regulatory determination. A `supported` verdict means the claim is no more favorable than the evidence you supplied (or is an honest report of the observed rate); it is not proof the system is accurate. See "What it does not do".
+The kit checks evidence. It does not certify that a figure is true or that a system is accurate, and it makes no legal or regulatory determination. A `supported` verdict means the claim is no more favorable than the counts you supplied, or is an honest report of the rate you observed. See "What it does not do" and [METHOD.md](https://github.com/lkopietz3-byte/accuracy-claim-kit/blob/main/METHOD.md), which gives the reason for every rule and default.
 
-Zero runtime dependencies, TypeScript, ESM, Node 20 or newer, no `node:` imports in the source. It reads no clock and uses no randomness: the same input gives the same output (dates are passed in, never read).
+Zero runtime dependencies, TypeScript types included, ESM, Node 20 or newer. It reads no clock and uses no randomness: the same input gives the same output (dates are passed in, never read).
 
-Status: private and unlicensed (`"private": true`, `"license": "UNLICENSED"`). It is not published anywhere.
+## Install
+
+```sh
+npm i accuracy-claim-kit
+```
 
 ESM only: `import` it. A CommonJS file can `require()` it on Node 20.19 or newer and 22.12 or newer (the releases that can require an ES module); on older Node 20 use `await import('accuracy-claim-kit')`.
 
 ## Quick start
 
-The same evidence (990 of 1000 right, labeled by people, drawn at random) against three claims:
+The same evidence (990 of 1000 right, labeled by people, drawn at random) against three claims. Save this as `check.mjs` and run `node check.mjs`:
 
-```ts
+```js
 import { assessAccuracyClaim } from 'accuracy-claim-kit'
 
-const evidence = { sample: { n: 1000, correct: 990 }, provenance: { source: 'human' }, sampling: 'random' } as const
+const evidence = { sample: { n: 1000, correct: 990 }, provenance: { source: 'human' }, sampling: 'random' }
 
-assessAccuracyClaim({ claim: { metric: 'accuracy', value: 0.98, display: '98%' }, ...evidence }).verdict
-// 'supported': the lower end of the 95% interval is 98.17%, so "98%" is no more than the evidence shows
-
-assessAccuracyClaim({ claim: { metric: 'accuracy', value: 0.995, display: '99.5%' }, ...evidence }).verdict
-// 'contradicted': the interval tops out at 99.46%, so "99.5%" is more than the counts allow
-
-assessAccuracyClaim({ claim: { metric: 'accuracy', value: 0.98, display: '98%' }, ...evidence, provenance: { source: 'model' } })
-// verdict 'refused', reasons ['no-human-labels']: a model's labels are not ground truth, so no figure can be judged
+for (const [display, value, more] of [['98%', 0.98, {}], ['99.5%', 0.995, {}], ['98%', 0.98, { provenance: { source: 'model' } }]]) {
+  const r = assessAccuracyClaim({ claim: { metric: 'accuracy', value, display }, ...evidence, ...more })
+  console.log(display, r.verdict, r.reasons.join(', '))
+}
 ```
 
+It prints:
+
+```
+98% supported claim-within-bound
+99.5% contradicted claim-outside-interval, precision-too-fine
+98% refused no-human-labels
+```
+
+- "98%" is `supported`: the lower end of the 95% interval is 98.17%, so 98% is no more than the evidence shows.
+- "99.5%" is `contradicted`: the interval tops out at 99.46%, so 99.5% is more than the counts allow.
+- The third has the same counts with labels from a model. It is `refused`: a model's labels are not ground truth, so no figure can be judged.
+
 `refused` means "cannot tell", not "false": it lists what to write down (who labeled, how items were picked, how many) so a figure can be judged. Every result has `reasons`, one plain sentence each in `explanation`, and a `suggestedStatement` you can publish instead of the claim.
+
+## Accuracy on real data
+
+How often is the kit right? Two re-runnable checks answer this, and neither is a sample of all accuracy claims. `npm run bench` reproduces every number below (it needs `python3`). They were measured on the 0.1.0 source at revision `f8cbc6f` of the repository, and `bench/expected.json` pins them.
+
+**Field benchmark: 216 printed rates with counts in 75 public FDA 510(k) summaries.** Each printed figure was altered in nine ways (rounded up, plus three points, claimed as 100%, five points under, a floor taken from the printed interval, the complement error rate, and error ceilings), and every claim was judged by `bench/oracle.py`, a second implementation of the rules in this README.
+
+- Of the 957 altered claims the oracle says the counts do not carry, the kit passed 0 as `supported`.
+- Of the 726 claims the oracle says the counts carry, the kit said `supported` for 726.
+- The kit's verdict equals the oracle's on 2,001 of 2,001 judged claims (also under `strictPrecision` and `conservative`), 216 of 216 with each document's declared sampling and label source, 3,498 of 3,498 as claims about a whole fixed set, and 95 of 95 pooled site tables.
+
+The oracle restates this README's rules and shares an author with the kit, so agreement shows the kit does what it documents, not that the rules are right. The FDA corpus is one document family, and the altered claims are built by fixed rules, so 0 of 957 is not the rate on claims people actually write.
+
+**Holdout: 103 public claims from other sources.** 103 claims with printed counts, from 30 open-access papers and one vendor benchmark page, none from the FDA corpus. Each was labeled by hand from the rules before the kit ran on it. The kit's verdict equals the label on 103 of 103 (73 supported, 24 refused, 4 contradicted, 2 overstated). Five of the six contradicted or overstated rows are printed percentages that are not the rate their own counts give (four truncated instead of rounded, one mistyped). 71 of the 103 are scores over a fixed set, so the interval path is exercised by only 6 claims.
+
+**Cross-check of the arithmetic.** Wilson intervals (8,899 cases), z, percent agreement, Cohen's kappa and Gwet's AC1 (1,500 two-rater tables) match statsmodels, scipy, scikit-learn and irrCAC to a largest difference of 4.9e-15 for Wilson and 6.7e-14 for kappa. See "Cross-checked against reference libraries".
+
+**What these numbers do not show.** They do not show that the policy defaults are right (the minimum sample of 30, the precision rule and the strata check are choices; METHOD.md lists each with its measured rate). They do not show how often declared labels and sampling are true, because the kit takes declarations at your word. A `supported` verdict on an honest report of the observed rate is not a claim about the true rate: in a simulation, the true rate was below an honest whole-percent report in 41% of samples (3,645 of 9,000), which is why the statement always quotes the interval.
 
 ## What it checks
 
@@ -77,7 +107,7 @@ The "conservative bound" is the end of the interval a claim should not beat: the
 
 499 of 500 items were right, labeled by two people, drawn at random. The claim is "99.8% accurate".
 
-```ts
+```js
 import { assessAccuracyClaim } from 'accuracy-claim-kit'
 
 const result = assessAccuracyClaim({
@@ -168,7 +198,7 @@ A bound pointing the wrong way for the metric ("<99%" accuracy), an impossible o
 
 Many real claims are not estimates from a sample: they are a score over the whole of a fixed, named set (a published validation set, a full test split). There is nothing to infer, so an interval is the wrong tool. Declare it with `sampling: 'complete'`, the set's name, and claim wording that names it:
 
-```ts
+```js
 assessAccuracyClaim({
   claim: { metric: 'accuracy', value: 0.799, display: '79.9%', text: 'Reaches 79.9% top-1 accuracy on the Ridgeview validation set' },
   sample: { n: 50000, correct: 39950 },
@@ -206,10 +236,6 @@ Real claims come as prose. Pull out these declarations first, and write "unknown
 | how items were chosen (all of a named set, a random draw, by score, whatever was handy) | `sampling`: `complete`, `random`, `stratified`, `ranked`, `convenience`, `unknown` |
 
 Pass `display` exactly as printed whenever it is one of the forms in the display table above (plain, approximate, floor, ceiling, range or `1 in N`). Do not drop or rewrite a bound or range: leaving out `<2%` turns a ceiling into a rounded point claim, which can change the verdict from `contradicted` to `supported`. Only prose the kit cannot read (a bare `1.8`, text around the figure) needs cleaning first; the kit throws on a display it cannot read rather than guessing.
-
-## Install
-
-The package is private and not on a registry. From a clone, `npm run build && npm pack` produces a tarball that another project can install by path. The examples import it as `accuracy-claim-kit`.
 
 ## API
 
@@ -329,7 +355,7 @@ Gwet     pi_k = (a_k + b_k) / (2N)
 - A `supported` verdict is not proof that the system is accurate. It says only that the claim is no more favorable than the lower end of an interval computed from counts you supplied, or is an honest report of the rate you observed (`matches-observed-rate`). The interval describes sampling noise alone; it does not cover label errors, drift, a different population in production, or choosing the best of several runs.
 - The Wilson interval treats the pooled counts as one simple random sample. A stratified sample with unequal sampling rates is not a simple random sample; the interval is not reweighted, so use per-stratum results for those.
 - It does not compare two systems, test significance between them, or estimate calibration.
-- It does not give advice, legal conclusions, or compliance conclusions.
+- It does not give advice, legal conclusions, or compliance conclusions. It checks evidence; it does not certify truth, and it does not decide whether evidence meets any legal standard.
 - The 30-item default minimum, the 1/10-of-width precision rule and the strata check are policy choices written down here, not statistical laws. Change `minN` if your situation differs.
 - It does not check an interval you quote. A published "95% CI 0.0 to 1.2" is not compared with the computed interval; a claim that carries its own correct interval can still come back `overstated` when the point figure sits above the interval's lower end. Use the suggested statement, which quotes the computed interval.
 - It does not compare systems ("+27 points over the old one", "best of ten models") and does not reweight a stratified sample by population share; for that, report per-stratum results.
@@ -399,5 +425,6 @@ src/text.ts        identifier folding for scope and benchmark names
 src/validate.ts    input readers
 test/              verdict table, numeric vectors, reference cross-check, field slice, hostile inputs
 scripts/           package verification and consumer probes; reference/gen.py (developer tool)
-bench/             field benchmark and holdout (not shipped)
+bench/             field benchmark, heuristic rates and holdout (not shipped)
+METHOD.md          why each verdict and default, measured rates, limits, framework mapping
 ```
