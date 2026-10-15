@@ -1296,3 +1296,40 @@ describe('false-pass:F11 the comparison tolerance never excuses an absolute clai
     expect(outcome(assessAccuracyClaim(sampled({ metric: 'accuracy', value: low }, { n: 1e13, correct: 1e13 })))).toBe('supported [claim-within-bound]')
   })
 })
+
+describe('hostile:F6 more distinct labels than the cap throw a clear error instead of exhausting the label table', () => {
+  const distinct = (count: number): [number, number][] => {
+    const pairs = new Array<[number, number]>(count)
+    for (let i = 0; i < count; i++) pairs[i] = [i, i]
+    return pairs
+  }
+
+  it('hostile:F6 percentAgreement, cohenKappa and gwetAC1 throw RangeError naming pairs and the limit, quickly', () => {
+    const pairs = distinct(1_000_001)
+    for (const fn of [percentAgreement, cohenKappa, gwetAC1]) {
+      const t0 = process.cpuUsage()
+      let error: unknown
+      try {
+        fn(pairs)
+      } catch (e) {
+        error = e
+      }
+      const t = process.cpuUsage(t0)
+      expect(error, fn.name).toBeInstanceOf(RangeError)
+      expect((error as RangeError).message).toMatch(/pairs have more than 1000000 distinct labels/)
+      expect((t.user + t.system) / 1000, fn.name).toBeLessThan(3000)
+    }
+  }, 60_000)
+
+  it('hostile:F6 a million distinct labels is the most that is accepted, and ordinary label sets are untouched', () => {
+    expect(percentAgreement(distinct(1000)).status).toBe('defined')
+    expect(percentAgreement(distinct(1000))).toMatchObject({ n: 1000, agreements: 1000, categories: 1000 })
+    expect(percentAgreement(distinct(1_000_000))).toMatchObject({ n: 1_000_000, categories: 1_000_000 })
+  }, 60_000)
+
+  it('hostile:F6 a label seen before never counts against the cap', () => {
+    const pairs: [number, number][] = distinct(500)
+    for (let i = 0; i < 20_000; i++) pairs.push([i % 500, (i * 7) % 500])
+    expect(cohenKappa(pairs).status).toBe('defined')
+  })
+})

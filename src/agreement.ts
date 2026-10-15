@@ -54,6 +54,9 @@ interface Tally {
   byLabel: Map<Label, [number, number]>
 }
 
+/** Most distinct labels in one set of pairs. Agreement is about a handful of categories; this only keeps the label table from growing without bound. */
+export const MAX_DISTINCT_LABELS = 1_000_000
+
 function readLabel(value: unknown, where: string): Label {
   if (typeof value === 'string') {
     // Equal-length strings over 16,383 characters collide in V8's Map hashing and make the tally quadratic.
@@ -98,6 +101,10 @@ function tally(pairs: unknown): Tally {
     const cb = byLabel.get(b)
     if (cb === undefined) byLabel.set(b, [0, 1])
     else cb[1] += 1
+    if (byLabel.size > MAX_DISTINCT_LABELS) {
+      // before V8's own limit on a Map (about 16.7 million entries) turns this into a bare 'Map maximum size exceeded'
+      throw new RangeError(`pairs have more than ${String(MAX_DISTINCT_LABELS)} distinct labels; agreement is for a small set of categories`)
+    }
   }
   return { n: length, agreements, byLabel }
 }
