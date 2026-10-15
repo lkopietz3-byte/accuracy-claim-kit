@@ -53,8 +53,9 @@ export interface Claim {
    */
   display?: string | undefined
   /**
-   * The claim's wording, used only for `sampling: 'complete'`: it must name the
-   * benchmark, or the claim is refused as an unscoped general claim. At most 2000 characters.
+   * The claim's wording. For `sampling: 'complete'` it must name the benchmark, or the
+   * claim is refused as an unscoped general claim. On every path a figure in it that is
+   * not the figure judged is flagged (`text-figure-differs`), never judged. At most 2000 characters.
    */
   text?: string | undefined
 }
@@ -180,6 +181,7 @@ export type ReasonCode =
   | 'matches-observed-rate'
   // informational, never changes the verdict
   | 'claim-worse-than-counts'
+  | 'text-figure-differs'
 
 /** Whether an optional check ran for this call. */
 export type GateStatus = 'applied' | 'not-supplied'

@@ -752,3 +752,105 @@ describe('false-pass:F9 docs-release:D2 the suggested statement leads with its s
     expect(r.suggestedStatement).toBe('39950 of 50000 correct on Ridgeview validation set (complete set, human labels): 79.90% accuracy. This describes that set only; it is not an estimate for other data')
   })
 })
+
+describe('false-pass:F4 a figure in claim.text that differs from the figure judged is flagged, never judged', () => {
+  const setCensus = (text: string, over: Partial<AccuracyClaimInput['claim']> = {}): AccuracyAssessment =>
+    assessAccuracyClaim(census({ metric: 'accuracy', value: 0.799, display: '79.9%', text, ...over }, { n: 50_000, correct: 39_950 }, 'Foo set'))
+
+  it('false-pass:F4 the three audit texts: 99.9% and "perfect" are flagged, the matching sentence is clean', () => {
+    const high = setCensus('Reaches 99.9% accuracy on the Foo set')
+    expect(outcome(high)).toBe('supported [census-matches-count, text-figure-differs]')
+    expect(high.explanation[1]).toContain('99.9%')
+    expect(high.explanation[1]).toContain('79.9')
+    expect(high.explanation[1]).toMatch(/text/)
+    expect(outcome(setCensus('Perfect accuracy on the Foo set'))).toBe('supported [census-matches-count, text-figure-differs]')
+    const clean = setCensus('Reaches 79.9% accuracy on the Foo set')
+    expect(outcome(clean)).toBe('supported [census-matches-count]')
+    expect(setCensus('Reaches 99.9% accuracy on the Foo set').suggestedStatement).toBe(clean.suggestedStatement)
+  })
+
+  it('false-pass:F4 the verdict is whatever it was: a contradicted claim stays contradicted and still gets the flag', () => {
+    const r = setCensus('Reaches 99.9% accuracy on the Foo set', { value: 0.81, display: '81%' })
+    expect(outcome(r)).toBe('contradicted [claim-differs-from-count, text-figure-differs]')
+  })
+
+  it('false-pass:F4 the sample path flags it too', () => {
+    const base = (text: string): AccuracyAssessment =>
+      assessAccuracyClaim(sampled({ metric: 'accuracy', value: 0.99, display: '99%', text }, { n: 1000, correct: 990 }))
+    expect(outcome(base('Our model is 99% accurate'))).toBe('supported [matches-observed-rate]')
+    expect(outcome(base('Our model is 99.9% accurate'))).toBe('supported [matches-observed-rate, text-figure-differs]')
+    expect(outcome(base('99% accurate, 100% reliable'))).toBe('supported [matches-observed-rate, text-figure-differs]')
+  })
+
+  it('false-pass:F4 a rounding of the value is the same figure, finer digits than the value are not', () => {
+    expect(outcome(setCensus('80% on the Foo set'))).toBe('supported [census-matches-count]')
+    expect(outcome(setCensus('79.9000% on the Foo set'))).toBe('supported [census-matches-count]')
+    expect(outcome(setCensus('79.95% on the Foo set'))).toBe('supported [census-matches-count, text-figure-differs]')
+    expect(outcome(setCensus('about 80% on the Foo set'))).toBe('supported [census-matches-count]')
+    expect(outcome(setCensus('79-81% on the Foo set'))).toBe('supported [census-matches-count]')
+    expect(outcome(setCensus('85-90% on the Foo set'))).toBe('supported [census-matches-count, text-figure-differs]')
+  })
+
+  it('false-pass:F4 "percent" and "per cent" are the percent sign', () => {
+    expect(outcome(setCensus('79.9 percent on the Foo set'))).toBe('supported [census-matches-count]')
+    expect(outcome(setCensus('99.9 percent on the Foo set'))).toBe('supported [census-matches-count, text-figure-differs]')
+    expect(outcome(setCensus('99.9 per cent on the Foo set'))).toBe('supported [census-matches-count, text-figure-differs]')
+    expect(outcome(setCensus('99.9 pct on the Foo set'))).toBe('supported [census-matches-count, text-figure-differs]')
+  })
+
+  it('false-pass:F4 a bound in the text is read as a bound against the value', () => {
+    expect(outcome(setCensus('at least 75% on the Foo set'))).toBe('supported [census-matches-count]')
+    expect(outcome(setCensus('over 70% on the Foo set'))).toBe('supported [census-matches-count]')
+    expect(outcome(setCensus('79%+ on the Foo set'))).toBe('supported [census-matches-count]')
+    expect(outcome(setCensus('at least 85% on the Foo set'))).toBe('supported [census-matches-count, text-figure-differs]')
+    expect(outcome(setCensus('over 79.9% on the Foo set'))).toBe('supported [census-matches-count, text-figure-differs]')
+    expect(outcome(setCensus('85%+ on the Foo set'))).toBe('supported [census-matches-count, text-figure-differs]')
+    // a bound pointing the wrong way for the metric cannot be read as one, so it is not judged either way
+    expect(outcome(setCensus('at most 5% on the Foo set'))).toBe('supported [census-matches-count]')
+  })
+
+  it('false-pass:F4 the complement is the same fact: an error-rate claim may quote its accuracy', () => {
+    const r = assessAccuracyClaim(census(
+      { metric: 'error-rate', value: 0.1229, display: '12.29%', text: 'Resolves 87.71% on Foo set; fails 12.29% of Foo set' },
+      { n: 10_000, errors: 1229 }, 'Foo set'))
+    expect(outcome(r)).toBe('supported [census-matches-count]')
+    const off = assessAssessErr('Resolves 90% on Foo set; fails 12.29% of Foo set')
+    expect(outcome(off)).toBe('supported [census-matches-count, text-figure-differs]')
+    function assessAssessErr(text: string): AccuracyAssessment {
+      return assessAccuracyClaim(census({ metric: 'error-rate', value: 0.1229, display: '12.29%', text }, { n: 10_000, errors: 1229 }, 'Foo set'))
+    }
+  })
+
+  it('false-pass:F4 absolute wording is a 100% (or 0% error) claim', () => {
+    const exact = (text: string, metric: 'accuracy' | 'error-rate', value: number): string => {
+      const claim = { metric, value, display: metric === 'accuracy' ? '100%' : '0%', text }
+      return outcome(assessAccuracyClaim(census(claim, metric === 'accuracy' ? { n: 200, correct: 200 } : { n: 200, errors: 0 }, 'Foo set')))
+    }
+    for (const word of ['perfect', 'flawless', 'error-free', 'no errors', 'zero errors']) {
+      expect(exact(`${word} on the Foo set`, 'accuracy', 1), word).toBe('supported [census-matches-count]')
+      expect(exact(`${word} on the Foo set`, 'error-rate', 0), word).toBe('supported [census-matches-count]')
+    }
+    expect(outcome(setCensus('an imperfect score on the Foo set'))).toBe('supported [census-matches-count]')
+  })
+
+  it('false-pass:F4 a refusal reports only its failed preconditions', () => {
+    const r = assessAccuracyClaim(census({ metric: 'accuracy', value: 0.799, display: '79.9%', text: 'Reaches 99.9% on the Foo set' }, { n: 50_000, correct: 39_950 }, 'Foo set', { provenance: { source: 'model' } }))
+    expect(r.reasons).toEqual(['no-human-labels'])
+  })
+
+  it('false-pass:F4 the flag is listed once however many figures differ, and the text scan is linear', () => {
+    const many = setCensus('99.9% 98.9% 97.9% 96.9% on the Foo set')
+    expect(many.reasons).toEqual(['census-matches-count', 'text-figure-differs'])
+    const cpu = (copies: number): number => {
+      const text = `${'99.9% '.repeat(copies)}on the Foo set`
+      const t0 = process.cpuUsage()
+      setCensus(text)
+      const t = process.cpuUsage(t0)
+      return t.user + t.system
+    }
+    cpu(10)
+    const small = Math.max(cpu(100), 1000)
+    const big = cpu(300)
+    expect(big / small).toBeLessThan(12)
+  })
+})

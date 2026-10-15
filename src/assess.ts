@@ -1,7 +1,7 @@
 import type { AgreementStatistic } from './agreement.js'
 import { countDecimals, matchesValue } from './census.js'
 import { dayNumber } from './dates.js'
-import { parseDisplayFigure } from './display.js'
+import { parseDisplayFigure, textFiguresDiffering } from './display.js'
 import { beyondOneUlp } from './exact.js'
 import type { DisplayFigure } from './display.js'
 import { confidenceLabel, maxDisplayDecimals, pctCeil, pctFloor, pctNearest } from './format.js'
@@ -242,6 +242,20 @@ const SAMPLING_ERROR_ONLY_CV = 'the interval covers sampling error only and is o
 const SAMPLE_WORD: Partial<Record<SamplingMethod, string>> = {
   stratified: 'stratified sample',
   'cross-validation': 'cross-validation estimate',
+}
+
+/**
+ * The informational note for a figure in `claim.text` that is not the figure
+ * judged (`text-figure-differs`), or null. The text is only scanned: a verdict
+ * is never changed by it.
+ */
+function textFigureNote(text: string | undefined, claimed: number, assessed: number, higherIsBetter: boolean): string | null {
+  if (text === undefined) return null
+  const differing = textFiguresDiffering(text, claimed, assessed, higherIsBetter)
+  if (differing.length === 0) return null
+  const shown = differing.slice(0, 3).map((figure) => `"${clip(figure, 40)}"`).join(', ')
+  const more = differing.length > 3 ? ` and ${String(differing.length - 3)} more` : ''
+  return `claim.text says ${shown}${more}, which is not the figure judged (${pctNearest(assessed, 3)}). The verdict judges value and display, never the wording, so make the text say what was judged.`
 }
 
 /**
@@ -668,6 +682,11 @@ export function assessAccuracyClaim(
       censusNotes.push(`The figure is printed to ${String(displayDecimals)} decimal place(s); ${String(n)} items resolve at most ${String(countDecimals(n))}.`)
       censusPrecisionNote = `; print it to at most ${String(countDecimals(n))} decimal place(s)`
     }
+    const censusTextNote = textFigureNote(claimText, claimed, assessed, higherIsBetter)
+    if (censusTextNote !== null) {
+      censusReasons.push('text-figure-differs')
+      censusNotes.push(censusTextNote)
+    }
     const name = benchmarkName as string
     const counted = higherIsBetter ? `${String(k)} of ${String(n)} correct` : `${String(k)} of ${String(n)} wrong`
     const setWord = sampling === 'held-out-split' ? 'held-out split' : 'complete set'
@@ -793,6 +812,12 @@ export function assessAccuracyClaim(
         `${subject} is far less favorable than the counts support (the 99.9% Wilson interval is ${pctFloor(wide.low, 3)} to ${pctCeil(wide.high, 3)}). If this is a published figure it may be stale or wrong.`,
       )
     }
+  }
+
+  const textNote = textFigureNote(claimText, claimed, assessed, higherIsBetter)
+  if (textNote !== null) {
+    reasons.push('text-figure-differs')
+    explanation.push(textNote)
   }
 
   // ---- statement ---------------------------------------------------------
