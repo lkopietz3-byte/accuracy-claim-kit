@@ -1,6 +1,6 @@
 # Field benchmark
 
-This folder lets anyone check what the kit does on real published figures, and re-run the numbers quoted in the README. It is not shipped in the npm package (`files` in `package.json` lists only `dist`, the README and the changelog).
+This folder lets anyone check what the kit does on real published figures, and re-run the numbers quoted in the README. It is not shipped in the npm package (`files` in `package.json` lists only `dist`, the README, `METHOD.md`, the license and the changelog).
 
 ```sh
 npm run bench     # builds, regenerates the cases with the Python oracle, runs the kit, checks the headline numbers, then runs the holdout
@@ -51,3 +51,7 @@ See `SOURCES.json`: every source URL, the license or terms of each source, what 
 ## The holdout (`holdout/`)
 
 103 public accuracy claims with printed counts from 30 open-access papers and a vendor benchmark page, none from the FDA corpus, labeled by hand before the kit was run: the kit agrees on 103 of 103 (73 supported, 24 refused, 4 contradicted, 2 overstated). `node bench/holdout/run.mjs` reproduces it; `holdout/README.md` says what it does not show.
+
+## Heuristic rates (`heuristics.mjs`)
+
+`node bench/heuristics.mjs` measures the kit's policy choices and prints each with its denominator: how many printed rates the default minimum sample size refuses, how many honest printed rates `strictPrecision` and `conservative` would stop supporting, how often the strata check refuses samples whose strata truly have one rate (a fixed-seed simulation), and how often the true rate is below a claim set at the lower end of the interval or equal to the observed rate (also simulated). `expected.json` pins them under `heuristics`; `METHOD.md` quotes them. Simulated numbers describe the simulated populations (listed in the script), not real studies.

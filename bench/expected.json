@@ -17,5 +17,24 @@
     "agreementDeclared": "216/216",
     "agreementCompleteSet": "3498/3498",
     "agreementStrata": "95/95"
+  },
+  "heuristics": {
+    "minN30RefusedPrinted": "35/216",
+    "n10to29": "30/216",
+    "printedNotSupported": "34/181",
+    "printedSupported": "147/181",
+    "printedMatchesObserved": "147/181",
+    "precisionTooFinePrinted": "129/181",
+    "strictPrecisionFlipsPrinted": "122/147",
+    "conservativeFlipsPrinted": "147/147",
+    "worseFlagOnPrinted": "0/181",
+    "worseFlagOnMinus5": "56/181",
+    "falsePass_plus-3-points": "0/181",
+    "falsePass_claim-100": "0/147",
+    "completeSetFalsePasses": "0/623",
+    "strataRefusedField": "8/95",
+    "strataFalseFlagSim": "6/4500",
+    "limitClaimTrueRateBelowSim": "108/9000",
+    "observedClaimTrueRateBelowSim": "3645/9000"
   }
 }
