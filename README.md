@@ -47,7 +47,7 @@ It prints:
 
 ## Accuracy on real data
 
-How often is the kit right? Two re-runnable checks answer this, and neither is a sample of all accuracy claims. From a clone of the repository, `npm run bench` reproduces every number below (it needs `python3`; `bench/` is not in the npm package). They were measured on the 0.1.0 source at revision `f8cbc6f` of the repository, and `bench/expected.json` pins them.
+How often is the kit right? Two re-runnable checks answer this, and neither is a sample of all accuracy claims. From a clone of the repository, `npm run bench` reproduces every number below (it needs `python3`; `bench/` is not in the npm package). They were measured on the 0.1.0 source at revision `373258b` of the repository (the commits after it change only documentation and workflows), and `bench/expected.json` pins them.
 
 **Field benchmark: 216 printed rates with counts in 75 public FDA 510(k) summaries.** Each printed figure was altered in nine ways (rounded up, plus three points, claimed as 100%, five points under, a floor taken from the printed interval, the complement error rate, and error ceilings), and every claim was judged by `bench/oracle.py`, a second implementation of the rules in this README.
 
@@ -126,7 +126,7 @@ result.suggestedStatement
 // 'On this sample, at least 98.87% accurate (95% Wilson interval 98.87% to 99.97%, n = 500, human labels, random sample); the interval covers sampling error only; print it as a whole percent'
 ```
 
-The figure equals the observed rate (499 of 500), so it is an honest report and is `supported`. Printed to a tenth of a percent it implies more precision than an interval 1.09 points wide supports (the data cannot rule out a true rate as low as 98.87%), so the result says to print it to whole percents, and with `strictPrecision` that alone makes it `overstated`. Printed as "99%" the claim would be inside the interval but above its lower end and above the observed rate, which is `overstated` with `claim-beyond-conservative-bound`. The suggested statement starts with its scope ("On this sample"), says the interval covers sampling error only, describes the evidence and rounds the lower end down (98.8759 prints as 98.87, never 98.88). The headline bound and the interval it quotes always use the same precision.
+The figure equals the observed rate (499 of 500), so it is an honest report and is `supported`. Printed to a tenth of a percent it implies more precision than an interval 1.09 points wide supports (the data cannot rule out a true rate as low as 98.87%), so the result says to print it to whole percents, and with `strictPrecision` that alone makes it `overstated`. Printed as "99%" the claim would be more cautious than the observed 99.8% but still above the lower end of the interval (98.87%), which is `overstated` with `claim-beyond-conservative-bound`: say the observed 99.8%, or go down to the lower end. The suggested statement starts with its scope ("On this sample"), says the interval covers sampling error only, describes the evidence and rounds the lower end down (98.8759 prints as 98.87, never 98.88). The headline bound and the interval it quotes always use the same precision.
 
 Other results from the same style of input:
 
