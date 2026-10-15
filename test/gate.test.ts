@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { assessAccuracyClaim, gwetAC1, wilsonInterval } from '../src/index.js'
+import { assessAccuracyClaim, cohenKappa, gwetAC1, percentAgreement, wilsonInterval } from '../src/index.js'
 import type { AccuracyAssessment, AccuracyClaimInput } from '../src/index.js'
 import { foldText } from '../src/text.js'
 
@@ -506,5 +506,78 @@ describe('gate-review:R5-F4 gate-hostile:F5 wilsonInterval and gwetAC1 reject an
     expect(gwetAC1(pairs, { categories: 5 }).categories).toBe(5)
     expect(gwetAC1(pairs, Object.assign(Object.create(null) as object, { categories: 4 })).categories).toBe(4)
     expect(gwetAC1(pairs).categories).toBe(2)
+  })
+})
+
+describe('gate-hostile:F3 checks.agreement says applied only when a size check or a minimum actually ran', () => {
+  const big = (agreement: unknown): AccuracyClaimInput =>
+    sampled({ metric: 'accuracy', value: 0.95, display: '95%' }, { n: 10_000, correct: 9500 }, {
+      provenance: { source: 'human', raters: 2, agreement } as AccuracyClaimInput['provenance'],
+    })
+
+  it('gate-hostile:F3 an undefined statistic with no minimum was never examined, so it does not read applied', () => {
+    for (const agreement of [percentAgreement([]), cohenKappa([['a', 'a'], ['a', 'a'], ['a', 'a']])]) {
+      const r = assessAccuracyClaim(big(agreement))
+      expect(agreement.status).toBe('undefined')
+      expect(r.checks.agreement, String(agreement.statistic)).toBe('not-supplied')
+    }
+  })
+
+  it('gate-hostile:F3 with a minimum an undefined statistic is a failed gate and the gate ran', () => {
+    const r = assessAccuracyClaim(big(cohenKappa([['a', 'a'], ['a', 'a'], ['a', 'a']])), { minAgreement: 0.5 })
+    expect(outcome(r)).toBe('refused [agreement-undefined]')
+    expect(r.checks.agreement).toBe('applied')
+  })
+
+  it('gate-hostile:F3 a defined statistic with an n has its size checked, so it reads applied', () => {
+    const pairs = Array.from({ length: 60 }, (_, i): [string, string] => (i % 2 === 0 ? ['a', 'a'] : ['b', 'b']))
+    expect(assessAccuracyClaim(big(cohenKappa(pairs))).checks.agreement).toBe('applied')
+    expect(assessAccuracyClaim(big({ statistic: 'cohen-kappa', value: 0.9 })).checks.agreement).toBe('not-supplied')
+  })
+})
+
+describe('gate-hostile:F7 checks.strata says applied only when two or more strata could be compared', () => {
+  const stratified = (strata: { name: string; n: number; correct: number }[]): AccuracyClaimInput =>
+    sampled({ metric: 'accuracy', value: 0.95 }, { n: strata.reduce((a, s) => a + s.n, 0), correct: strata.reduce((a, s) => a + s.correct, 0) }, { sampling: 'stratified', strata })
+
+  it('gate-hostile:F7 one stratum is never compared, so the check did not run', () => {
+    expect(assessAccuracyClaim(stratified([{ name: 'a', n: 1000, correct: 950 }])).checks.strata).toBe('not-supplied')
+  })
+
+  it('gate-hostile:F7 two strata are compared, and a complete set never is', () => {
+    expect(assessAccuracyClaim(stratified([{ name: 'a', n: 500, correct: 475 }, { name: 'b', n: 500, correct: 475 }])).checks.strata).toBe('applied')
+    const set = assessAccuracyClaim(census({ metric: 'accuracy', value: 0.95 }, { n: 1000, correct: 950 }, 'Foo set', { strata: [{ name: 'a', n: 500, correct: 475 }, { name: 'b', n: 500, correct: 475 }] }))
+    expect(set.checks.strata).toBe('not-supplied')
+  })
+})
+
+describe('gate-hostile:F14 the pass-through keys of provenance.agreement are read like the others', () => {
+  const pairs = Array.from({ length: 60 }, (_, i): [string, string] => (i % 2 === 0 ? ['a', 'a'] : ['b', 'b']))
+  const withAgreement = (agreement: unknown): AccuracyClaimInput =>
+    sampled({ metric: 'accuracy', value: 0.95, display: '95%' }, { n: 10_000, correct: 9500 }, {
+      provenance: { source: 'human', raters: 2, agreement } as AccuracyClaimInput['provenance'],
+    })
+  const kappa = cohenKappa(pairs)
+
+  it('gate-hostile:F14 a result from this kit still passes straight in, defined or undefined', () => {
+    expect(assessAccuracyClaim(withAgreement(kappa)).verdict).toBe('supported')
+    expect(assessAccuracyClaim(withAgreement(percentAgreement([]))).verdict).toBe('supported')
+    expect(assessAccuracyClaim(withAgreement(cohenKappa(pairs.map((): [string, string] => ['a', 'a'])))).verdict).toBe('supported')
+  })
+
+  it('gate-hostile:F14 nonsense in agreements, categories and reason throws', () => {
+    expect(() => assessAccuracyClaim(withAgreement({ ...kappa, agreements: 'banana' }))).toThrow(TypeError)
+    expect(() => assessAccuracyClaim(withAgreement({ ...kappa, agreements: -1 }))).toThrow(RangeError)
+    expect(() => assessAccuracyClaim(withAgreement({ ...kappa, agreements: 1.5 }))).toThrow(RangeError)
+    expect(() => assessAccuracyClaim(withAgreement({ ...kappa, agreements: 5000 }))).toThrow(/agreements.*larger than provenance\.agreement\.n/)
+    expect(() => assessAccuracyClaim(withAgreement({ ...kappa, categories: -5 }))).toThrow(RangeError)
+    expect(() => assessAccuracyClaim(withAgreement({ ...kappa, categories: 'two' }))).toThrow(TypeError)
+    expect(() => assessAccuracyClaim(withAgreement({ ...cohenKappa([['a', 'a'], ['a', 'a']]), reason: 42 }))).toThrow(TypeError)
+    expect(() => assessAccuracyClaim(withAgreement({ ...cohenKappa([['a', 'a'], ['a', 'a']]), reason: 'because' }))).toThrow(RangeError)
+  })
+
+  it('gate-hostile:F14 a hand-written agreements count with no n is only checked as a count', () => {
+    expect(assessAccuracyClaim(withAgreement({ statistic: 'cohen-kappa', value: 0.9, agreements: 5000 })).verdict).toBe('supported')
+    expect(() => assessAccuracyClaim(withAgreement({ statistic: 'cohen-kappa', value: 0.9, agreements: 'many' }))).toThrow(TypeError)
   })
 })

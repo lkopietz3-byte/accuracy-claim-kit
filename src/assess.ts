@@ -1,4 +1,4 @@
-import type { AgreementStatistic } from './agreement.js'
+import type { AgreementStatistic, UndefinedAgreementReason } from './agreement.js'
 import { countDecimals, matchesValue } from './census.js'
 import { dayNumber } from './dates.js'
 import { parseDisplayFigure, textFiguresDiffering } from './display.js'
@@ -103,6 +103,7 @@ const RETRACTION_KEYS = ['count', 'includedInSample'] as const
 const BENCHMARK_KEYS = ['name'] as const
 const POPULATION_KEYS = ['claimed', 'evaluated'] as const
 const STATISTICS: readonly AgreementStatistic[] = ['percent-agreement', 'cohen-kappa', 'gwet-ac1']
+const UNDEFINED_REASONS: readonly UndefinedAgreementReason[] = ['no-pairs', 'expected-agreement-is-1', 'single-category']
 const STATISTIC_LABEL: Record<AgreementStatistic, string> = {
   'percent-agreement': 'percent agreement',
   'cohen-kappa': 'Cohen kappa',
@@ -193,11 +194,22 @@ function readAgreement(raw: unknown): Agreement {
   const statusRaw: unknown = rec.status
   const valueRaw: unknown = rec.value
   const nRaw: unknown = rec.n
+  const agreementsRaw: unknown = rec.agreements
+  const categoriesRaw: unknown = rec.categories
+  const reasonRaw: unknown = rec.reason
   const statistic = readEnum(statisticRaw, STATISTICS, 'provenance.agreement.statistic')
   if (statusRaw !== undefined && statusRaw !== 'defined' && statusRaw !== 'undefined') {
     throw new RangeError('provenance.agreement.status must be "defined" or "undefined"')
   }
   const n = nRaw === undefined ? null : readCount(nRaw, 'provenance.agreement.n', 0)
+  // The keys a kit result carries are allowed so it can be passed straight in; they
+  // are not used, but nonsense in them means the object is not what it claims to be.
+  const agreements = agreementsRaw === undefined ? null : readCount(agreementsRaw, 'provenance.agreement.agreements', 0)
+  if (agreements !== null && n !== null && agreements > n) {
+    throw new RangeError(`provenance.agreement.agreements (${String(agreements)}) is larger than provenance.agreement.n (${String(n)})`)
+  }
+  if (categoriesRaw !== undefined) readCount(categoriesRaw, 'provenance.agreement.categories', 0)
+  if (reasonRaw !== undefined) readEnum(reasonRaw, UNDEFINED_REASONS, 'provenance.agreement.reason')
   if (statusRaw === 'undefined') {
     // A statistic that has no value must say so with null; NaN, 0 or text in
     // its place is malformed input, not "cannot tell".
@@ -537,8 +549,12 @@ export function assessAccuracyClaim(
     retractions: retractionsRaw !== undefined ? 'applied' : 'not-supplied',
     scope: population !== undefined ? 'applied' : 'not-supplied',
     age: maxAgeDays !== undefined ? 'applied' : 'not-supplied',
-    agreement: minAgreement !== undefined || (agreement !== undefined && agreement.n !== null) ? 'applied' : 'not-supplied',
-    strata: strata !== undefined && !isFixedSet ? 'applied' : 'not-supplied',
+    // applied = a minimum was required, or a statistic with a value and an n had its size checked;
+    // a statistic that has no value is never examined unless a minimum asks for it
+    agreement:
+      minAgreement !== undefined || (agreement !== undefined && agreement.n !== null && agreement.value !== null) ? 'applied' : 'not-supplied',
+    // applied = two or more strata could be compared; one stratum has nothing to differ from
+    strata: strata !== undefined && strata.length > 1 && !isFixedSet ? 'applied' : 'not-supplied',
   }
 
   // ---- preconditions -----------------------------------------------------
