@@ -26,6 +26,8 @@ export interface DisplayFigure {
   strict: boolean
   /** True when the printed value agrees with `value` to its rounding (plus one ulp). */
   consistentWith(value: number): boolean
+  /** What the value had to satisfy when it disagrees with this figure, as the end of an error message. */
+  mismatchHint: string
   /** For "1 in N": what band N was read at, to put in an explanation; null for every other form. */
   bandNote: string | null
   /**
@@ -144,6 +146,7 @@ function oneInN(text: string, approximate: boolean, display: string): DisplayFig
     bound: null,
     strict: false,
     bandNote,
+    mismatchHint: `the value must lie inside the band the display is read at (${band})`,
     consistentWith,
     agreesWith: consistentWith,
     matchesObserved: within,
@@ -205,6 +208,7 @@ export function parseDisplayFigure(display: unknown, higherIsBetter: boolean): D
         bound: null,
         strict: false,
         bandNote: null,
+        mismatchHint: 'the value must lie inside the range',
         consistentWith(value: number): boolean {
           // inside the range, with only one ulp of representation error at each end
           return atLeastDecimal(value, low.digits, low.decimals + 2) && atMostDecimal(value, high.digits, high.decimals + 2)
@@ -245,6 +249,7 @@ export function parseDisplayFigure(display: unknown, higherIsBetter: boolean): D
     bound: isBound ? form : null,
     strict: isBound && strict,
     bandNote: null,
+    mismatchHint: `they may differ by at most half a unit of the last digit printed (${(0.5 / 10 ** num.decimals).toFixed(num.decimals + 1)} percentage points)`,
     consistentWith: (value) => withinHalfUnit(value, num.digits, scale, scale),
     agreesWith(value: number): boolean {
       const shown = proportionOf(num)

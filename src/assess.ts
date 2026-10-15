@@ -116,6 +116,26 @@ function readEnum<T extends string>(value: unknown, allowed: readonly T[], name:
   return found
 }
 
+/**
+ * The metric: judged (exact, lower-case name), known-unsupported (refused
+ * later; case does not matter, since such a name can only be refused), or
+ * unknown (thrown). A judged name in the wrong case is a typo that throws, with
+ * the name the caller probably meant.
+ */
+function readMetric(raw: unknown): { metric: ClaimMetric | UnsupportedMetric; judged: boolean } {
+  if (typeof raw !== 'string') throw new TypeError('claim.metric must be a string')
+  const supported = METRICS.find((m) => m === raw)
+  if (supported !== undefined) return { metric: supported, judged: true }
+  const lower = raw.toLowerCase()
+  const unsupported = UNSUPPORTED_METRICS.find((m) => m === lower)
+  if (unsupported !== undefined) return { metric: unsupported, judged: false }
+  const meant = METRICS.find((m) => m === lower)
+  const hint = meant === undefined ? '' : `; did you mean "${meant}"?`
+  throw new RangeError(
+    `claim.metric must be one of ${METRICS.join(', ')}, or one of ${UNSUPPORTED_METRICS.join(', ')} (which the kit knows and refuses, in any case); got "${clip(raw)}"${hint}`,
+  )
+}
+
 interface Counts {
   n: number
   correct: number
@@ -360,13 +380,7 @@ export function assessAccuracyClaim(
   const textRaw: unknown = claimRec.text
 
   // The metric: judged, or known-unsupported (refused below), or a typo (thrown).
-  const unsupportedMetric =
-    typeof metricRaw === 'string' ? UNSUPPORTED_METRICS.find((m) => m === metricRaw) : undefined
-  const metric: ClaimMetric | UnsupportedMetric =
-    unsupportedMetric !== undefined
-      ? unsupportedMetric
-      : readEnum(metricRaw, METRICS, `claim.metric (or one of ${UNSUPPORTED_METRICS.join(', ')})`)
-  const judged = unsupportedMetric === undefined
+  const { metric, judged } = readMetric(metricRaw)
   const higherIsBetter = judged && HIGHER_IS_BETTER.includes(metric as ClaimMetric)
 
   // A value is a proportion from 0 to 1 for a judged metric. An unsupported
@@ -382,7 +396,9 @@ export function assessAccuracyClaim(
     // Exact: the value must agree with the printed figure to its rounding plus
     // one ulp of the value. No float tolerance is involved.
     if (!figure.consistentWith(claimed)) {
-      throw new RangeError('claim.display does not match claim.value')
+      throw new RangeError(
+        `claim.display "${clip(displayRaw, 40)}" (${pctNearest(figure.info.figure, 3).replace(/\.?0+%$/, '%')}) does not match claim.value ${String(claimed)} (${pctNearest(claimed, 3).replace(/\.?0+%$/, '%')}): ${figure.mismatchHint}`,
+      )
     }
   }
   const displayIsPoint = figure !== undefined && figure.bound === null

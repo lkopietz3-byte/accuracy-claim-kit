@@ -1031,7 +1031,7 @@ describe('field:F2 specificity, NPV and the diagnostic agreement names are metri
   })
 
   it('field:F2 names the kit does not know still throw, and the message lists the metrics it judges', () => {
-    for (const metric of ['Specificity', 'tnr', 'f-score', 'sensitivty']) {
+    for (const metric of ['tnr', 'f-score', 'sensitivty', 'specificity ']) {
       expect(() => assessAccuracyClaim(sampled(claimOf(metric, 0.9, '90%'), { n: 1000, correct: 900 })), metric).toThrow(RangeError)
     }
     expect(() => assessAccuracyClaim(sampled(claimOf('sensitivty', 0.9, '90%'), { n: 1000, correct: 900 }))).toThrow(/sensitivity/)
@@ -1109,5 +1109,63 @@ describe('hostile:F8 control and bidirectional characters in an echoed string th
     const r = assessAccuracyClaim(sampled({ metric: 'error-rate', value: 0.01, display: 'about\n1 in\u2028100' }, { n: 100_000, errors: 1500 }))
     expect(r.explanation.join('\n')).not.toMatch(/[\n\u2028]/)
     expect(r.explanation[0]).toContain('"about 1 in 100" is read as 1 in 50 to 1 in 150')
+  })
+})
+
+describe('hostile:F12 docs-release:D5 false-pass:F12 the metric and display messages say what to do', () => {
+  const withMetric = (metric: unknown): AccuracyClaimInput => sampled({ metric, value: 0.9 } as AccuracyClaimInput['claim'], { n: 100, correct: 90 })
+
+  it('hostile:F12 docs-release:D5 an unknown metric lists the judged names, then the refused ones, with no sentence fragment', () => {
+    let error: unknown
+    try {
+      assessAccuracyClaim(withMetric('foo'))
+    } catch (e) {
+      error = e
+    }
+    expect(error).toBeInstanceOf(RangeError)
+    const message = (error as RangeError).message
+    expect(message).toBe(
+      'claim.metric must be one of accuracy, error-rate, precision, recall, false-positive-rate, false-negative-rate, specificity, npv, sensitivity, ppa, ppv, npa, opa, or one of f1, auc, roc-auc, wer, cer, bleu, rouge, map, composite, other (which the kit knows and refuses, in any case); got "foo"',
+    )
+    expect(message).not.toMatch(/claim\.metric \(or/)
+  })
+
+  it('hostile:F12 a metric that is not a string is a TypeError', () => {
+    expect(() => assessAccuracyClaim(withMetric(5))).toThrow(TypeError)
+    expect(() => assessAccuracyClaim(withMetric(undefined))).toThrow(/claim\.metric must be a string/)
+  })
+
+  it('false-pass:F12 a metric the kit refuses is recognized in any case: F1, AUC, WER and mAP are refused, not thrown', () => {
+    for (const metric of ['F1', 'AUC', 'WER', 'mAP', 'ROC-AUC', 'Composite']) {
+      const r = assessAccuracyClaim(withMetric(metric))
+      expect(r.reasons, metric).toEqual(['metric-not-supported'])
+      expect(r.metric).toBe(metric.toLowerCase())
+    }
+  })
+
+  it('false-pass:F12 a judged metric stays exact, and a wrong case says which name was meant', () => {
+    expect(() => assessAccuracyClaim(withMetric('Accuracy'))).toThrow(/got "Accuracy"; did you mean "accuracy"\?/)
+    expect(() => assessAccuracyClaim(withMetric('False-Positive-Rate'))).toThrow(/did you mean "false-positive-rate"/)
+    expect(() => assessAccuracyClaim(withMetric('FPR'))).toThrow(RangeError)
+    expect(() => assessAccuracyClaim(withMetric('FPR'))).not.toThrow(/did you mean/)
+  })
+
+  it('docs-release:D5 a display that disagrees with the value says both figures and the allowance', () => {
+    const claim = (display: string, value: number, metric: 'accuracy' | 'error-rate' = 'accuracy'): AccuracyClaimInput =>
+      sampled({ metric, value, display }, metric === 'accuracy' ? { n: 100, correct: 90 } : { n: 100, errors: 10 })
+    const say = (input: AccuracyClaimInput): string => {
+      try {
+        assessAccuracyClaim(input)
+      } catch (e) {
+        return (e as Error).message
+      }
+      return 'no error'
+    }
+    expect(say(claim('91%', 0.9))).toBe('claim.display "91%" (91%) does not match claim.value 0.9 (90%): they may differ by at most half a unit of the last digit printed (0.5 percentage points)')
+    expect(say(claim('90.5%', 0.9))).toContain('(0.05 percentage points)')
+    expect(say(claim('95-98%', 0.9))).toBe('claim.display "95-98%" (98%) does not match claim.value 0.9 (90%): the value must lie inside the range')
+    expect(say(claim('about 1 in 100', 0.1, 'error-rate'))).toContain('the value must lie inside the band the display is read at (1 in 50 to 1 in 150)')
+    expect(say(claim('1 in 100', 0.011, 'error-rate'))).toContain('1 in 99.5 to 1 in 100.5')
+    expect(say(claim('99%+', 0.9))).toContain('(0.5 percentage points)')
   })
 })
