@@ -1,7 +1,6 @@
 {
   "name": "accuracy-claim-kit",
   "version": "0.1.0",
-  "private": true,
   "description": "Does this accuracy or error-rate number have the evidence to carry it? Wilson intervals, inter-rater agreement (percent agreement, Cohen's kappa, Gwet's AC1) and a refuse-or-judge verdict on a claimed figure, computed from caller-supplied counts. Zero-dependency, offline TypeScript.",
   "keywords": [
     "accuracy",
@@ -14,10 +13,24 @@
     "claim-verification",
     "honesty",
     "ci",
+    "substantiation",
+    "ai-evaluation",
+    "benchmark",
+    "error-bars",
+    "statistics",
+    "typescript",
     "honesty-kits"
   ],
   "author": "Lucas Kopietz",
-  "license": "UNLICENSED",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lkopietz3-byte/accuracy-claim-kit.git"
+  },
+  "homepage": "https://github.com/lkopietz3-byte/accuracy-claim-kit#readme",
+  "bugs": {
+    "url": "https://github.com/lkopietz3-byte/accuracy-claim-kit/issues"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -32,6 +45,8 @@
   "files": [
     "dist",
     "README.md",
+    "METHOD.md",
+    "LICENSE",
     "CHANGELOG.md"
   ],
   "engines": {
@@ -46,7 +61,7 @@
     "audit:dependencies": "npm audit --package-lock-only --include=dev --ignore-scripts --audit-level=low",
     "verify:package": "node scripts/verify-package.mjs",
     "attw": "attw --pack . --ignore-rules cjs-resolves-to-esm",
-    "bench": "npm run build && python3 -I bench/fda/build.py && node bench/run.mjs && python3 -I bench/holdout/hand_labels.py --check && node bench/holdout/run.mjs",
+    "bench": "npm run build && python3 -I bench/fda/build.py && node bench/run.mjs && node bench/heuristics.mjs && python3 -I bench/holdout/hand_labels.py --check && node bench/holdout/run.mjs",
     "verify": "npm run lint && npm run typecheck && npm test && npm run build && npm run verify:package",
     "prepublishOnly": "npm run verify"
   },

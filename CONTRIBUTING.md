@@ -1,6 +1,6 @@
 # Contributing
 
-This is a private, local package. There is no remote, CI or release workflow.
+accuracy-claim-kit is an MIT-licensed package. Contributions are welcome under the same license. Issues and pull requests go to https://github.com/lkopietz3-byte/accuracy-claim-kit.
 
 ## Setup
 
@@ -14,7 +14,7 @@ npm ci
 npm run verify
 ```
 
-`verify` runs lint, typecheck, tests, the build, and the packaging checks in one command. It must pass locally before you commit.
+`verify` runs lint, typecheck, tests, the build, and the packaging checks in one command. It must pass locally before you commit, and CI runs the same checks on every pull request.
 
 ## Fixing a bug
 
@@ -40,3 +40,11 @@ The library versions are recorded in the file. Regenerating on newer versions is
 ## Field benchmark
 
 `npm run bench` runs the kit over the published-rate corpus in `bench/` and checks the headline numbers in `bench/expected.json` (see `bench/README.md`). `python3 -I bench/fda/build.py --subset` rewrites the small slice that `test/field-corpus.test.ts` runs on every commit.
+
+## Releases
+
+Releases are made by the maintainer. A version is published only when a `v*` tag matching `package.json` is pushed: `.github/workflows/release.yml` then installs, verifies and publishes with npm trusted publishing. Nobody runs `npm publish` by hand.
+
+## Security
+
+Report vulnerabilities privately, as `SECURITY.md` describes, not in a public issue.

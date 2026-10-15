@@ -6,7 +6,7 @@
 // What it does, in order:
 //   1. `npm pack` the built package (run `npm run build` first).
 //   2. Fail if the tarball contains anything outside the intended file set
-//      (tests, configs, CI files, env files, node_modules).
+//      (tests, configs, CI files, env files, node_modules); the license ships.
 //   3. Install that tarball into an empty temp project, offline, no scripts.
 //   4. Import every `exports` entry by its public specifier, and check that
 //      each declared types file exists.
@@ -67,8 +67,14 @@ const forbidden = [
 ];
 const leaked = packed.filter((p) => forbidden.some((re) => re.test(p)));
 assert.deepEqual(leaked, [], `Tarball contains files that must not ship: ${leaked.join(', ')}`);
-// No LICENSE is required: the package is private and UNLICENSED until a license is chosen.
-for (const required of ['package.json', 'README.md']) {
+// The package is public and MIT: the license must ship, and the manifest must say so.
+assert.equal(pkg.license, 'MIT', 'package.json license must be MIT');
+assert.notEqual(pkg.private, true, 'package.json must not be private');
+// Only these files ship: dist/, the docs a user reads, and the license.
+const allowed = (p) => p.startsWith('dist/') || ['package.json', 'README.md', 'METHOD.md', 'LICENSE', 'CHANGELOG.md'].includes(p);
+const unexpected = packed.filter((p) => !allowed(p));
+assert.deepEqual(unexpected, [], `Tarball holds files outside dist, README, METHOD, LICENSE and CHANGELOG: ${unexpected.join(', ')}`);
+for (const required of ['package.json', 'README.md', 'METHOD.md', 'LICENSE', 'CHANGELOG.md']) {
   assert.ok(packed.includes(required), `Tarball is missing ${required}`);
 }
 assert.ok(packed.some((p) => p.startsWith('dist/')), 'Tarball has no dist/ output; run npm run build first');
