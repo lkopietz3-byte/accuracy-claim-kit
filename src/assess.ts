@@ -28,7 +28,7 @@ import {
   readOpenUnit,
   requireRecord,
 } from './validate.js'
-import { assertPlainText, foldText, MAX_LABEL_LENGTH, MAX_TEXT_LENGTH, mentionsName, readName } from './text.js'
+import { assertPlainText, foldText, MAX_LABEL_LENGTH, MAX_TEXT_LENGTH, mentionsName, readName, shownText } from './text.js'
 import { DEFAULT_CONFIDENCE, wilsonWithZ, zForConfidence, zForTail } from './wilson.js'
 
 /** Lowest confidence level `assessAccuracyClaim` accepts. `wilsonInterval` takes any level strictly between 0 and 1. */
@@ -232,11 +232,12 @@ function readStrata(raw: unknown): Stratum[] {
     if (nameRaw.length > MAX_LABEL_LENGTH) {
       throw new RangeError(`strata[${i}].name must be at most ${String(MAX_LABEL_LENGTH)} characters`)
     }
-    assertPlainText(nameRaw, `strata[${i}].name`)
-    if (names.has(nameRaw)) throw new RangeError(`strata[${i}].name "${clip(nameRaw)}" is a duplicate`)
-    names.add(nameRaw)
+    const name = shownText(nameRaw, `strata[${i}].name`)
+    if (name === '') throw new RangeError(`strata[${i}].name must not be blank`)
+    if (names.has(name)) throw new RangeError(`strata[${i}].name "${clip(name)}" is a duplicate`)
+    names.add(name)
     const counts = readCounts(rec, `strata[${i}]`)
-    out.push({ name: nameRaw, ...counts })
+    out.push({ name, ...counts })
   }
   return out
 }

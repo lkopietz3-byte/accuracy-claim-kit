@@ -58,6 +58,46 @@ const UNSAFE_TEXT = /[\u0000-\u0008\u000a-\u001f\u007f-\u009f\u2028\u2029\u202a-
 
 const LINE_BREAK = /[\n\r\u0085\u2028\u2029]/u
 
+// Invisible code points can carry text a reader does not see. Tag characters
+// spell ASCII and variation selectors encode bytes, and neither has a use in a
+// name, so a string that holds one throws. The other invisible characters (zero-width
+// space, word joiner, BOM, the fillers, the invisible operators, the braille
+// blank) are dropped from a string before it is echoed, so what is printed is what
+// a person sees. The ones real writing needs stay: the joiner and non-joiner, the
+// direction marks and Arabic letter mark, the soft hyphen, the grapheme joiner and
+// the emoji presentation selectors. The braille blank is not default-ignorable but
+// is blank.
+const TEXT_CARRYING = /[︀-︍]|[\u{e0000}-\u{e007f}]|[\u{e0100}-\u{e01ef}]/u
+const HIDDEN_TEXT = /(?!\u00ad|\u034f|\u061c|[\u200c-\u200f]|\ufe0e|\ufe0f)\p{Default_Ignorable_Code_Point}|\u2800/gu
+
+/**
+ * What a message may not carry raw: controls (the tab too), line and paragraph
+ * separators and every invisible code point. `clip` writes them as \uXXXX.
+ */
+// eslint-disable-next-line no-control-regex
+export const MESSAGE_UNSAFE = /[\u0000-\u001f\u007f-\u009f\u2028\u2029\u2800]|\p{Default_Ignorable_Code_Point}/gu
+
+/** The code point as U+XXXX. */
+export function codeLabel(char: string): string {
+  return `U+${(char.codePointAt(0) as number).toString(16).toUpperCase().padStart(4, '0')}`
+}
+
+/**
+ * For a string that is echoed into an explanation or a statement (names,
+ * population identifiers, stratum names): assertPlainText, then a RangeError
+ * for a tag character or variation selector, then the string without its other
+ * invisible characters. The errors name the field, the code point and where it
+ * sits, never the string.
+ */
+export function shownText(value: string, name: string): string {
+  assertPlainText(value, name)
+  const carrying = TEXT_CARRYING.exec(value)
+  if (carrying !== null) {
+    throw new RangeError(`${name} must not contain a tag character or variation selector, which can carry hidden text (${codeLabel(carrying[0])} at position ${String(carrying.index)})`)
+  }
+  return value.replace(HIDDEN_TEXT, '')
+}
+
 /**
  * Throws RangeError when `value` holds a control or bidirectional-formatting
  * character, naming the field, the code point and where it sits (never echoing
@@ -67,9 +107,8 @@ const LINE_BREAK = /[\n\r\u0085\u2028\u2029]/u
 export function assertPlainText(value: string, name: string, lineAdvice?: string): void {
   const found = UNSAFE_TEXT.exec(value)
   if (found === null) return
-  const code = (found[0].codePointAt(0) as number).toString(16).toUpperCase().padStart(4, '0')
   const advice = lineAdvice !== undefined && LINE_BREAK.test(found[0]) ? `; ${lineAdvice}` : ''
-  throw new RangeError(`${name} must not contain a control or bidirectional-formatting character (U+${code} at position ${String(found.index)})${advice}`)
+  throw new RangeError(`${name} must not contain a control or bidirectional-formatting character (${codeLabel(found[0])} at position ${String(found.index)})${advice}`)
 }
 
 const WORDISH = /[\p{L}\p{N}\p{M}]/u
@@ -142,14 +181,15 @@ export function mentionsName(text: string, name: string): boolean {
 /**
  * Reads a required string of at most `max` characters that holds at least one
  * letter or digit once folded: a name made only of punctuation or invisible
- * characters would be "found" in almost any text.
+ * characters would be "found" in almost any text. Returns the name as it will
+ * be echoed (see shownText).
  */
 export function readName(value: unknown, name: string, max = MAX_NAME_LENGTH): string {
   if (typeof value !== 'string') throw new TypeError(`${name} must be a string`)
   if (value.length > max) throw new RangeError(`${name} must be at most ${max} characters`)
-  assertPlainText(value, name)
+  const shown = shownText(value, name)
   const folded = foldText(value)
   if (folded === '') throw new RangeError(`${name} must not be blank`)
   if (!HAS_LETTER_OR_DIGIT.test(folded)) throw new RangeError(`${name} must contain at least one letter or digit`)
-  return value
+  return shown
 }

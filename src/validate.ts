@@ -2,6 +2,8 @@
 // throws TypeError; right type but unusable value throws RangeError. Nothing
 // here coerces: a string "5" is not a count, a Number object is not a number.
 
+import { codeLabel, MESSAGE_UNSAFE } from './text.js'
+
 export const MAX_COUNT = Number.MAX_SAFE_INTEGER
 
 /**
@@ -32,7 +34,7 @@ export function requireRecord(value: unknown, name: string): Record<string, unkn
  */
 export function assertPlainObject(value: Record<string, unknown>, name: string): void {
   const tag = Object.prototype.toString.call(value)
-  if (tag !== '[object Object]') throw new TypeError(`${name} must be a plain object, got ${tag}`)
+  if (tag !== '[object Object]') throw new TypeError(`${name} must be a plain object, got ${clip(tag)}`)
 }
 
 /** Reads a whole number in [min, MAX_COUNT]. Normalizes -0 to 0. */
@@ -82,13 +84,20 @@ export function readOpenUnit(value: unknown, name: string): number {
   return value
 }
 
-/** Cuts a caller-supplied string for use in a message without splitting a surrogate pair. */
+/**
+ * Makes a caller-supplied string safe to quote in a message: every control
+ * (a newline, an escape), line separator, bidirectional or invisible character
+ * is written as its code point (\u000A), so a message can never carry a forged
+ * log line or a terminal escape, then the text is cut without splitting a
+ * surrogate pair.
+ */
 export function clip(text: string, max = 60): string {
-  if (text.length <= max) return text
+  const plain = text.replace(MESSAGE_UNSAFE, (char) => `\\u${codeLabel(char).slice(2)}`)
+  if (plain.length <= max) return plain
   let end = max
-  const code = text.charCodeAt(end - 1)
+  const code = plain.charCodeAt(end - 1)
   if (code >= 0xd800 && code <= 0xdbff) end -= 1
-  return `${text.slice(0, end)}...`
+  return `${plain.slice(0, end)}...`
 }
 
 /** Keys longer than this are reported but never searched for a near match. */

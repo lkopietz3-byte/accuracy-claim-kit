@@ -1,5 +1,7 @@
 // Calendar-date handling with no clock: callers pass both dates in.
 
+import { clip } from './validate.js'
+
 const DAY_MS = 86_400_000
 const DATE = /^(\d{4})-(\d{2})-(\d{2})$/
 
@@ -7,7 +9,7 @@ const DATE = /^(\d{4})-(\d{2})-(\d{2})$/
 export function dayNumber(value: unknown, name: string): number {
   if (typeof value !== 'string') throw new TypeError(`${name} must be a "YYYY-MM-DD" string`)
   const m = DATE.exec(value)
-  if (m === null) throw new RangeError(`${name} must look like "2026-10-10"; got "${value.slice(0, 40)}"`)
+  if (m === null) throw new RangeError(`${name} must look like "2026-10-10"; got "${clip(value, 40)}"`)
   const year = Number(m[1])
   const month = Number(m[2])
   const day = Number(m[3])
