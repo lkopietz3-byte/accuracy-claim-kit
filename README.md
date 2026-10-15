@@ -47,7 +47,7 @@ It prints:
 
 ## Accuracy on real data
 
-How often is the kit right? Two re-runnable checks answer this, and neither is a sample of all accuracy claims. From a clone of the repository, `npm run bench` reproduces every number below (it needs `python3`; `bench/` is not in the npm package). They were measured on the 0.1.0 source at revision `373258b` of the repository (the commits after it change only documentation and workflows), and `bench/expected.json` pins them.
+How often is the kit right? Two re-runnable checks answer this, and neither is a sample of all accuracy claims. From a clone of the repository, `npm run bench` reproduces every number below (it needs `python3`; `bench/` is not in the npm package). They were measured on the 0.1.0 source at revision `373258b` of the repository (the commits after it change only documentation, workflows and tests), and `bench/expected.json` pins them.
 
 **Field benchmark: 216 printed rates with counts in 75 public FDA 510(k) summaries.** Each printed figure was altered in nine ways (rounded up, plus three points, claimed as 100%, five points under, a floor taken from the printed interval, the complement error rate, and error ceilings), and every claim was judged by `bench/oracle.py`, a second implementation of the rules in this README.
 
