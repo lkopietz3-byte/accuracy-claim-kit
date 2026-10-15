@@ -13,20 +13,26 @@ export const MAX_LABEL_LENGTH = 1000
 const APOSTROPHES = /[‘’‛′ʼ]/g
 const DOUBLE_QUOTES = /[“”]/g
 const DASHES = /[‐-―⁃−⸺⸻]/g
-const SOFT_HYPHEN = /­/g
+// Characters with no visible form of their own (zero-width space, joiners, word
+// joiner, direction marks, BOM, variation selectors, tag characters, the Hangul
+// and Mongolian fillers, the soft hyphen). They are dropped before comparison,
+// so one next to a name cannot make it look like a clean word boundary
+// ("MMLU", ZWSP, "-Pro") and one inside a name copied from the web does not
+// break the match.
+const INVISIBLE = /\p{Default_Ignorable_Code_Point}/gu
 
 /**
  * Folds a string for comparison: NFKC (so full-width and compatibility forms
  * match their plain forms), lower case, typographic quotes and apostrophes to
- * ' and ", every dash variant and the minus sign to -, the soft hyphen
- * dropped, and any run of whitespace becomes one space. Look-alike letters
- * from other scripts are NOT folded.
+ * ' and ", every dash variant and the minus sign to -, every invisible
+ * default-ignorable character (including the soft hyphen) dropped, and any run
+ * of whitespace becomes one space. Look-alike letters from other scripts are NOT folded.
  */
 export function foldText(text: string): string {
   const plain = text
     .normalize('NFKC')
     .toLowerCase()
-    .replace(SOFT_HYPHEN, '')
+    .replace(INVISIBLE, '')
     .replace(APOSTROPHES, "'")
     .replace(DOUBLE_QUOTES, '"')
     .replace(DASHES, '-')

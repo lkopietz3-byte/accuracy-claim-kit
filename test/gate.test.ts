@@ -232,3 +232,51 @@ describe('gate-review:R5-F3 a claim.text with a line break throws a message that
     expect(differing.reasons).toContain('text-figure-differs')
   })
 })
+
+describe('gate-hostile:F2 invisible format characters do not change what a name or the claim text says', () => {
+  // zero-width space, non-joiner, joiner, word joiner, direction marks, BOM, Mongolian vowel separator,
+  // Arabic letter mark, invisible separator, soft hyphen, a variation selector, a tag character, Hangul filler
+  const invisible = ['​', '‌', '‍', '⁠', '‎', '‏', '﻿', '᠎', '؜', '⁣', '­', '️', '\u{e0041}', 'ㅤ', 'ᅟ']
+  const code = (c: string): string => `U+${(c.codePointAt(0) as number).toString(16).toUpperCase().padStart(4, '0')}`
+  const scoped = (name: string, text: string): AccuracyAssessment =>
+    assessAccuracyClaim({
+      claim: { metric: 'accuracy', value: 0.7, text },
+      sample: { n: 1000, correct: 700 },
+      provenance: { source: 'human' },
+      sampling: 'complete',
+      benchmark: { name },
+    })
+
+  it('gate-hostile:F2 an invisible character next to the name cannot hide a longer name (MMLU-Pro, HumanEval+, latest)', () => {
+    for (const c of invisible) {
+      expect(outcome(scoped('MMLU', `Reaches 70% on MMLU${c}-Pro`)), `MMLU ${code(c)}`).toBe('refused [claim-not-scoped-to-benchmark]')
+      expect(outcome(scoped('MMLU', `Reaches 70% on MMLU-${c}Pro`)), `MMLU- ${code(c)}`).toBe('refused [claim-not-scoped-to-benchmark]')
+      expect(outcome(scoped('HumanEval', `Reaches 70% on HumanEval${c}+`)), `HumanEval ${code(c)}`).toBe('refused [claim-not-scoped-to-benchmark]')
+      expect(outcome(scoped('test', `Reaches 70% on the la${c}test`)), `latest ${code(c)}`).toBe('refused [claim-not-scoped-to-benchmark]')
+    }
+  })
+
+  it('gate-hostile:F2 the same name with an invisible character inside it still matches, as text copied from the web does', () => {
+    for (const c of invisible) {
+      expect(outcome(scoped('CIFAR-10', `Reaches 70% on CIFAR-${c}10`)), `CIFAR ${code(c)}`).toBe('supported [census-matches-count]')
+      expect(outcome(scoped('MS COCO', `Reaches 70% on MS${c} COCO`)), `COCO ${code(c)}`).toBe('supported [census-matches-count]')
+      expect(outcome(scoped('MMLU', `Reaches 70% on MMLU${c}`)), `MMLU end ${code(c)}`).toBe('supported [census-matches-count]')
+    }
+  })
+
+  it('gate-hostile:F2 the controls with a plain control in the control row are unchanged: a plain boundary still passes and a name of invisible characters alone is blank', () => {
+    expect(outcome(scoped('MMLU', 'Reaches 70% on MMLU, a broad exam'))).toBe('supported [census-matches-count]')
+    expect(() => scoped('​⁠', 'x')).toThrow(RangeError)
+  })
+
+  it('gate-hostile:F2 two population strings that differ only by invisible characters are the same scope', () => {
+    const r = assessAccuracyClaim({
+      claim: { metric: 'accuracy', value: 0.9 },
+      sample: { n: 1000, correct: 900 },
+      provenance: { source: 'human' },
+      sampling: 'random',
+      population: { claimed: 'English tweets', evaluated: 'English‍ tweets' },
+    })
+    expect(r.verdict).toBe('supported')
+  })
+})
