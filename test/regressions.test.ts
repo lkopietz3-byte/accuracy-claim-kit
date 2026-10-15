@@ -4,6 +4,7 @@ import { assessAccuracyClaim } from '../src/index.js'
 import type { AccuracyAssessment, AccuracyClaimInput, AssessOptions } from '../src/index.js'
 import { cohenKappa, gwetAC1, percentAgreement, wilsonInterval } from '../src/index.js'
 import { foldText, mentionsName } from '../src/text.js'
+import { confidenceLabel } from '../src/format.js'
 import { vectors } from './vectors.js'
 
 // Regression rows for the findings of the round 1 audit. Every row name starts
@@ -1376,5 +1377,33 @@ describe('hostile:F7 an options value that is not a plain object throws, and a s
     expect(assessAccuracyClaim(input, new Opts()).reasons).toEqual(['sample-too-small'])
     expect(assessAccuracyClaim(input, Object.assign(Object.create(null) as object, { minN: 5000 })).reasons).toEqual(['sample-too-small'])
     expect(assessAccuracyClaim(input, vm.runInNewContext('({ minN: 5000 })') as AssessOptions).reasons).toEqual(['sample-too-small'])
+  })
+})
+
+describe('hostile:F11 a confidence level in e-notation is labeled from its digits, not its binary expansion', () => {
+  it('hostile:F11 1e-7 reads 0.00001% (it printed 0.000009999%)', () => {
+    expect(confidenceLabel(1e-7)).toBe('0.00001%')
+    expect(confidenceLabel(1.5e-7)).toBe('0.000015%')
+    expect(confidenceLabel(2.5e-9)).toBe('0.00000025%')
+    expect(confidenceLabel(1e-9)).toBe('0.0000001%')
+    expect(confidenceLabel(5e-7)).toBe('0.00005%')
+  })
+
+  it('hostile:F11 levels below one billionth of a percent say so, and ordinary levels are as before', () => {
+    expect(confidenceLabel(1e-12)).toBe('under 0.000000001%')
+    expect(confidenceLabel(0.95)).toBe('95%')
+    expect(confidenceLabel(0.999)).toBe('99.9%')
+    expect(confidenceLabel(0.5)).toBe('50%')
+    expect(confidenceLabel(0.9999999)).toBe('99.99999%')
+  })
+
+  it('hostile:F11 no level that assessAccuracyClaim accepts (0.5 up to 1) is ever written in e-notation', () => {
+    for (const confidence of [0.5, 0.5000001, 0.9, 0.99, 0.9999, 0.999999, 0.9999999999, 1 - 1e-15, 1 - 2 ** -53]) {
+      expect(String(confidence), String(confidence)).not.toContain('e')
+      const r = assessAccuracyClaim(sampled({ metric: 'accuracy', value: 0.5 }, { n: 100, correct: 90 }), { confidence })
+      expect(r.suggestedStatement).toMatch(/Wilson interval/)
+      expect(r.suggestedStatement).not.toMatch(/e[+-]?\d/)
+      expect(r.suggestedStatement).not.toMatch(/100% Wilson/)
+    }
   })
 })

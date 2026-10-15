@@ -59,7 +59,13 @@ export function pctNearest(proportion: number, decimals: number): string {
  */
 export function confidenceLabel(confidence: number): string {
   let text = String(confidence)
-  if (text.includes('e')) text = confidence.toFixed(30)
+  const at = text.indexOf('e')
+  if (at >= 0) {
+    // 1.5e-7 is 0.00000015: expand the digits the number is written with, never the binary expansion
+    const exponent = Number(text.slice(at + 1))
+    const mantissa = text.slice(0, at).replace('.', '')
+    text = `0.${'0'.repeat(Math.max(0, -exponent - 1))}${mantissa}`
+  }
   const digits = text.slice(2) // after "0."
   const whole = Number(digits.slice(0, 2).padEnd(2, '0')) // percent, integer part
   const fraction = digits.slice(2, 11).replace(/0+$/, '')
