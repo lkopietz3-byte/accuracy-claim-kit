@@ -27,9 +27,9 @@
  ],
  "_sources": {
   "wilson1927": "E. B. Wilson (1927), JASA 22:209-212, formula only (not retrievable here); values come from the independent decimal implementation above.",
-  "newcombe1998": "R. G. Newcombe (1998), Stat Med 17:857-872, Table I Wilson rows (81/263, 15/148, 0/20). The paper could not be retrieved in this environment; these 4-decimal values are recalled, were NOT checked against the paper, and each agrees with the independent computation here to 4 decimals. Treat as unverified against the source.",
+  "referenceLibraries": "Wilson, kappa and AC1 are also compared with statsmodels, scipy, scikit-learn and irrCAC in test/fixtures/reference.json (scripts/reference/gen.py), including the three Wilson rows of Newcombe (1998) Table I (81/263, 15/148, 0/20). No value in this file is recalled from a paper.",
   "cohenKappaExamples": "Wikipedia 'Cohen's kappa' (fetched 2026-10-10): 50-proposal example kappa 0.40; 100-item examples 0.1304 and 0.2593; 16-item limitations example 0.0089 and -0.0667 (page rounds to 0.01 and -0.07; the unrounded values here are from the cell counts).",
-  "gwetAC1": "Gwet (2008) BJMSP 61:29-48 could not be retrieved (preprint URL returned 404); AC1 relies on the independent exact-fraction implementation above."
+  "gwetAC1": "Gwet (2008) BJMSP 61:29-48 could not be retrieved (preprint URL returned 404); AC1 is checked against the independent exact-fraction implementation above and against irrCAC (test/fixtures/reference.json)."
  },
  "normalQuantile": [
   [
@@ -7919,32 +7919,6 @@
    "low": 0.3079847908388464,
    "high": 0.30798479091020303,
    "point": 0.30798479087452474
-  }
- ],
- "wilsonPublished": [
-  {
-   "successes": 81,
-   "n": 263,
-   "confidence": 0.95,
-   "low4": 0.2553,
-   "high4": 0.3662,
-   "source": "Newcombe 1998 Table I (recalled, unverified against paper)"
-  },
-  {
-   "successes": 15,
-   "n": 148,
-   "confidence": 0.95,
-   "low4": 0.0624,
-   "high4": 0.1605,
-   "source": "Newcombe 1998 Table I (recalled, unverified against paper)"
-  },
-  {
-   "successes": 0,
-   "n": 20,
-   "confidence": 0.95,
-   "low4": 0.0,
-   "high4": 0.1611,
-   "source": "Newcombe 1998 Table I (recalled, unverified against paper)"
   }
  ],
  "wilsonAnalytic": [

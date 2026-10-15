@@ -141,9 +141,9 @@ def main():
     out["_comment"] = __doc__.strip().split("\n")
     out["_sources"] = {
         "wilson1927": "E. B. Wilson (1927), JASA 22:209-212, formula only (not retrievable here); values come from the independent decimal implementation above.",
-        "newcombe1998": "R. G. Newcombe (1998), Stat Med 17:857-872, Table I Wilson rows (81/263, 15/148, 0/20). The paper could not be retrieved in this environment; these 4-decimal values are recalled, were NOT checked against the paper, and each agrees with the independent computation here to 4 decimals. Treat as unverified against the source.",
+        "referenceLibraries": "Wilson, kappa and AC1 are also compared with statsmodels, scipy, scikit-learn and irrCAC in test/fixtures/reference.json (scripts/reference/gen.py), including the three Wilson rows of Newcombe (1998) Table I (81/263, 15/148, 0/20). No value in this file is recalled from a paper.",
         "cohenKappaExamples": "Wikipedia 'Cohen's kappa' (fetched 2026-10-10): 50-proposal example kappa 0.40; 100-item examples 0.1304 and 0.2593; 16-item limitations example 0.0089 and -0.0667 (page rounds to 0.01 and -0.07; the unrounded values here are from the cell counts).",
-        "gwetAC1": "Gwet (2008) BJMSP 61:29-48 could not be retrieved (preprint URL returned 404); AC1 relies on the independent exact-fraction implementation above.",
+        "gwetAC1": "Gwet (2008) BJMSP 61:29-48 could not be retrieved (preprint URL returned 404); AC1 is checked against the independent exact-fraction implementation above and against irrCAC (test/fixtures/reference.json).",
     }
 
     # inverse normal ------------------------------------------------------
@@ -181,12 +181,6 @@ def main():
             cases.append({"successes": s, "n": n, "confidence": c, "low": lo, "high": hi, "point": pt})
     out["wilson"] = cases
 
-    out["wilsonPublished"] = []
-    for (s, n, lo4, hi4) in [(81, 263, 0.2553, 0.3662), (15, 148, 0.0624, 0.1605), (0, 20, 0.0, 0.1611)]:
-        lo, hi, _ = wilson(s, n, 0.95)
-        assert round(lo, 4) == lo4 and round(hi, 4) == hi4, (s, n, lo, hi)
-        out["wilsonPublished"].append({"successes": s, "n": n, "confidence": 0.95, "low4": lo4, "high4": hi4,
-                                       "source": "Newcombe 1998 Table I (recalled, unverified against paper)"})
     # analytic: zero successes => [0, z^2/(n+z^2)], all successes => [n/(n+z^2), 1]
     out["wilsonAnalytic"] = []
     for n in [1, 5, 20, 29, 100]:

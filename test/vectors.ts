@@ -69,7 +69,6 @@ export interface Vectors {
   normalQuantile: [number, number][]
   zForConfidence: [number, number][]
   wilson: WilsonVector[]
-  wilsonPublished: { successes: number; n: number; confidence: number; low4: number; high4: number; source: string }[]
   wilsonAnalytic: { n: number; confidence: number; zeroUpper: number; allLower: number }[]
   agreement: AgreementVector[]
   verdictGrid: GridVector[]
