@@ -1,0 +1,9 @@
+# Developer-only: the libraries scripts/reference/gen.py compares the kit with.
+# These versions produced test/fixtures/reference.json (recorded in its "versions" field).
+# irrCAC pins an old pandas, so install it separately and without its dependencies:
+#   pip install --no-deps irrCAC==0.4.4
+numpy==2.5.4
+pandas==3.0.6
+scipy==1.18.1
+scikit-learn==1.9.1
+statsmodels==0.15.0
