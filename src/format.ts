@@ -1,3 +1,4 @@
+import { valueDigits } from './census.js'
 import { splitDouble } from './exact.js'
 
 // Number formatting for statements. Bounds are rounded in the direction that
@@ -49,6 +50,30 @@ export function pctCeil(proportion: number, decimals: number): string {
 /** Nearest, for figures that are not bounds (the claim itself, a width). */
 export function pctNearest(proportion: number, decimals: number): string {
   return `${(proportion * 100).toFixed(decimals)}%`
+}
+
+/**
+ * A number to `decimals` places, cut in a chosen direction instead of rounded to
+ * the nearest, from the digits it is written with (0.57 is 0.57, not 0.5699...):
+ * 'down' never shows more than the number (0.9996 is 0.99, -0.456 is -0.46),
+ * 'up' never shows less (a required minimum of 0.8004 is 0.801).
+ */
+export function decimalCut(x: number, decimals: number, direction: 'down' | 'up'): string {
+  const negative = x < 0
+  const { digits, scale } = valueDigits(Math.abs(x))
+  let units: bigint
+  if (scale <= decimals) {
+    units = digits * 10n ** BigInt(decimals - scale)
+  } else {
+    const unit = 10n ** BigInt(scale - decimals)
+    const rest = digits % unit
+    // the size of a negative number grows when it is cut down, a positive one when it is cut up
+    const grows = negative ? direction === 'down' : direction === 'up'
+    units = digits / unit + (grows && rest !== 0n ? 1n : 0n)
+  }
+  const whole = units / 10n ** BigInt(decimals)
+  const fraction = decimals === 0 ? '' : `.${String(units % 10n ** BigInt(decimals)).padStart(decimals, '0')}`
+  return `${negative && units !== 0n ? '-' : ''}${String(whole)}${fraction}`
 }
 
 /**

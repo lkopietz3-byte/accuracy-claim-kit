@@ -644,3 +644,38 @@ describe('gate-false-pass:G8 strata with no pooled sample are refused with the s
     expect(r.explanation.join(' ')).not.toContain('pass sample')
   })
 })
+
+describe('gate-false-pass:G9 an agreement statistic is never shown above its value', () => {
+  const withAgreement = (value: number, options: { minAgreement?: number } = {}): AccuracyAssessment =>
+    assessAccuracyClaim(
+      sampled({ metric: 'accuracy', value: 0.95, display: '95%' }, { n: 10_000, correct: 9500 }, {
+        provenance: { source: 'human', raters: 2, agreement: { statistic: 'cohen-kappa', value, n: 500 } },
+      }),
+      options,
+    )
+
+  it('gate-false-pass:G9 0.996 and 0.9996 print 0.99 in the statement, not 1.00', () => {
+    for (const value of [0.996, 0.9996, 0.9999]) {
+      expect(withAgreement(value).suggestedStatement, String(value)).toContain('Cohen kappa 0.99)')
+    }
+  })
+
+  it('gate-false-pass:G9 a value that is already two decimals prints as written, including a computed one and a negative one', () => {
+    expect(withAgreement(0.85).suggestedStatement).toContain('Cohen kappa 0.85)')
+    expect(withAgreement(0.57).suggestedStatement).toContain('Cohen kappa 0.57)')
+    expect(withAgreement(0.1 + 0.2 + 0.27).suggestedStatement).toContain('Cohen kappa 0.57)')
+    expect(withAgreement(1).suggestedStatement).toContain('Cohen kappa 1.00)')
+    expect(withAgreement(0).suggestedStatement).toContain('Cohen kappa 0.00)')
+    expect(withAgreement(-0.456).suggestedStatement).toContain('Cohen kappa -0.46)')
+  })
+
+  it('gate-false-pass:G9 a refusal for a value just under the minimum shows two different figures', () => {
+    const r = withAgreement(0.7996, { minAgreement: 0.8 })
+    expect(outcome(r)).toBe('refused [agreement-below-minimum]')
+    expect(r.explanation[0]).toBe('Cohen kappa is 0.799, below the required 0.800.')
+    const fine = withAgreement(0.6, { minAgreement: 0.8 })
+    expect(fine.explanation[0]).toBe('Cohen kappa is 0.600, below the required 0.800.')
+    const odd = withAgreement(0.8002, { minAgreement: 0.8004 })
+    expect(odd.explanation[0]).toBe('Cohen kappa is 0.800, below the required 0.801.')
+  })
+})

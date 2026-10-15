@@ -4,7 +4,7 @@ import { dayNumber } from './dates.js'
 import { parseDisplayFigure, textFiguresDiffering } from './display.js'
 import { beyondNoise, snapAbsolute } from './exact.js'
 import type { DisplayFigure } from './display.js'
-import { confidenceLabel, maxDisplayDecimals, pctCeil, pctFloor, pctNearest } from './format.js'
+import { confidenceLabel, decimalCut, maxDisplayDecimals, pctCeil, pctFloor, pctNearest } from './format.js'
 import type {
   AccuracyAssessment,
   AccuracyClaimInput,
@@ -686,7 +686,7 @@ export function assessAccuracyClaim(
     } else if (agreement.value + COMPARISON_TOLERANCE < minAgreement) {
       refusals.push('agreement-below-minimum')
       notes.push(
-        `${STATISTIC_LABEL[agreement.statistic]} is ${agreement.value.toFixed(3)}, below the required ${minAgreement.toFixed(3)}.`,
+        `${STATISTIC_LABEL[agreement.statistic]} is ${decimalCut(agreement.value, 3, 'down')}, below the required ${decimalCut(minAgreement, 3, 'up')}.`,
       )
     }
   }
@@ -963,7 +963,7 @@ export function assessAccuracyClaim(
   ]
   if (evaluatedAtRaw !== undefined) parts.push(`evaluated ${evaluatedAtRaw as string}`)
   if (agreement !== undefined && agreement.value !== null) {
-    parts.push(`${STATISTIC_LABEL[agreement.statistic]} ${agreement.value.toFixed(2)}`)
+    parts.push(`${STATISTIC_LABEL[agreement.statistic]} ${decimalCut(agreement.value, 2, 'down')}`)
   }
   return {
     verdict,
