@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { assessAccuracyClaim, cohenKappa, gwetAC1, percentAgreement, wilsonInterval } from '../src/index.js'
-import type { AccuracyAssessment, AccuracyClaimInput } from '../src/index.js'
+import type { AccuracyAssessment, AccuracyClaimInput, Claim } from '../src/index.js'
 import { foldText } from '../src/text.js'
 
 // Regression rows for the findings of the release gate. Every row name starts
@@ -677,5 +677,21 @@ describe('gate-false-pass:G9 an agreement statistic is never shown above its val
     expect(fine.explanation[0]).toBe('Cohen kappa is 0.600, below the required 0.800.')
     const odd = withAgreement(0.8002, { minAgreement: 0.8004 })
     expect(odd.explanation[0]).toBe('Cohen kappa is 0.800, below the required 0.801.')
+  })
+})
+
+describe('gate-false-pass:G10 the declarations accept the names of refused metrics in the cases a person writes them', () => {
+  it('gate-false-pass:G10 F1, AUC, WER, Roc-auc and the lower-case names type-check and are refused, not thrown', () => {
+    const names: Claim['metric'][] = ['f1', 'F1', 'auc', 'AUC', 'Auc', 'roc-auc', 'ROC-AUC', 'wer', 'WER', 'cer', 'CER', 'bleu', 'BLEU', 'rouge', 'ROUGE', 'map', 'MAP', 'composite', 'Composite', 'other', 'Other']
+    for (const metric of names) {
+      const r = assessAccuracyClaim(sampled({ metric, value: 0.9 }, { n: 100, correct: 90 }))
+      expect(outcome(r), metric).toBe('refused [metric-not-supported]')
+    }
+  })
+
+  it('gate-false-pass:G10 a judged metric in the wrong case is still a type error and a RangeError that says what was meant', () => {
+    // @ts-expect-error a judged metric must be written in lower case
+    const claim: Claim = { metric: 'Accuracy', value: 0.9 }
+    expect(() => assessAccuracyClaim(sampled(claim, { n: 100, correct: 90 }))).toThrow(/did you mean "accuracy"/)
   })
 })

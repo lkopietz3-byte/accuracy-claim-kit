@@ -55,7 +55,12 @@ export type SamplingMethod =
   | 'cross-validation'
 
 export interface Claim {
-  metric: ClaimMetric | UnsupportedMetric
+  /**
+   * A judged metric in lower case, or the name of a metric the kit refuses. A refused name is
+   * matched in any case at run time; the types accept the lower-case (`f1`), upper-case (`F1`)
+   * and capitalized (`Auc`) forms people write. The result's `metric` is the lower-case name.
+   */
+  metric: ClaimMetric | UnsupportedMetric | Uppercase<UnsupportedMetric> | Capitalize<UnsupportedMetric>
   /** The claimed rate as a proportion from 0 to 1 (0.998 means 99.8%). */
   value: number
   /**
