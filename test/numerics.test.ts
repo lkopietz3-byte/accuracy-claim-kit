@@ -90,7 +90,7 @@ describe('Wilson interval against an independent 60-digit decimal implementation
     expect(checked).toBeGreaterThan(100)
   })
 
-  it('reproduces the Newcombe (1998) Table I Wilson rows to 4 decimals', () => {
+  it('reproduces the three Newcombe (1998) Table I Wilson rows as recalled (not checked against the paper) to 4 decimals', () => {
     for (const v of vectors.wilsonPublished) {
       const r = wilsonInterval(v.successes, v.n, { confidence: v.confidence })
       expect(Math.round(r.low * 1e4) / 1e4).toBe(v.low4)
