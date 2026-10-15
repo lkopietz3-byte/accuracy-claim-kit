@@ -31,7 +31,7 @@ Does this accuracy or error-rate number have the evidence to carry it? Wilson in
 ## Code Review Rules
 
 - A refusal means "cannot tell", never "false". Fail only on positive evidence; malformed input throws and never returns a verdict or permission.
-- Keep the claimant-favoring tolerance (`COMPARISON_TOLERANCE`) as the only place floating-point noise is absorbed. Rows exactly at each boundary stay in the verdict table.
+- Keep the claimant-favoring tolerance (`COMPARISON_TOLERANCE`) as the only place floating-point noise is absorbed when a claim meets an interval limit; `VALUE_NOISE` is the only allowance for reading a value as the decimal or count it was computed as. Rows exactly at each boundary stay in the verdict table.
 - Validate every captured array length before looping, and judge the printed display as well as the value.
 - Read every caller property once; never call `toJSON` or `then`. List the own keys of each caller object exactly once, only to reject an unknown key (a typo must throw, never switch a check off).
 - Statements describe evidence only. They must never say the system is accurate, and bounds round in the cautious direction.

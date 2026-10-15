@@ -2,7 +2,7 @@ import type { AgreementStatistic } from './agreement.js'
 import { countDecimals, matchesValue } from './census.js'
 import { dayNumber } from './dates.js'
 import { parseDisplayFigure, textFiguresDiffering } from './display.js'
-import { beyondOneUlp } from './exact.js'
+import { beyondNoise, snapAbsolute } from './exact.js'
 import type { DisplayFigure } from './display.js'
 import { confidenceLabel, maxDisplayDecimals, pctCeil, pctFloor, pctNearest } from './format.js'
 import type {
@@ -407,12 +407,17 @@ export function assessAccuracyClaim(
     ? readFiniteInRange(valueRaw, 'claim.value', 0, 1)
     : readFiniteInRange(valueRaw, 'claim.value', -Infinity, Infinity)
 
+  // A value within the floating-point noise of 0 or 1 is the absolute claim of 0 or
+  // 1 (ten 0.1s added up is 100%, not "99.99999999999999% so matches 99.5%").
+  // `claimed` stays as supplied for the result; every judgment uses `judgedValue`.
+  const judgedValue = judged ? snapAbsolute(claimed) : claimed
+
   if (displayRaw !== undefined && typeof displayRaw !== 'string') throw new TypeError('claim.display must be a string')
   let figure: DisplayFigure | undefined
   if (displayRaw !== undefined && judged) {
     figure = parseDisplayFigure(displayRaw, higherIsBetter)
     // Exact: the value must agree with the printed figure to its rounding plus
-    // one ulp of the value. No float tolerance is involved.
+    // the value-noise allowance. No float tolerance is involved.
     if (!figure.consistentWith(claimed)) {
       throw new RangeError(
         `claim.display "${clip(displayRaw, 40)}" (${pctNearest(figure.info.figure, 3).replace(/\.?0+%$/, '%')}) does not match claim.value ${String(claimed)} (${pctNearest(claimed, 3).replace(/\.?0+%$/, '%')}): ${figure.mismatchHint}`,
@@ -511,12 +516,13 @@ export function assessAccuracyClaim(
   // Readers see the printed figure, so the more favorable of the value and the
   // parsed figure is what gets judged. A display that disagrees with the value
   // by more than its own rounding already threw above.
-  let assessed = claimed
+  let assessed = judgedValue
   let fromDisplay = false
   if (figure !== undefined) {
     const shown = figure.info.figure
-    // One ulp apart is the same figure (82.7 / 100 against 0.827), not a more favorable one.
-    const displayWins = beyondOneUlp(shown, claimed, higherIsBetter)
+    // A little noise apart is the same figure (82.7 / 100 against 0.827, 1 - 0.8 against
+    // 0.2), not a more favorable one.
+    const displayWins = beyondNoise(shown, judgedValue, higherIsBetter)
     if (displayWins) {
       assessed = shown
       fromDisplay = true
@@ -706,10 +712,10 @@ export function assessAccuracyClaim(
     // printed figure is itself a point figure. 0 and 1 stay exact.
     const form = figure?.info.form
     const pointDisplay = form === 'percent' || form === 'approx'
-    const valueMoreFavorable = figure !== undefined && beyondOneUlp(claimed, figure.info.figure, higherIsBetter)
+    const valueMoreFavorable = figure !== undefined && beyondNoise(judgedValue, figure.info.figure, higherIsBetter)
     const displayOk = figure === undefined || figure.satisfiedBy(k, n)
     const valueOk =
-      figure === undefined || valueMoreFavorable || pointDisplay ? matchesValue(claimed, k, n) : true
+      figure === undefined || valueMoreFavorable || pointDisplay ? matchesValue(judgedValue, k, n) : true
     const printedOnly = form === 'floor' || form === 'ceiling' || form === 'range' || form === 'one-in-n'
     const ok = displayOk && valueOk
     if (ok) {
@@ -735,7 +741,7 @@ export function assessAccuracyClaim(
       censusNotes.push(`The figure is printed to ${placesWord(displayDecimals)}; ${String(n)} items resolve ${supportsWord(countDecimals(n))}.`)
       censusPrecisionNote = printAdvice(countDecimals(n))
     }
-    const censusTextNote = textFigureNote(claimText, claimed, assessed, higherIsBetter)
+    const censusTextNote = textFigureNote(claimText, judgedValue, assessed, higherIsBetter)
     if (censusTextNote !== null) {
       censusReasons.push('text-figure-differs')
       censusNotes.push(censusTextNote)
@@ -788,11 +794,11 @@ export function assessAccuracyClaim(
     // The printed figure must match the rate to its own precision; a value that
     // is more favorable than the printed figure must match as well, so a coarse
     // value cannot stand in for a precise print.
-    const valueMoreFavorable = figure !== undefined && beyondOneUlp(claimed, figure.info.figure, higherIsBetter)
+    const valueMoreFavorable = figure !== undefined && beyondNoise(judgedValue, figure.info.figure, higherIsBetter)
     matchesObserved =
       figure === undefined
-        ? matchesValue(claimed, successes, n)
-        : figure.matchesObserved(successes, n) && (!valueMoreFavorable || matchesValue(claimed, successes, n))
+        ? matchesValue(judgedValue, successes, n)
+        : figure.matchesObserved(successes, n) && (!valueMoreFavorable || matchesValue(judgedValue, successes, n))
   }
 
   const top = pctCeil(w.high, 3)
@@ -807,7 +813,7 @@ export function assessAccuracyClaim(
     const tol = tolFor(x)
     return higherIsBetter ? (strict ? x < w.low - tol : x <= w.low + tol) : strict ? x > w.high + tol : x >= w.high - tol
   }
-  const withinBound = clears(claimed, false) && (figure === undefined || clears(figure.info.figure, strictBound))
+  const withinBound = clears(judgedValue, false) && (figure === undefined || clears(figure.info.figure, strictBound))
   const matchesText = `matches the observed rate (${observedText}) to ${figure === undefined ? VALUE_PRECISION : 'its printed precision'}. The ${cl} Wilson interval is ${bottom} to ${top}.`
   if (withinBound) {
     verdict = 'supported'
@@ -903,7 +909,7 @@ export function assessAccuracyClaim(
     explanation.push('The strata are pooled as one sample and not reweighted by population share, so the interval describes the pooled counts, not the population, unless each stratum was sampled in proportion to its size. Report each stratum, or reweight them yourself.')
   }
 
-  const textNote = textFigureNote(claimText, claimed, assessed, higherIsBetter)
+  const textNote = textFigureNote(claimText, judgedValue, assessed, higherIsBetter)
   if (textNote !== null) {
     reasons.push('text-figure-differs')
     explanation.push(textNote)

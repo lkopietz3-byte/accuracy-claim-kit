@@ -1,19 +1,20 @@
 // Exact helpers for claims about a complete, fixed set (a benchmark): there is
 // no sampling, so the claim is compared with the exact count, not an interval.
 
-import { splitDouble } from './exact.js'
+import { VALUE_NOISE, VALUE_NOISE_EXPONENT, snapAbsolute } from './exact.js'
 
 /**
  * The decimal digits a number is written with, read from its shortest
  * round-trip text (never from binary expansion): 0.799 -> digits 799, scale 3;
  * 5e-7 -> digits 5, scale 7 (value = digits / 10^scale).
  *
- * A double that is one ulp from a shorter decimal is read as that decimal, so
- * the noisy results of 82.7 / 100 (0.8270000000000001) and 82.7 * 0.01 read as
- * 0.827 and not as a sixteen-digit figure nobody wrote.
+ * A double within VALUE_NOISE of a shorter decimal is read as that decimal, so
+ * the noisy results of 82.7 / 100 (0.8270000000000001), 82.7 * 0.01 and
+ * 1 - 800 / 1000 (0.19999999999999996) read as 0.827 and 0.2 and not as a
+ * sixteen-digit figure nobody wrote.
  */
 export function valueDigits(value: number): { digits: bigint; scale: number } {
-  const text = shortestWithinOneUlp(value)
+  const text = shortestWithinNoise(value)
   const at = text.indexOf('e')
   const mantissa = at < 0 ? text : text.slice(0, at)
   const exponent = at < 0 ? 0 : Number(text.slice(at + 1))
@@ -26,13 +27,12 @@ export function valueDigits(value: number): { digits: bigint; scale: number } {
   return { digits: BigInt(`${whole}${fraction}`), scale: fraction.length - exponent }
 }
 
-/** The shortest decimal text (from 1 to 16 significant digits) within one ulp of `value`, else its round-trip text. */
-function shortestWithinOneUlp(value: number): string {
+/** The shortest decimal text (from 1 to 16 significant digits) within VALUE_NOISE of `value`, else its round-trip text. */
+export function shortestWithinNoise(value: number): string {
   if (value === 0) return '0'
-  const ulp = 2 ** splitDouble(value).exponent
   for (let digits = 1; digits <= 16; digits++) {
     const text = value.toPrecision(digits)
-    if (Math.abs(Number(text) - value) <= ulp) return text
+    if (Math.abs(Number(text) - value) <= VALUE_NOISE) return text
   }
   return String(value)
 }
@@ -58,27 +58,27 @@ export function matchesCount(digits: bigint, scale: number, k: number, n: number
 export const COARSEST_VALUE_SCALE = 2
 
 /**
- * True when the double `x` matches k / n: 0 and 1 are exact claims; otherwise
- * the decimal `x` is written as (see valueDigits) must be within half a unit of
- * its own last digit (never coarser than a whole percent) plus one ulp of `x`
- * of k / n, so a value computed as k / n in floating point matches its own
- * count and a value one ulp off a rounded figure is judged like that figure.
- * Exact integer arithmetic.
+ * True when the double `x` matches k / n: 0 and 1 are exact claims (a value
+ * within VALUE_NOISE of either is that claim; see snapAbsolute); otherwise the
+ * decimal `x` is written as (see valueDigits) must be within half a unit of
+ * its own last digit (never coarser than a whole percent) plus VALUE_NOISE of
+ * k / n, so a value computed as k / n, or as 1 - (n - k) / n, in floating point
+ * matches its own count and a value a little off a rounded figure is judged
+ * like that figure. Exact integer arithmetic.
  */
 export function matchesValue(x: number, k: number, n: number): boolean {
-  if (x === 0) return k === 0
-  if (x === 1) return k === n
+  const exact = snapAbsolute(x)
+  if (exact === 0) return k === 0
+  if (exact === 1) return k === n
   const { digits, scale: own } = valueDigits(x)
   const half = 10n ** BigInt(Math.max(own, COARSEST_VALUE_SCALE)) // half a unit is 1 / (2 half)
   const written = 10n ** BigInt(own)
-  const { exponent } = splitDouble(x)
   const bn = BigInt(n)
-  // |digits / written - k / n| <= 1 / (2 half) + ulp, ulp = 2^exponent = num / den,
-  // multiplied through by 2 half written n den
-  const num = exponent >= 0 ? 1n << BigInt(exponent) : 1n
-  const den = exponent >= 0 ? 1n : 1n << BigInt(-exponent)
+  // |digits / written - k / n| <= 1 / (2 half) + 2^NOISE_EXPONENT, multiplied
+  // through by 2 half written n 2^-NOISE_EXPONENT
+  const shift = BigInt(-VALUE_NOISE_EXPONENT)
   const gap = digits * bn - BigInt(k) * written
-  return 2n * half * den * (gap < 0n ? -gap : gap) <= written * bn * den + 2n * half * written * bn * num
+  return ((2n * half * (gap < 0n ? -gap : gap)) << shift) <= ((written * bn) << shift) + 2n * half * written * bn
 }
 
 /**

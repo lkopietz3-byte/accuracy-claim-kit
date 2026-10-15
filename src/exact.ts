@@ -58,13 +58,46 @@ export function atMostDecimal(x: number, digits: bigint, scale: number): boolean
 }
 
 /**
- * True when `a` is more favorable than `b` by more than one ulp of `a`.
- * "More favorable" is higher when `higherIsBetter`, else lower. A value built
- * as printedPercent / 100 can sit one ulp from the figure it was printed as;
- * that is the same figure, not a more favorable one.
+ * How far a claimed value may sit from the decimal or the rate it was computed
+ * as, and still be that figure: 2^-50, about 8.9e-16. A double built as
+ * 1 - correct / n, (k / n * 100) / 100 or the mean of ten folds carries a few
+ * units of rounding error in the last place of 1, and a subtraction from 1
+ * turns that into an absolute error that is hundreds of ulps when the result is
+ * small, so the allowance is absolute, not a count of ulps of the value. It is
+ * about eight times the spacing of doubles just below 1, and it is far below
+ * anything a count can resolve (it would take 1e15 items). A value within it of
+ * 0 or 1 is read as 0 or 1 (see snapAbsolute): an absolute claim is never
+ * excused as an honest rate. COMPARISON_TOLERANCE (1e-12) is the separate,
+ * wider allowance for comparing a claim with an interval limit.
  */
-export function beyondOneUlp(a: number, b: number, higherIsBetter: boolean): boolean {
-  const gap = higherIsBetter ? a - b : b - a
-  if (!(gap > 0)) return false
-  return gap > 2 ** splitDouble(a).exponent
+export const VALUE_NOISE_EXPONENT = -50
+export const VALUE_NOISE = 2 ** VALUE_NOISE_EXPONENT
+
+/**
+ * 0 or 1 when `x` is within VALUE_NOISE of it, else `x`. A computed 100%
+ * (ten 0.1s added up, 1 - 2^-52) is the absolute claim of 100%, and a computed
+ * 0% (1 - 0.9999999999999999) is the absolute claim of 0%.
+ */
+export function snapAbsolute(x: number): number {
+  if (Math.abs(x) <= VALUE_NOISE) return 0
+  if (Math.abs(1 - x) <= VALUE_NOISE) return 1
+  return x
+}
+
+/**
+ * True when `a` is more favorable than `b` by more than VALUE_NOISE.
+ * "More favorable" is higher when `higherIsBetter`, else lower. A value built
+ * as printedPercent / 100, or as 1 - something, can sit a little off the figure
+ * it was printed as; that is the same figure, not a more favorable one.
+ */
+export function beyondNoise(a: number, b: number, higherIsBetter: boolean): boolean {
+  const lead = higherIsBetter ? a : b
+  const trail = higherIsBetter ? b : a
+  if (!(lead > trail)) return false
+  // exact: both doubles and the noise in units of 2^-p, so no rounding in the subtraction
+  const x = splitDouble(lead)
+  const y = splitDouble(trail)
+  const p = Math.max(-x.exponent, -y.exponent, -VALUE_NOISE_EXPONENT)
+  const gap = (x.mantissa << BigInt(x.exponent + p)) - (y.mantissa << BigInt(y.exponent + p))
+  return gap > 1n << BigInt(p + VALUE_NOISE_EXPONENT)
 }

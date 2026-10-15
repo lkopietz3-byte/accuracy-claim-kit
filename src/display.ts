@@ -3,7 +3,7 @@
 // favorable reading, and answers the exact questions the verdict needs.
 
 import { matchesCount } from './census.js'
-import { atLeastDecimal, atMostDecimal, beyondOneUlp, splitDouble, withinHalfUnit } from './exact.js'
+import { atLeastDecimal, atMostDecimal, beyondNoise, splitDouble, withinHalfUnit } from './exact.js'
 import { foldText } from './text.js'
 import { clip } from './validate.js'
 
@@ -166,8 +166,8 @@ function oneInN(text: string, kind: 'percent' | 'approx' | 'floor' | 'ceiling', 
     return strict ? lhs < 0n : lhs <= 0n
   }
   const agreesWith = (value: number): boolean => {
-    if (bound === 'floor') return strict ? beyondOneUlp(value, figure, true) : !beyondOneUlp(figure, value, true)
-    if (bound === 'ceiling') return strict ? beyondOneUlp(value, figure, false) : !beyondOneUlp(figure, value, false)
+    if (bound === 'floor') return strict ? beyondNoise(value, figure, true) : !beyondNoise(figure, value, true)
+    if (bound === 'ceiling') return strict ? beyondNoise(value, figure, false) : !beyondNoise(figure, value, false)
     return consistentWith(value)
   }
   return {
@@ -293,8 +293,8 @@ export function parseDisplayFigure(display: unknown, higherIsBetter: boolean): D
     consistentWith: (value) => withinHalfUnit(value, num.digits, scale, scale),
     agreesWith(value: number): boolean {
       const shown = proportionOf(num)
-      if (form === 'floor') return strict ? beyondOneUlp(value, shown, true) : !beyondOneUlp(shown, value, true)
-      if (form === 'ceiling') return strict ? beyondOneUlp(value, shown, false) : !beyondOneUlp(shown, value, false)
+      if (form === 'floor') return strict ? beyondNoise(value, shown, true) : !beyondNoise(shown, value, true)
+      if (form === 'ceiling') return strict ? beyondNoise(value, shown, false) : !beyondNoise(shown, value, false)
       return withinHalfUnit(value, num.digits, scale, scale)
     },
     matchesObserved: (k, n) => matchesCount(num.digits, scale, k, n),
