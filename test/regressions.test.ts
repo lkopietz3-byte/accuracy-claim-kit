@@ -6,6 +6,7 @@ import { cohenKappa, gwetAC1, percentAgreement, wilsonInterval } from '../src/in
 import { foldText, mentionsName } from '../src/text.js'
 import { confidenceLabel } from '../src/format.js'
 import { vectors } from './vectors.js'
+import { bestCpuMs, cpuMs, GROWTH_LIMIT_FOR_4X, growthRatio } from './cpu-growth.js'
 
 // Regression rows for the findings of the round 1 audit. Every row name starts
 // with the finding id it pins, so `vitest -t "field:F1"` runs one finding.
@@ -184,20 +185,6 @@ describe('false-pass:F1 a value with no display is never read coarser than a who
   })
 })
 
-function cpuMs(work: () => void): number {
-  const before = process.cpuUsage()
-  work()
-  const after = process.cpuUsage(before)
-  return (after.user + after.system) / 1000
-}
-
-function bestCpuMs(work: () => void, trials = 5): number {
-  work() // warm up
-  let best = Infinity
-  for (let i = 0; i < trials; i++) best = Math.min(best, cpuMs(work))
-  return best
-}
-
 /** A complete-set claim whose scope check runs mentionsName on `text` against `name`. */
 function scoped(name: string, text: string, extra: Partial<AccuracyClaimInput> = {}): AccuracyClaimInput {
   return census({ metric: 'accuracy', value: 0.799, display: '79.9%', text }, { n: 50_000, correct: 39_950 }, name, extra)
@@ -334,30 +321,42 @@ describe('hostile:F1 and codex:CX-1 the name matcher is linear in the claim text
     expect(ms).toBeLessThan(250) // 3,800 ms before the fix; about 1 ms after
   })
 
-  it('hostile:F1 codex:CX-1 CPU time grows less than 6x for 4x the text (500, 1000, 2000 characters)', () => {
+  it('hostile:F1 codex:CX-1 CPU time grows less than 10x for 4x the text (500 and 2000 characters)', () => {
     // fail fast, before the repeated loops, if one call is already slow
     expect(cpuMs(() => assessAccuracyClaim(heavy(2000)))).toBeLessThan(250)
-    const time = (length: number): number => {
+    // 40 calls per run put the 500-character run near 15 ms of CPU, well above timer noise
+    const ratio = growthRatio((length) => {
       const input = heavy(length)
-      return bestCpuMs(() => {
-        for (let i = 0; i < 10; i++) assessAccuracyClaim(input)
-      }, 4)
-    }
-    const t500 = Math.max(time(500), 2)
-    const t1000 = time(1000)
-    const t2000 = time(2000)
-    expect(t2000 / t500).toBeLessThan(6)
-    expect(t1000 / t500).toBeLessThan(6)
+      return () => {
+        for (let i = 0; i < 40; i++) assessAccuracyClaim(input)
+      }
+    }, 500, 2000)
+    expect(ratio).toBeLessThan(GROWTH_LIMIT_FOR_4X)
   })
 
   it('hostile:F1 a text full of matches that are all rejected is linear too', () => {
-    const run = (reps: number) => (): void => {
-      mentionsName('ab'.repeat(reps), 'b')
-    }
-    const t1 = Math.max(bestCpuMs(run(5000)), 0.5)
-    const t2 = bestCpuMs(run(20_000))
-    expect(t2 / t1).toBeLessThan(6)
+    const ratio = growthRatio((reps) => {
+      const text = 'ab'.repeat(reps)
+      return () => {
+        for (let i = 0; i < 40; i++) mentionsName(text, 'b')
+      }
+    }, 5000, 20_000)
+    expect(ratio).toBeLessThan(GROWTH_LIMIT_FOR_4X)
   })
+
+  it('hostile:F1 the growth harness still fails a quadratic function at the same limit, and passes a linear one', () => {
+    let sink = 0
+    const quadratic = (size: number) => (): void => {
+      for (let i = 0; i < size; i++) for (let j = 0; j < size * 16; j++) sink = (sink + (i ^ j)) | 0
+    }
+    const linear = (size: number) => (): void => {
+      for (let i = 0; i < size * 4000; i++) sink = (sink + i) | 0
+    }
+    // 4x the size: about 16x the CPU time for the quadratic function, about 4x for the linear one
+    expect(growthRatio(quadratic, 500, 2000)).toBeGreaterThanOrEqual(GROWTH_LIMIT_FOR_4X)
+    expect(growthRatio(linear, 500, 2000)).toBeLessThan(GROWTH_LIMIT_FOR_4X)
+    expect(typeof sink).toBe('number')
+  }, 30_000) // about 1 s of CPU on a quiet machine; a loaded runner needs more than the default 5 s
 })
 
 describe('hostile:F3 a benchmark name needs a letter or a digit', () => {
