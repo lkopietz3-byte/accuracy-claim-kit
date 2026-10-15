@@ -765,8 +765,30 @@ describe('gate-review:R5-F5 a range on a complete set is judged at its favorable
 
 describe('gate-review:R5-F7 gate-review:R5-F8 the measured-rate note and the bench instructions say what is true', () => {
   it('gate-review:R5-F7 the lower end of a two-sided 95% interval is a one-sided 97.5% limit', () => {
-    expect(method).toContain('is a one-sided 97.5% limit, so the expected miss rate is at most 2.5%')
+    expect(method).toContain('is a one-sided 97.5% limit, so the miss rate is about 2.5% nominal')
     expect(method).not.toContain('one-sided 95% limit')
+  })
+
+  it('release-review:wilson-miss-rate-nominal METHOD.md says about 2.5% nominal for the conservative end, never "at most", and keeps the measured 108 of 9,000', () => {
+    expect(method).not.toContain('at most 2.5%')
+    expect(method).toContain('about 2.5% nominal')
+    expect(method).toContain('close to nominal, not guaranteed')
+    expect(method).toContain('108 of 9,000 simulated samples (1.2%)')
+  })
+
+  it('release-review:readme-99-below-observed a 99% claim on 499 of 500 is below the observed 99.8% and above the lower end, and the README says so', () => {
+    const r = assessAccuracyClaim({
+      claim: { metric: 'accuracy', value: 0.99, display: '99%' },
+      sample: { n: 500, correct: 499 },
+      provenance: { source: 'human', raters: 2 },
+      sampling: 'random',
+    })
+    expect(r.verdict).toBe('overstated')
+    expect(r.reasons).toEqual(['claim-beyond-conservative-bound'])
+    expect(r.interval!.low).toBeGreaterThan(0.9887)
+    expect(r.interval!.low).toBeLessThan(0.99)
+    expect(readme).not.toMatch(/Printed as "99%"[^.]*above the observed rate/)
+    expect(readme).toContain('Printed as "99%" the claim would be more cautious than the observed 99.8% but still above the lower end of the interval (98.87%)')
   })
 
   it('gate-review:R5-F8 every mention of npm run bench in the README says it runs from a clone', () => {
