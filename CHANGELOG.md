@@ -23,6 +23,7 @@ First version. The package is private and unlicensed and has not been published,
   - An agreement statistic that carries `n` below `options.minN` is `refused` with `agreement-sample-too-small` (a kappa or AC1 of 1.0 from 6 items used to clear `minAgreement` for a 10,000-item sample), and `provenance.raters` below 2 with an agreement block throws `RangeError`. A hand-written `{ statistic, value }` with no `n` is trusted as before. Migration: pass the agreement result from `percentAgreement`, `cohenKappa` or `gwetAC1` computed on at least `minN` items.
 
 ### Added
+- `strata-not-reweighted` (informational): every stratified result carries it, and its statement says `stratified sample, unweighted pooled`. Verdicts are unchanged.
 - `text-figure-differs` (informational): a percent, range, bound or `1 in N` in `claim.text` that is not the figure judged, or "perfect"-style wording when the figure is not 100%. Verdicts are unchanged.
 - New reason code `agreement-sample-too-small`; `AgreementInput` accepts an optional `n`.
 - The result carries `checks` (`retractions`, `scope`, `age`, `agreement`, `strata`, each `applied` or `not-supplied`) so a check that was left out is visible. New exported types `GateChecks` and `GateStatus`.

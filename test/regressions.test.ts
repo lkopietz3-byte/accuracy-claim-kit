@@ -929,3 +929,47 @@ describe('false-pass:F2 "1 in N" is exact unless it is written as approximate', 
     expect(outcome(text('about 1 in 50 on the Foo set'))).toBe('supported [census-matches-count, text-figure-differs]')
   })
 })
+
+describe('false-pass:F8 a stratified result says its pooled interval is not reweighted', () => {
+  const strat = (claim: AccuracyClaimInput['claim']): AccuracyClaimInput => sampled(
+    claim, { n: 350, correct: 343 },
+    { sampling: 'stratified', strata: [{ name: 'A', n: 300, correct: 297 }, { name: 'B', n: 50, correct: 46 }] },
+  )
+
+  it('false-pass:F8 the audit case (A is 10% of the population, B is 90%, claim 98%) carries the reason and the statement says unweighted pooled', () => {
+    const r = assessAccuracyClaim(strat({ metric: 'accuracy', value: 0.98, display: '98%' }))
+    expect(r.verdict).toBe('supported')
+    expect(r.reasons).toEqual(['matches-observed-rate', 'strata-not-reweighted'])
+    expect(r.explanation[1]).toContain('not reweighted')
+    expect(r.explanation[1]).toContain('population')
+    expect(r.suggestedStatement).toContain('stratified sample, unweighted pooled')
+    expect(r.suggestedStatement).toMatch(/^On this sample, at least /)
+  })
+
+  it('false-pass:F8 the reason never changes the verdict, whichever it is', () => {
+    const verdicts = (['overstated', 'contradicted', 'supported'] as const).map((expected) => {
+      const value = expected === 'contradicted' ? 0.995 : expected === 'overstated' ? 0.985 : 0.9
+      const r = assessAccuracyClaim(strat({ metric: 'accuracy', value }))
+      expect(r.reasons).toContain('strata-not-reweighted')
+      return r.verdict
+    })
+    expect(verdicts).toEqual(['overstated', 'contradicted', 'supported'])
+  })
+
+  it('false-pass:F8 error rates and every other sampling method are unaffected except stratified', () => {
+    const err = assessAccuracyClaim(sampled(
+      { metric: 'error-rate', value: 0.02 }, { n: 350, errors: 7 },
+      { sampling: 'stratified', strata: [{ name: 'A', n: 300, errors: 5 }, { name: 'B', n: 50, errors: 2 }] }))
+    expect(err.reasons).toContain('strata-not-reweighted')
+    for (const sampling of ['random', 'cross-validation'] as const) {
+      const r = assessAccuracyClaim(sampled({ metric: 'accuracy', value: 0.9 }, { n: 350, correct: 343 }, { sampling }))
+      expect(r.reasons, sampling).not.toContain('strata-not-reweighted')
+      expect(r.suggestedStatement, sampling).not.toContain('unweighted')
+    }
+  })
+
+  it('false-pass:F8 a refusal keeps only its failed preconditions', () => {
+    const r = assessAccuracyClaim(sampled({ metric: 'accuracy', value: 0.98 }, { n: 350, correct: 343 }, { sampling: 'stratified' }))
+    expect(r.reasons).toEqual(['stratified-without-strata'])
+  })
+})

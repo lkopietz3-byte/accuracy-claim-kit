@@ -181,6 +181,7 @@ export type ReasonCode =
   | 'matches-observed-rate'
   // informational, never changes the verdict
   | 'claim-worse-than-counts'
+  | 'strata-not-reweighted'
   | 'text-figure-differs'
 
 /** Whether an optional check ran for this call. */

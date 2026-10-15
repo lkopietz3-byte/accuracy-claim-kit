@@ -240,7 +240,7 @@ const SAMPLING_ERROR_ONLY = 'the interval covers sampling error only'
 const SAMPLING_ERROR_ONLY_CV = 'the interval covers sampling error only and is optimistic because cross-validation folds share data'
 
 const SAMPLE_WORD: Partial<Record<SamplingMethod, string>> = {
-  stratified: 'stratified sample',
+  stratified: 'stratified sample, unweighted pooled',
   'cross-validation': 'cross-validation estimate',
 }
 
@@ -819,6 +819,14 @@ export function assessAccuracyClaim(
         `${subject} is far less favorable than the counts support (the 99.9% Wilson interval is ${pctFloor(wide.low, 3)} to ${pctCeil(wide.high, 3)}). If this is a published figure it may be stale or wrong.`,
       )
     }
+  }
+
+  // The interval pools the strata as one simple random sample. It is not
+  // reweighted by population share, and the kit has no population shares to
+  // reweight with, so a stratified result says so (informational).
+  if (sampling === 'stratified') {
+    reasons.push('strata-not-reweighted')
+    explanation.push('The strata are pooled as one sample and not reweighted by population share, so the interval describes the pooled counts, not the population, unless each stratum was sampled in proportion to its size. Report each stratum, or reweight them yourself.')
   }
 
   const textNote = textFigureNote(claimText, claimed, assessed, higherIsBetter)

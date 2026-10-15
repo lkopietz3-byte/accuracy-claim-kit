@@ -229,7 +229,7 @@ const rows: Row[] = [
     name: 'stratified sampling is accepted when the strata come with it',
     input: input({ sampling: 'stratified', strata: [{ name: 'a', n: 600, correct: 594 }, { name: 'b', n: 400, correct: 396 }] }),
     verdict: 'supported',
-    reasons: ['claim-within-bound'],
+    reasons: ['claim-within-bound', 'strata-not-reweighted'],
   },
 
   // ---- overstated ------------------------------------------------------
@@ -364,7 +364,7 @@ describe('suggested statements', () => {
       }),
     )
     expect(r.suggestedStatement).toBe(
-      'On this sample, at most 1.84% error rate (95% Wilson interval 0.54% to 1.84%, n = 1000, human labels, stratified sample, Gwet AC1 0.91); the interval covers sampling error only',
+      'On this sample, at most 1.84% error rate (95% Wilson interval 0.54% to 1.84%, n = 1000, human labels, stratified sample, unweighted pooled, Gwet AC1 0.91); the interval covers sampling error only',
     )
   })
 
