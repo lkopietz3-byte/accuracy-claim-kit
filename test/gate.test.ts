@@ -581,3 +581,66 @@ describe('gate-hostile:F14 the pass-through keys of provenance.agreement are rea
     expect(() => assessAccuracyClaim(withAgreement({ statistic: 'cohen-kappa', value: 0.9, agreements: 'many' }))).toThrow(TypeError)
   })
 })
+
+describe('gate-hostile:F13 gate-false-pass:G7 a numeral that is part of a percent figure does not name a benchmark', () => {
+  const scoped = (name: string, text: string): AccuracyAssessment =>
+    assessAccuracyClaim({
+      claim: { metric: 'accuracy', value: 0.7, text },
+      sample: { n: 1000, correct: 700 },
+      provenance: { source: 'human' },
+      sampling: 'complete',
+      benchmark: { name },
+    })
+
+  it('gate-hostile:F13 a digits-only name equal to the score is not found in the score', () => {
+    expect(outcome(scoped('70', 'Our model is 70% accurate'))).toBe('refused [claim-not-scoped-to-benchmark]')
+    expect(outcome(scoped('70', 'Our model is 70 % accurate'))).toBe('refused [claim-not-scoped-to-benchmark]')
+    expect(outcome(scoped('90', 'Our model is 90% accurate'))).toBe('refused [claim-not-scoped-to-benchmark]')
+  })
+
+  it('gate-hostile:F13 the same numeral as a named set still matches, before or after a figure', () => {
+    expect(outcome(scoped('70', 'Reaches 70% on 70'))).toBe('supported [census-matches-count]')
+    expect(outcome(scoped('2048', 'Scores 70% on 2048'))).toBe('supported [census-matches-count]')
+    expect(outcome(scoped('CIFAR-10', 'Scores 70% on CIFAR-10, a small set'))).toBe('supported [census-matches-count]')
+    expect(outcome(scoped('CIFAR-10', 'Scores 70% on CIFAR-10.'))).toBe('supported [census-matches-count]')
+  })
+})
+
+describe('gate-false-pass:G8 strata with no pooled sample are refused with the sums to pass', () => {
+  const strata = [
+    { name: 'english', n: 600, correct: 570 },
+    { name: 'tagalog', n: 400, correct: 380 },
+  ]
+  const claim = { metric: 'accuracy' as const, value: 0.95 }
+
+  it('gate-false-pass:G8 the refusal says to add sample and gives the strata sums, and those sums give a verdict', () => {
+    const only = assessAccuracyClaim({ claim, provenance: { source: 'human' }, sampling: 'stratified', strata })
+    expect(outcome(only)).toBe('refused [n-undisclosed]')
+    expect(only.explanation[0]).toContain('pass sample: { n: 1000, correct: 950 }')
+    const withSums = assessAccuracyClaim({ claim, sample: { n: 1000, correct: 950 }, provenance: { source: 'human' }, sampling: 'stratified', strata })
+    expect(withSums.verdict).toBe('supported')
+  })
+
+  it('gate-false-pass:G8 an empty sample object is the same, a complete set gets the same advice, and no strata and no sample keeps the plain note', () => {
+    const empty = assessAccuracyClaim({ claim, sample: {} as unknown as AccuracyClaimInput['sample'], provenance: { source: 'human' }, sampling: 'stratified', strata })
+    expect(empty.explanation[0]).toContain('pass sample: { n: 1000, correct: 950 }')
+    const set = assessAccuracyClaim({
+      claim: { ...claim, text: 'Scores 95% on the Foo set' },
+      provenance: { source: 'human' }, sampling: 'complete', benchmark: { name: 'Foo set' }, strata,
+    })
+    expect(outcome(set)).toBe('refused [n-undisclosed]')
+    expect(set.explanation[0]).toContain('pass sample: { n: 1000, correct: 950 }')
+    const none = assessAccuracyClaim({ claim, provenance: { source: 'human' }, sampling: 'random' })
+    expect(none.explanation[0]).toBe('The sample counts (n and correct or errors) were not supplied, so there is nothing to weigh the figure against.')
+  })
+
+  it('gate-false-pass:G8 strata sums beyond the largest safe integer are not quoted', () => {
+    const big = Number.MAX_SAFE_INTEGER
+    const r = assessAccuracyClaim({
+      claim: { metric: 'accuracy', value: 0.5 }, provenance: { source: 'human' }, sampling: 'stratified',
+      strata: [{ name: 'a', n: big, correct: big }, { name: 'b', n: big, correct: 0 }],
+    })
+    expect(r.reasons).toContain('n-undisclosed')
+    expect(r.explanation.join(' ')).not.toContain('pass sample')
+  })
+})

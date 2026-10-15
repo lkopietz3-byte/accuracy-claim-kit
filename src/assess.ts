@@ -20,6 +20,7 @@ import type {
 import {
   clip,
   isRecord,
+  MAX_COUNT,
   readCount,
   readFiniteInRange,
   readLength,
@@ -449,7 +450,7 @@ export function assessAccuracyClaim(
     claimText = textRaw
   }
 
-  const counts = readSampleCounts(sampleRaw)
+  const sampleCounts = readSampleCounts(sampleRaw)
 
   const provRec = requireRecord(provenanceRaw, 'provenance')
   assertKnownKeys(provRec, PROVENANCE_KEYS, 'provenance')
@@ -496,7 +497,10 @@ export function assessAccuracyClaim(
   }
 
   const strata = strataRaw === undefined ? undefined : readStrata(strataRaw)
-  if (strata !== undefined && counts !== null) {
+  const counts = sampleCounts
+  // The strata's own totals, as text for a refusal that asks for the pooled counts (null when none or too big to say)
+  let strataTotals: string | null = null
+  if (strata !== undefined) {
     // BigInt: a plain sum can round past 2^53 and falsely equal the total.
     let sumN = 0n
     let sumCorrect = 0n
@@ -504,8 +508,12 @@ export function assessAccuracyClaim(
       sumN += BigInt(s.n)
       sumCorrect += BigInt(s.correct)
     }
-    if (sumN !== BigInt(counts.n) || sumCorrect !== BigInt(counts.correct)) {
-      throw new RangeError('strata counts must add up to the sample counts')
+    if (sampleCounts !== null) {
+      if (sumN !== BigInt(sampleCounts.n) || sumCorrect !== BigInt(sampleCounts.correct)) {
+        throw new RangeError('strata counts must add up to the sample counts')
+      }
+    } else if (sumN <= BigInt(MAX_COUNT)) {
+      strataTotals = `{ n: ${String(sumN)}, correct: ${String(sumCorrect)} }`
     }
   }
 
@@ -606,7 +614,11 @@ export function assessAccuracyClaim(
 
   if (counts === null) {
     refusals.push('n-undisclosed')
-    notes.push('The sample counts (n and correct or errors) were not supplied, so there is nothing to weigh the figure against.')
+    notes.push(
+      strataTotals === null
+        ? 'The sample counts (n and correct or errors) were not supplied, so there is nothing to weigh the figure against.'
+        : `The pooled sample counts (n and correct or errors) were not supplied. The strata hold them: pass sample: ${strataTotals}, their sums, with the strata.`,
+    )
   } else if (!isFixedSet && counts.n < minN) {
     refusals.push('sample-too-small')
     notes.push(`The sample has ${String(counts.n)} items, below the minimum of ${String(minN)} needed for a verdict.`)

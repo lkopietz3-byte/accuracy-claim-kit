@@ -113,6 +113,7 @@ export function assertPlainText(value: string, name: string, lineAdvice?: string
 
 const WORDISH = /[\p{L}\p{N}\p{M}]/u
 const HAS_LETTER_OR_DIGIT = /[\p{L}\p{N}]/u
+const DIGIT = /\p{N}/u
 /** Characters that join a name to a suffix or prefix without a space: MMLU-Pro, MMLU_pro, MMLU/pro, MMLU.pro. */
 const JOINERS = '-_/.'
 
@@ -138,6 +139,8 @@ function codePointAfter(text: string, index: number): number | undefined {
 
 const unitOf = (codePoint: number): number => (codePoint > 0xffff ? 2 : 1)
 const PLUS = 0x2b
+const PERCENT = 0x25
+const SPACE = 0x20
 const isJoiner = (codePoint: number | undefined): boolean => codePoint !== undefined && JOINERS.includes(String.fromCodePoint(codePoint))
 
 /**
@@ -146,6 +149,8 @@ const isJoiner = (codePoint: number | undefined): boolean => codePoint !== undef
  *  - a letter, digit or combining mark next to a name that starts or ends with
  *    one ("test" is not found inside "latest");
  *  - a "+" straight after the match ("HumanEval" is not "HumanEval+");
+ *  - a percent sign (straight after, or after one space) when the name ends in a
+ *    digit: "70" is not found in "70%", where it is the score;
  *  - one of - _ / . straight before or after the match when a letter or digit
  *    sits on the far side of it ("MMLU" is not "MMLU-Pro" or "mini-MMLU", but a
  *    full stop that ends a sentence, as in "on CIFAR-10.", is fine).
@@ -161,6 +166,7 @@ export function mentionsName(text: string, name: string): boolean {
   const last = needle.codePointAt(lastStart)
   const needsStart = isWordish(first)
   const needsEnd = isWordish(last)
+  const endsInDigit = DIGIT.test(String.fromCodePoint(last as number))
   let from = 0
   for (;;) {
     const at = hay.indexOf(needle, from)
@@ -172,6 +178,8 @@ export function mentionsName(text: string, name: string): boolean {
     if (needsStart && isWordish(before)) continue
     if (needsEnd && isWordish(after)) continue
     if (after === PLUS) continue
+    // a numeral that is part of a percent figure ("70" in "70%") is the score, not a set
+    if (endsInDigit && (after === PERCENT || (after === SPACE && codePointAfter(hay, end + 1) === PERCENT))) continue
     if (isJoiner(after) && isWordish(codePointAfter(hay, end + 1))) continue
     if (isJoiner(before) && isWordish(codePointBefore(hay, at - (before !== undefined && before > 0xffff ? 2 : 1)))) continue
     return true
