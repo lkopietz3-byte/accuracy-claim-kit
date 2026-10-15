@@ -1262,3 +1262,37 @@ describe('field:F6 false-pass:F12 ordinary acceptance-criteria wordings are read
     }
   })
 })
+
+describe('false-pass:F11 the comparison tolerance never excuses an absolute claim', () => {
+  const zeroErrors = (n: number, value = 0, display = '0%'): AccuracyAssessment =>
+    assessAccuracyClaim(sampled({ metric: 'error-rate', value, display }, { n, errors: 0 }))
+  const allCorrect = (n: number, value = 1, display = '100%'): AccuracyAssessment =>
+    assessAccuracyClaim(sampled({ metric: 'accuracy', value, display }, { n, correct: n }))
+
+  it('false-pass:F11 a 0% error claim on zero errors is overstated at every size, not supported past about 4e12 items', () => {
+    for (const n of [1e3, 1e9, 1e12, 3e12, 5e12, 1e13, 1e14, 1e15, Number.MAX_SAFE_INTEGER]) {
+      expect(outcome(zeroErrors(n)), String(n)).toBe('overstated [claim-beyond-conservative-bound]')
+    }
+  })
+
+  it('false-pass:F11 a 100% accuracy claim on all correct is overstated at every size', () => {
+    for (const n of [1e3, 1e9, 1e12, 5e12, 1e13, 1e15, Number.MAX_SAFE_INTEGER]) {
+      expect(outcome(allCorrect(n)), String(n)).toBe('overstated [claim-beyond-conservative-bound]')
+    }
+  })
+
+  it('false-pass:F11 a bare value of 0 or 1 is absolute too, and one error makes a 0% claim contradicted even at 1e13 items', () => {
+    expect(outcome(assessAccuracyClaim(sampled({ metric: 'error-rate', value: 0 }, { n: 1e13, errors: 0 })))).toBe('overstated [claim-beyond-conservative-bound]')
+    expect(outcome(assessAccuracyClaim(sampled({ metric: 'accuracy', value: 1 }, { n: 1e13, correct: 1e13 })))).toBe('overstated [claim-beyond-conservative-bound]')
+    expect(outcome(assessAccuracyClaim(sampled({ metric: 'error-rate', value: 0, display: '0%' }, { n: 1e13, errors: 1 })))).toBe('contradicted [claim-outside-interval]')
+    expect(outcome(assessAccuracyClaim(sampled({ metric: 'accuracy', value: 1, display: '100%' }, { n: 1e13, correct: 1e13 - 1 })))).toBe('contradicted [claim-outside-interval]')
+  })
+
+  it('false-pass:F11 a claim that is not exactly 0 or 1 keeps the tolerance, so a limit that is the claim up to rounding still passes', () => {
+    const r = assessAccuracyClaim(sampled({ metric: 'accuracy', value: wilsonInterval(990, 1000).low }, { n: 1000, correct: 990 }))
+    expect(outcome(r)).toBe('supported [claim-within-bound]')
+    // a bound at the interval limit of an all-correct sample is still on the cautious side
+    const low = wilsonInterval(1e13, 1e13).low
+    expect(outcome(assessAccuracyClaim(sampled({ metric: 'accuracy', value: low }, { n: 1e13, correct: 1e13 })))).toBe('supported [claim-within-bound]')
+  })
+})

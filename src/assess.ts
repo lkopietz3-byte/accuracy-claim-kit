@@ -42,9 +42,10 @@ export const DEFAULT_MIN_N = 30
  * the limit, on the claimant's side. It exists only to absorb binary
  * floating-point noise (a claim of exactly 0.98 against a limit that
  * computes to 0.98000000000000001). It is far below the width of any
- * interval met in practice; it can only matter for samples above about 1e15
+ * interval met in practice; it can only matter for samples above about 4e12
  * items with a rate within about 1e-12 of 0 or 1, where the interval itself
- * is narrower than the tolerance.
+ * is narrower than the tolerance. A claim of exactly 0 or 1 is absolute and
+ * never uses it.
  */
 export const COMPARISON_TOLERANCE = 1e-12
 
@@ -747,7 +748,10 @@ export function assessAccuracyClaim(
   const interval = { ...w, confidence, z, successes, n }
   const conservativeBound = higherIsBetter ? w.low : w.high
   const cl = confidenceLabel(confidence)
-  const tol = COMPARISON_TOLERANCE
+  // The tolerance absorbs binary noise at an interval limit. An exact 0 or 1 is
+  // an absolute claim with no noise in it, and must never be excused: at about
+  // 4e12 items the limit next to 0 or 1 is closer than the tolerance.
+  const tolFor = (x: number): number => (x === 0 || x === 1 ? 0 : COMPARISON_TOLERANCE)
 
   let verdict: AccuracyVerdict
   const reasons: ReasonCode[] = []
@@ -782,8 +786,10 @@ export function assessAccuracyClaim(
   // interval's conservative end; a strict one ("over 99%") needs to clear it.
   // The value and the printed figure are each judged on their own terms: only
   // the printed bound carries the strictness.
-  const clears = (x: number, strict: boolean): boolean =>
-    higherIsBetter ? (strict ? x < w.low - tol : x <= w.low + tol) : strict ? x > w.high + tol : x >= w.high - tol
+  const clears = (x: number, strict: boolean): boolean => {
+    const tol = tolFor(x)
+    return higherIsBetter ? (strict ? x < w.low - tol : x <= w.low + tol) : strict ? x > w.high + tol : x >= w.high - tol
+  }
   const withinBound = clears(claimed, false) && (figure === undefined || clears(figure.info.figure, strictBound))
   const matchesText = `matches the observed rate (${observedText}) to ${figure === undefined ? VALUE_PRECISION : 'its printed precision'}. The ${cl} Wilson interval is ${bottom} to ${top}.`
   if (withinBound) {
@@ -800,7 +806,7 @@ export function assessAccuracyClaim(
     verdict = 'supported'
     reasons.push('matches-observed-rate')
     explanation.push(`${subject}${qualifier} ${matchesText}`)
-  } else if (higherIsBetter ? assessed > w.high + tol : assessed < w.low - tol) {
+  } else if (higherIsBetter ? assessed > w.high + tolFor(assessed) : assessed < w.low - tolFor(assessed)) {
     verdict = 'contradicted'
     reasons.push('claim-outside-interval')
     explanation.push(
@@ -844,7 +850,7 @@ export function assessAccuracyClaim(
   // the verdict is unchanged.
   if (verdict !== 'contradicted') {
     const wide = wilsonWithZ(successes, n, zForConfidence(0.999))
-    const worse = higherIsBetter ? assessed < wide.low - tol : assessed > wide.high + tol
+    const worse = higherIsBetter ? assessed < wide.low - tolFor(assessed) : assessed > wide.high + tolFor(assessed)
     if (worse) {
       reasons.push('claim-worse-than-counts')
       explanation.push(
