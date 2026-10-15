@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { assessAccuracyClaim, cohenKappa, gwetAC1, percentAgreement, wilsonInterval } from '../src/index.js'
 import type { AccuracyAssessment, AccuracyClaimInput, Claim } from '../src/index.js'
+import engineering from '../ENGINEERING.md?raw'
+import method from '../METHOD.md?raw'
+import readme from '../README.md?raw'
+import security from '../SECURITY.md?raw'
 import { confidenceLabel } from '../src/format.js'
 import { foldText } from '../src/text.js'
 
@@ -724,3 +728,132 @@ describe('gate-hostile:F8 a confidence written as 1 - alpha prints the level a p
     expect(confidenceLabel(0.95)).toBe('95%')
   })
 })
+
+// The rows below pin behavior the documentation now states, and the documentation
+// itself, for the findings that were wording or a documented limit rather than a change of rule.
+describe('gate-false-pass:G4 the verdict tables say what overstated means', () => {
+  it('gate-false-pass:G4 a figure above the lower end but below the observed rate is overstated, and the observed rate or the lower end is not', () => {
+    const at = (value: number, display: string): AccuracyAssessment =>
+      assessAccuracyClaim(sampled({ metric: 'accuracy', value, display }, { n: 1000, correct: 990 }))
+    for (const [value, display] of [[0.985, '98.5%'], [0.983, '98.3%'], [0.982, '98.2%']] as const) {
+      expect(at(value, display).verdict, display).toBe('overstated')
+      expect(at(value, display).reasons[0], display).toBe('claim-beyond-conservative-bound')
+    }
+    expect(at(0.981, '98.1%').verdict).toBe('supported')
+    expect(at(0.99, '99.0%').verdict).toBe('supported')
+    const mirror = assessAccuracyClaim(sampled({ metric: 'error-rate', value: 0.015, display: '1.5%' }, { n: 1000, errors: 10 }))
+    expect(outcome(mirror)).toBe('overstated [claim-beyond-conservative-bound, precision-too-fine]')
+  })
+
+  it('gate-false-pass:G4 README and METHOD.md define overstated by the conservative end and the observed rate, with the cautious case named', () => {
+    for (const [name, text] of [['README', readme], ['METHOD', method]] as const) {
+      expect(text, name).toContain('not the observed rate to its printed precision')
+      expect(text, name).toContain('98.5% for 990 of 1000')
+    }
+    expect(method).not.toContain('more favorable than both the conservative end and the observed rate')
+  })
+})
+
+describe('gate-review:R5-F5 a range on a complete set is judged at its favorable end', () => {
+  it('gate-review:R5-F5 95-98% with value 0.97 on 970 of 1000 is contradicted, as README says, and METHOD.md says so too', () => {
+    const r = assessAccuracyClaim(census({ metric: 'accuracy', value: 0.97, display: '95-98%' }, { n: 1000, correct: 970 }))
+    expect(outcome(r)).toBe('contradicted [claim-differs-from-count]')
+    expect(method).toContain('A printed range is judged at its favorable end, as a point')
+    expect(readme).toContain('a complete set is judged at that end too, not as a span')
+  })
+})
+
+describe('gate-review:R5-F7 gate-review:R5-F8 the measured-rate note and the bench instructions say what is true', () => {
+  it('gate-review:R5-F7 the lower end of a two-sided 95% interval is a one-sided 97.5% limit', () => {
+    expect(method).toContain('is a one-sided 97.5% limit, so the expected miss rate is at most 2.5%')
+    expect(method).not.toContain('one-sided 95% limit')
+  })
+
+  it('gate-review:R5-F8 every mention of npm run bench in the README says it runs from a clone', () => {
+    const mentions = readme.split('npm run bench').length - 1
+    expect(mentions).toBeGreaterThan(0)
+    expect(readme).toContain('From a clone of the repository, `npm run bench` reproduces every number below')
+    expect(readme).toContain('`bench/` is not in the npm package')
+    expect(readme).toContain('From a clone, `npm run bench` runs the kit over 216 percentages')
+  })
+})
+
+describe('gate-false-pass:G7 gate-false-pass:G11 gate-false-pass:G12 documented limits are stated, and the behavior they describe is pinned', () => {
+  const scoped = (name: string, text: string): AccuracyAssessment =>
+    assessAccuracyClaim({
+      claim: { metric: 'accuracy', value: 0.9, text },
+      sample: { n: 1000, correct: 900 },
+      provenance: { source: 'human' },
+      sampling: 'complete',
+      benchmark: { name },
+    })
+
+  it('gate-false-pass:G7 an ordinary word or a one-letter name is found as a word, and the README says naming is a word check', () => {
+    expect(outcome(scoped('math', 'Our assistant is 90% accurate at math'))).toBe('supported [census-matches-count]')
+    expect(outcome(scoped('a', 'Our assistant is 90% accurate at a task'))).toBe('supported [census-matches-count]')
+    expect(readme).toContain('a name of one letter, a bare number or an ordinary word')
+    expect(readme).toContain('is found wherever it occurs as its own word')
+  })
+
+  it('gate-false-pass:G11 the caps are exact and listed: 200 for names, 2000 for text, 64 for display', () => {
+    const long = (n: number): string => 'x'.repeat(n)
+    expect(() => scoped(long(201), 'x')).toThrow(/at most 200 characters/)
+    expect(() => assessAccuracyClaim(sampled({ metric: 'accuracy', value: 0.9, text: long(2001) }, { n: 1000, correct: 900 }))).toThrow(/at most 2000 characters/)
+    expect(() => assessAccuracyClaim(sampled({ metric: 'accuracy', value: 0.9, display: '9'.repeat(65) }, { n: 1000, correct: 900 }))).toThrow(RangeError)
+    expect(() => assessAccuracyClaim(sampled({ metric: 'accuracy', value: 0.9, display: '9'.repeat(64) }, { n: 1000, correct: 900 }))).toThrow(/percent/)
+    expect(readme).toContain('at most 200 characters, `claim.text` at most 2000, `claim.display` at most 64')
+  })
+
+  it('gate-false-pass:G12 a key present as undefined is read as absent, result.checks shows it, and the README says so', () => {
+    const base = sampled({ metric: 'accuracy', value: 0.9 }, { n: 1000, correct: 900 }, {
+      provenance: { source: 'human', raters: 2 },
+    })
+    const off = assessAccuracyClaim(base, { minAgreement: undefined })
+    expect(off.checks.agreement).toBe('not-supplied')
+    const on = assessAccuracyClaim(base, { minAgreement: 0.5 })
+    expect(outcome(on)).toBe('refused [agreement-missing]')
+    expect(on.checks.agreement).toBe('applied')
+    expect(readme).toContain('A key that is present with the value `undefined` is read as absent')
+  })
+})
+
+describe('gate-hostile:F11 gate-hostile:F12 gate-false-pass:R1-field:F3 documented inputs and limits', () => {
+  it('gate-hostile:F11 null is not absent: each of these throws, and the README says to leave the key out', () => {
+    const base = sampled({ metric: 'accuracy', value: 0.9 }, { n: 1000, correct: 900 })
+    const asNull = (extra: Record<string, unknown>): AccuracyClaimInput => ({ ...base, ...extra })
+    expect(() => assessAccuracyClaim(asNull({ sample: null }))).toThrow(TypeError)
+    expect(() => assessAccuracyClaim(asNull({ benchmark: null }))).toThrow(TypeError)
+    expect(() => assessAccuracyClaim(asNull({ sample: { n: 0, correct: 0 } }))).toThrow(RangeError)
+    expect(() => assessAccuracyClaim(asNull({ id: 7 }))).toThrow(/unknown key "id"/)
+    expect(readme).toContain('leave a key out instead of writing `null`')
+  })
+
+  it('gate-hostile:F12 the docs do not call every path linear without saying where it is not', () => {
+    expect(security).toContain('a few milliseconds per call at the caps')
+    expect(engineering).toContain('not strictly linear on adversarial text')
+    expect(method).toContain('can grow faster than linearly on adversarial text')
+  })
+
+  it('gate-false-pass:R1-field:F3 consecutive enrollment has no declaration: convenience refuses, and the README says what to do instead', () => {
+    const r = assessAccuracyClaim(sampled({ metric: 'recall', value: 0.84 }, { n: 147, correct: 123 }, { sampling: 'convenience' }))
+    expect(outcome(r)).toBe('refused [convenience-sample]')
+    expect(readme).toContain('Consecutive or prospective enrollment')
+    expect(readme).toContain('is not one of the `sampling` declarations')
+  })
+
+  it('gate-false-pass:R1-false-pass:F3 a variant set off by a space is a documented limit, and the declared full name still works', () => {
+    expect(outcome(scoped79('SWE-bench', 'Resolves 79.9% of SWE-bench Verified'))).toBe('supported [census-matches-count]')
+    expect(outcome(scoped79('SWE-bench Verified', 'Resolves 79.9% of SWE-bench Lite'))).toBe('refused [claim-not-scoped-to-benchmark]')
+    expect(readme).toContain('declare the full name of the set you measured')
+  })
+})
+
+function scoped79(name: string, text: string): AccuracyAssessment {
+  return assessAccuracyClaim({
+    claim: { metric: 'accuracy', value: 0.799, text },
+    sample: { n: 1000, correct: 799 },
+    provenance: { source: 'human' },
+    sampling: 'complete',
+    benchmark: { name },
+  })
+}

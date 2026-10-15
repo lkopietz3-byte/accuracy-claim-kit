@@ -233,7 +233,8 @@ export interface AccuracyAssessment {
   /**
    * The figure that was judged: the more favorable of `value` and the parsed
    * `display` (the higher for accuracy, the lower for error rate). Equal to
-   * `claimed` when there is no display or the value is already the more favorable.
+   * `claimed` when there is no display or the value is already the more favorable, except that
+   * a value within float noise of 0 or 1 (ten 0.1s added up) is the absolute claim and is reported as 0 or 1.
    */
   assessedValue: number
   /** Items in the sample; null when the counts were not disclosed. */

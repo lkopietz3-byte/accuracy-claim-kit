@@ -8,3 +8,7 @@ declare module 'node:vm' {
   const vm: { runInNewContext(code: string): unknown }
   export default vm
 }
+declare module '*?raw' {
+  const text: string
+  export default text
+}
