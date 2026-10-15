@@ -40,6 +40,10 @@ jobs:
         run: npm test
       - name: Build
         run: npm run build
+      - name: Benchmark (the pinned headline numbers must not move)
+        # Rebuilds the cases with the Python oracle (python3 ships on the runner)
+        # and fails if a number in bench/expected.json changes.
+        run: npm run bench
       - name: Check types (attw)
         run: npm run attw
       - name: Verify the installable package

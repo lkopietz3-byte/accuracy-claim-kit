@@ -43,7 +43,23 @@ The library versions are recorded in the file. Regenerating on newer versions is
 
 ## Releases
 
-Releases are made by the maintainer. A version is published only when a `v*` tag matching `package.json` is pushed: `.github/workflows/release.yml` then installs, verifies and publishes with npm trusted publishing. Nobody runs `npm publish` by hand.
+Releases are made by the maintainer. A version is published only when a `v*` tag matching `package.json` is pushed: `.github/workflows/release.yml` then requires a successful `Verify` run on the tagged commit (so tag a commit that went through the pull request or `main` checks), runs the checks once and publishes with npm trusted publishing and `--ignore-scripts`, so the test suite does not run a second time. Every release after 0.1.0 goes only through `release.yml`; nobody runs `npm publish` by hand. Before tagging, update `CHANGELOG.md` and run `npm run verify`, `npm run attw` and `npm pack --dry-run`.
+
+### First publish (0.1.0)
+
+npm's documentation does not say whether a name that has never been published can be given a trusted publisher, so the first publish has two possible paths. Only the owner takes either one; an agent never runs `npm trust` or `npm publish`. The `README` links to `bench/` files under `blob/main`, which resolve once the release branch is merged to `main`.
+
+1. Merge the release branch to `main`, push it and wait for `Verify` to pass on every job (the release job requires a green run for the tagged commit, so the branch push and the tag push are separate steps).
+2. On tag day, try to set up trusted publishing first:
+
+   ```bash
+   npm trust github accuracy-claim-kit --file release.yml --repo lkopietz3-byte/accuracy-claim-kit --allow-publish --yes
+   ```
+
+   If that works, push the `v0.1.0` tag. `release.yml` publishes 0.1.0 with provenance.
+3. If npm refuses because the package does not exist, the owner runs `npm publish` once from a clean checkout of the tagged commit (`npm ci`, then `npm publish`; `prepublishOnly` runs `npm run verify`). That gives 0.1.0 no provenance. Then the owner runs the same `npm trust github` command the same day (an unused setting can expire), and pushes the tag. `release.yml` finds the version already on the registry and does nothing. From 0.1.1 on, versions publish from the tag with provenance.
+
+A published `name@version` can never be reused, so fix forward with a new version.
 
 ## Security
 

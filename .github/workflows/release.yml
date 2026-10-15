@@ -9,6 +9,8 @@ on:
 permissions:
   contents: read
   id-token: write
+  # Read the Verify workflow's runs (the gate below); nothing is written.
+  actions: read
 
 jobs:
   release:
@@ -25,7 +27,7 @@ jobs:
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: '26.3.0'
-          cache: npm
+          # No npm cache in a job that publishes: a poisoned cache must not reach the tarball.
 
       - name: Install locked dependencies
         run: npm ci --no-audit
@@ -42,6 +44,19 @@ jobs:
           TAG_VERSION="${GITHUB_REF_NAME#v}"
           if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
             echo "::error::Tag ${GITHUB_REF_NAME} does not match package.json version ${PKG_VERSION}"
+            exit 1
+          fi
+
+      - name: Require a green Verify run for this exact commit
+        # The Verify workflow runs the checks on Node 26.3.0 and the consumer
+        # matrix on Node 20 to 24. This job re-runs the checks on one version,
+        # so the tag must also sit on a commit where the whole workflow passed.
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PASSED="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow verify.yml --commit "$GITHUB_SHA" --status success --json databaseId --jq 'length')"
+          if [ "$PASSED" -lt 1 ]; then
+            echo "::error::No successful Verify run for commit ${GITHUB_SHA}. Merge through a green Verify run, then tag that commit."
             exit 1
           fi
 
@@ -77,4 +92,7 @@ jobs:
 
       - name: Publish to npm
         if: steps.check.outputs.already_published == 'false'
-        run: npm publish
+        # The checks above are the checks: skip the lifecycle scripts so the
+        # test suite does not run a second time (prepublishOnly runs verify).
+        # dist/ is the one the Verify step above built and tested.
+        run: npm publish --ignore-scripts
