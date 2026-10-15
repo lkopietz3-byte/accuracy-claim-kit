@@ -305,6 +305,9 @@ export function parseDisplayFigure(display: unknown, higherIsBetter: boolean): D
       const shown = proportionOf(num)
       if (form === 'floor') return strict ? beyondNoise(value, shown, true) : !beyondNoise(shown, value, true)
       if (form === 'ceiling') return strict ? beyondNoise(value, shown, false) : !beyondNoise(shown, value, false)
+      // a printed 100% or 0% is absolute: it is the figure only for a value that is exactly 1 or 0
+      // (within the value noise), never for 99.6% that merely rounds to it (AGENTS.md: absolute claims)
+      if (form === 'percent' && (num.digits === 0n || num.digits === 10n ** BigInt(scale))) return snapAbsolute(value) === shown
       return withinHalfUnit(value, num.digits, scale, scale)
     },
     matchesObserved: (k, n) => matchesCount(num.digits, scale, k, n),
@@ -342,7 +345,8 @@ const MAX_TEXT_FIGURES = 50
  * impossible percent) is skipped. A figure agrees when it describes `value` or
  * `assessed` (the value, or the printed display that was judged instead), or,
  * for a point, approximate or range figure, their complement ("87.7% right"
- * beside a 12.3% error rate). The words perfect, flawless, error-free, no
+ * beside a 12.3% error rate). A printed 100% or 0% is absolute: it describes
+ * only a value of exactly 1 or 0, never 99.6% that rounds to it. The words perfect, flawless, error-free, no
  * errors and zero errors mean 100% (0% for a lower-is-better metric). The
  * text is only scanned, never judged: nothing here changes a verdict.
  */

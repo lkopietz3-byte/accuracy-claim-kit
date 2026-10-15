@@ -756,8 +756,12 @@ describe('false-pass:F9 docs-release:D2 the suggested statement leads with its s
 })
 
 describe('false-pass:F4 a figure in claim.text that differs from the figure judged is flagged, never judged', () => {
-  const setCensus = (text: string, over: Partial<AccuracyClaimInput['claim']> = {}): AccuracyAssessment =>
-    assessAccuracyClaim(census({ metric: 'accuracy', value: 0.799, display: '79.9%', text, ...over }, { n: 50_000, correct: 39_950 }, 'Foo set'))
+  const setCensus = (
+    text: string,
+    over: Partial<AccuracyClaimInput['claim']> = {},
+    sample: AccuracyClaimInput['sample'] = { n: 50_000, correct: 39_950 },
+  ): AccuracyAssessment =>
+    assessAccuracyClaim(census({ metric: 'accuracy', value: 0.799, display: '79.9%', text, ...over }, sample, 'Foo set'))
 
   it('false-pass:F4 the three audit texts: 99.9% and "perfect" are flagged, the matching sentence is clean', () => {
     const high = setCensus('Reaches 99.9% accuracy on the Foo set')
@@ -833,6 +837,42 @@ describe('false-pass:F4 a figure in claim.text that differs from the figure judg
       expect(exact(`${word} on the Foo set`, 'error-rate', 0), word).toBe('supported [census-matches-count]')
     }
     expect(outcome(setCensus('an imperfect score on the Foo set'))).toBe('supported [census-matches-count]')
+  })
+
+  it('review:P2 a printed 100% or 0% in the text is absolute, never excused as the rounding of 99.6% or 0.4%', () => {
+    // 9,960 of 10,000 correct: "100% accurate" must be flagged like the word "perfect" and like display "100%"
+    const acc = (text: string): string => outcome(setCensus(text, { value: 0.996, display: undefined }, { n: 10_000, correct: 9_960 }))
+    for (const text of ['100% accurate on Foo set', '100 percent accurate on Foo set', '100.0% accurate on Foo set', 'perfect on Foo set', 'at least 100% on Foo set']) {
+      expect(acc(text), text).toBe('supported [census-matches-count, text-figure-differs]')
+    }
+    // the mirror: 40 errors in 10,000 must flag "0% errors"
+    const err = (text: string): string =>
+      outcome(assessAccuracyClaim(census({ metric: 'error-rate', value: 0.004, text }, { n: 10_000, errors: 40 }, 'Foo set')))
+    for (const text of ['0% errors on Foo set', '0.0% errors on Foo set', 'zero errors on Foo set', 'at most 0% on Foo set']) {
+      expect(err(text), text).toBe('supported [census-matches-count, text-figure-differs]')
+    }
+    // the sample path flags it too
+    const sample = assessAccuracyClaim(sampled({ metric: 'accuracy', value: 0.996, text: '100% accurate' }, { n: 10_000, correct: 9_960 }))
+    expect(sample.reasons).toContain('text-figure-differs')
+    const sampleErr = assessAccuracyClaim(sampled({ metric: 'error-rate', value: 0.004, text: '0% errors' }, { n: 10_000, errors: 40 }))
+    expect(sampleErr.reasons).toContain('text-figure-differs')
+  })
+
+  it('review:P2 the endpoint rule leaves honest figures alone: exact 100% or 0%, the complement, an approximate figure and a range', () => {
+    const exactAcc = (text: string): string => outcome(setCensus(text, { value: 1, display: '100%' }, { n: 200, correct: 200 }))
+    expect(exactAcc('100% accurate on Foo set')).toBe('supported [census-matches-count]')
+    expect(exactAcc('0% errors on Foo set')).toBe('supported [census-matches-count]')
+    const exactErr = (text: string): string =>
+      outcome(assessAccuracyClaim(census({ metric: 'error-rate', value: 0, display: '0%', text }, { n: 200, errors: 0 }, 'Foo set')))
+    expect(exactErr('0% errors, 100% accurate on Foo set')).toBe('supported [census-matches-count]')
+    // a value computed as 1 sits within noise of 100%
+    expect(outcome(setCensus('100% accurate on Foo set', { value: 1 - 2 ** -52, display: '100%' }, { n: 200, correct: 200 }))).toBe('supported [census-matches-count]')
+    // an approximate or ranged figure at the end keeps its band
+    const near = (text: string): string => outcome(setCensus(text, { value: 0.996, display: undefined }, { n: 10_000, correct: 9_960 }))
+    expect(near('about 100% accurate on Foo set')).toBe('supported [census-matches-count]')
+    expect(near('99-100% accurate on Foo set')).toBe('supported [census-matches-count]')
+    expect(near('at least 99% accurate on Foo set')).toBe('supported [census-matches-count]')
+    expect(near('99.6% accurate on Foo set')).toBe('supported [census-matches-count]')
   })
 
   it('false-pass:F4 a refusal reports only its failed preconditions', () => {
@@ -1430,6 +1470,19 @@ describe('field:F4 a claim of 100% (or 0%) says why a sample cannot carry it, an
     expect(r.explanation[0]).toContain('0 of 290')
     expect(r.explanation[0]).toContain('1.308%')
     expect(r.suggestedStatement).toMatch(/^On this sample, at most 1\.31% error rate/)
+  })
+
+  it('review:P3 the sentence describes the conservative limit, not the whole interval, which does reach 1 (or 0) at s = n (or 0)', () => {
+    const acc = hundred(100)
+    expect(acc.interval?.high).toBe(1)
+    expect(acc.explanation[0]).not.toMatch(/interval never reaches/)
+    expect(acc.explanation[0]).toContain('conservative lower limit cannot establish 100%')
+    expect(acc.explanation[0]).toContain('96.300%')
+    const err = assessAccuracyClaim(sampled({ metric: 'error-rate', value: 0, display: '0%' }, { n: 100, errors: 0 }))
+    expect(err.interval?.low).toBe(0)
+    expect(err.explanation[0]).not.toMatch(/interval never reaches/)
+    expect(err.explanation[0]).toContain('conservative upper limit cannot establish 0%')
+    expect(err.explanation[0]).toContain('3.700%')
   })
 
   it('field:F4 only a claim of exactly 100% or 0% gets that sentence; a rounding is judged as before', () => {

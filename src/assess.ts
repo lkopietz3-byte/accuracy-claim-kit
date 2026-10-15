@@ -871,11 +871,12 @@ export function assessAccuracyClaim(
     verdict = 'overstated'
     reasons.push('claim-beyond-conservative-bound')
     if (absolute) {
-      // 100% (or 0%) is certainty: no sample reaches it, even when every item agreed.
+      // 100% (or 0%) is certainty: the Wilson interval itself ends at 1 (or 0) when every item agreed,
+      // but the conservative limit never establishes it.
       explanation.push(
         higherIsBetter
-          ? `${subject} cannot be stated from a sample: an interval never reaches 100%, even when every item was right (${observedText}). The most the evidence supports is ${bottom}, the lower end of the ${cl} Wilson interval.`
-          : `${subject}${qualifier} cannot be stated from a sample: an interval never reaches 0%, even when no item was wrong (${observedText}). The least the evidence supports is ${top}, the upper end of the ${cl} Wilson interval.`,
+          ? `${subject} cannot be stated from a sample: even when every item was right (${observedText}), the conservative lower limit cannot establish 100%. The most the evidence supports is ${bottom}, the lower end of the ${cl} Wilson interval.`
+          : `${subject}${qualifier} cannot be stated from a sample: even when no item was wrong (${observedText}), the conservative upper limit cannot establish 0%. The least the evidence supports is ${top}, the upper end of the ${cl} Wilson interval.`,
       )
     } else {
       let sentence = higherIsBetter
