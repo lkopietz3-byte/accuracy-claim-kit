@@ -857,3 +857,34 @@ function scoped79(name: string, text: string): AccuracyAssessment {
     benchmark: { name },
   })
 }
+
+describe('gate-false-pass:G3 a computed value that overshoots 0 or 1 by float noise is the absolute claim, not malformed input', () => {
+  it('gate-false-pass:G3 1 + 2^-52 and 0.9 + 0.1 + EPSILON on an all-correct sample are overstated, as 1 is', () => {
+    const over = 0.9 + 0.1 + Number.EPSILON
+    for (const value of [1 + 2 ** -52, over, 1 + 2 ** -50]) {
+      expect(value).toBeGreaterThan(1)
+      const r = assessAccuracyClaim(sampled({ metric: 'accuracy', value }, { n: 290, correct: 290 }))
+      expect(outcome(r), String(value)).toBe('overstated [claim-beyond-conservative-bound]')
+      expect(r.assessedValue).toBe(1)
+      const c = assessAccuracyClaim(census({ metric: 'accuracy', value }, { n: 290, correct: 289 }))
+      expect(outcome(c), String(value)).toBe('contradicted [claim-differs-from-count]')
+    }
+  })
+
+  it('gate-false-pass:G3 a value a hair below 0 is the absolute claim of 0', () => {
+    for (const value of [-1e-17, -(2 ** -52), 0.3 - 0.1 - 0.2]) {
+      expect(value).toBeLessThan(0)
+      const r = assessAccuracyClaim(sampled({ metric: 'error-rate', value }, { n: 290, errors: 0 }))
+      expect(outcome(r), String(value)).toBe('overstated [claim-beyond-conservative-bound]')
+      expect(r.assessedValue).toBe(0)
+    }
+  })
+
+  it('gate-false-pass:G3 a value outside the noise allowance is still malformed and throws with the old message', () => {
+    for (const value of [1 + 1e-9, 1.5, -1e-9, -0.1]) {
+      expect(() => assessAccuracyClaim(sampled({ metric: 'accuracy', value }, { n: 290, correct: 290 })), String(value)).toThrow(/claim\.value must be a finite number between 0 and 1, got/)
+    }
+    expect(() => assessAccuracyClaim(sampled({ metric: 'accuracy', value: Number.NaN }, { n: 290, correct: 290 }))).toThrow(RangeError)
+    expect(assessAccuracyClaim(sampled({ metric: 'wer', value: 1.4 }, { n: 290, correct: 290 })).verdict).toBe('refused')
+  })
+})

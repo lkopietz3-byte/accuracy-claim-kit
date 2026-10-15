@@ -2,7 +2,7 @@ import type { AgreementStatistic, UndefinedAgreementReason } from './agreement.j
 import { countDecimals, matchesValue } from './census.js'
 import { dayNumber } from './dates.js'
 import { parseDisplayFigure, textFiguresDiffering } from './display.js'
-import { beyondNoise, snapAbsolute } from './exact.js'
+import { beyondNoise, snapAbsolute, VALUE_NOISE } from './exact.js'
 import type { DisplayFigure } from './display.js'
 import { confidenceLabel, decimalCut, maxDisplayDecimals, pctCeil, pctFloor, pctNearest } from './format.js'
 import type {
@@ -417,13 +417,15 @@ export function assessAccuracyClaim(
 
   // A value is a proportion from 0 to 1 for a judged metric. An unsupported
   // metric (a word error rate can pass 1) only needs to be a number.
-  const claimed = judged
-    ? readFiniteInRange(valueRaw, 'claim.value', 0, 1)
-    : readFiniteInRange(valueRaw, 'claim.value', -Infinity, Infinity)
-
+  const claimed = readFiniteInRange(valueRaw, 'claim.value', -Infinity, Infinity)
   // A value within the floating-point noise of 0 or 1 is the absolute claim of 0 or
-  // 1 (ten 0.1s added up is 100%, not "99.99999999999999% so matches 99.5%").
-  // `claimed` stays as supplied for the result; every judgment uses `judgedValue`.
+  // 1 (ten 0.1s added up is 100%, not "99.99999999999999% so matches 99.5%"), and
+  // that includes a computed value that overshoots by the noise (1.0000000000000002).
+  // Further out it is not a proportion. `claimed` stays as supplied for the result;
+  // every judgment uses `judgedValue`.
+  if (judged && (claimed < -VALUE_NOISE || claimed > 1 + VALUE_NOISE)) {
+    throw new RangeError(`claim.value must be a finite number between 0 and 1, got ${String(claimed)}`)
+  }
   const judgedValue = judged ? snapAbsolute(claimed) : claimed
 
   if (displayRaw !== undefined && typeof displayRaw !== 'string') throw new TypeError('claim.display must be a string')
@@ -431,8 +433,8 @@ export function assessAccuracyClaim(
   if (displayRaw !== undefined && judged) {
     figure = parseDisplayFigure(displayRaw, higherIsBetter)
     // Exact: the value must agree with the printed figure to its rounding plus
-    // the value-noise allowance. No float tolerance is involved.
-    if (!figure.consistentWith(claimed)) {
+    // one ulp of the value. No float tolerance is involved.
+    if (!figure.consistentWith(judgedValue)) {
       throw new RangeError(
         `claim.display "${clip(displayRaw, 40)}" (${pctNearest(figure.info.figure, 3).replace(/\.?0+%$/, '%')}) does not match claim.value ${String(claimed)} (${pctNearest(claimed, 3).replace(/\.?0+%$/, '%')}): ${figure.mismatchHint}`,
       )
