@@ -235,6 +235,10 @@ const LABEL_WORD: Record<'human' | 'automated' | 'by-construction', string> = {
   'by-construction': 'labels fixed by construction',
 }
 
+/** What the interval in a statement does and does not cover, said in the statement itself. */
+const SAMPLING_ERROR_ONLY = 'the interval covers sampling error only'
+const SAMPLING_ERROR_ONLY_CV = 'the interval covers sampling error only and is optimistic because cross-validation folds share data'
+
 const SAMPLE_WORD: Partial<Record<SamplingMethod, string>> = {
   stratified: 'stratified sample',
   'cross-validation': 'cross-validation estimate',
@@ -794,9 +798,14 @@ export function assessAccuracyClaim(
   // ---- statement ---------------------------------------------------------
   // One precision for the headline bound and the interval it quotes.
   const decimals = Math.min(maxDisplayDecimals(w.high - w.low) + 2, 5)
+  // The lead names the scope first: the figure is about this sample (or the
+  // declared evaluated population), so a pasted headline cannot read as a
+  // property of the system.
+  const scope = population === undefined ? 'On this sample' : `On this sample of ${population.evaluated}`
   const headline = higherIsBetter
-    ? `At least ${pctFloor(w.low, decimals)} ${metricName}`
-    : `At most ${pctCeil(w.high, decimals)} ${metricName}`
+    ? `${scope}, at least ${pctFloor(w.low, decimals)} ${metricName}`
+    : `${scope}, at most ${pctCeil(w.high, decimals)} ${metricName}`
+  const caveat = sampling === 'cross-validation' ? SAMPLING_ERROR_ONLY_CV : SAMPLING_ERROR_ONLY
   const parts = [
     `${cl} Wilson interval ${pctFloor(w.low, decimals)} to ${pctCeil(w.high, decimals)}`,
     `n = ${String(n)}`,
@@ -820,6 +829,6 @@ export function assessAccuracyClaim(
     checks,
     interval,
     conservativeBound,
-    suggestedStatement: `${headline} (${parts.join(', ')})${precisionNote}`,
+    suggestedStatement: `${headline} (${parts.join(', ')}); ${caveat}${precisionNote}`,
   }
 }

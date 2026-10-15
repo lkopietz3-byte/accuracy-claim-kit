@@ -55,7 +55,7 @@ const supported = assessAccuracyClaim({
   sample: { n: 1000, correct: 990 },
 });
 assert.equal(supported.verdict, 'supported');
-assert.match(supported.suggestedStatement, /^At least 98\.16% accurate \(95% Wilson interval /);
+assert.match(supported.suggestedStatement, /^On this sample, at least 98\.16% accurate \(95% Wilson interval /);
 
 const overstated = assessAccuracyClaim({
   ...base,

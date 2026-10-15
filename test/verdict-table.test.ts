@@ -349,7 +349,7 @@ describe('suggested statements', () => {
     const r = assessAccuracyClaim(input({ claim: accuracy(0.998, '99.8%'), sample: { n: 500, correct: 499 } }))
     // The lower limit is 98.8759...%, so it prints as 98.8, not 98.9.
     expect(r.suggestedStatement).toBe(
-      'At least 98.87% accurate (95% Wilson interval 98.87% to 99.97%, n = 500, human labels, random sample); print it to at most 0 decimal place(s)',
+      'On this sample, at least 98.87% accurate (95% Wilson interval 98.87% to 99.97%, n = 500, human labels, random sample); the interval covers sampling error only; print it to at most 0 decimal place(s)',
     )
   })
 
@@ -364,7 +364,7 @@ describe('suggested statements', () => {
       }),
     )
     expect(r.suggestedStatement).toBe(
-      'At most 1.84% error rate (95% Wilson interval 0.54% to 1.84%, n = 1000, human labels, stratified sample, Gwet AC1 0.91)',
+      'On this sample, at most 1.84% error rate (95% Wilson interval 0.54% to 1.84%, n = 1000, human labels, stratified sample, Gwet AC1 0.91); the interval covers sampling error only',
     )
   })
 
@@ -386,7 +386,7 @@ describe('suggested statements', () => {
     for (const g of vectors.verdictGrid.slice(0, 400)) {
       const r = assessAccuracyClaim(gridInput(g), { confidence: g.confidence })
       if (r.verdict === 'refused') continue
-      const m = /^At (?:least|most) (\d+(?:\.\d+)?)%/.exec(r.suggestedStatement)
+      const m = /^On this sample, at (?:least|most) (\d+(?:\.\d+)?)%/.exec(r.suggestedStatement)
       expect(m).not.toBeNull()
       const stated = Number((m as RegExpExecArray)[1]) / 100
       if (g.metric === 'accuracy') expect(stated).toBeLessThanOrEqual(g.low + 1e-9)
@@ -1107,8 +1107,8 @@ describe('an undefined agreement statistic must be well formed and cannot pass a
 describe('formatted bounds never cross the bound', () => {
   it('n = 1e14 all correct does not print 100%', () => {
     const r = assessAccuracyClaim({ ...B, claim: { metric: 'accuracy', value: 0.5 }, sample: { n: 1e14, correct: 1e14 } })
-    expect(r.suggestedStatement).not.toMatch(/^At least 100/)
-    expect(r.suggestedStatement).toMatch(/^At least 99\.9999/)
+    expect(r.suggestedStatement).not.toMatch(/^On this sample, at least 100/)
+    expect(r.suggestedStatement).toMatch(/^On this sample, at least 99\.9999/)
     expect(r.interval?.low).toBeLessThan(1)
   })
 
@@ -1318,7 +1318,7 @@ describe('headline bound and quoted interval use one precision', () => {
         provenance: human,
         sampling: 'random',
       })
-      const m = /^At most (\S+) error rate \(95% Wilson interval (\S+) to (\S+),/.exec(r.suggestedStatement)
+      const m = /^On this sample, at most (\S+) error rate \(95% Wilson interval (\S+) to (\S+),/.exec(r.suggestedStatement)
       expect(m, r.suggestedStatement).not.toBeNull()
       expect((m as RegExpExecArray)[1]).toBe((m as RegExpExecArray)[3])
     }
@@ -1643,20 +1643,20 @@ describe('more metrics, each with a stated meaning of n', () => {
   it('precision: n is the predicted positives, correct the true positives', () => {
     const r = assessU(claimOf('precision', 0.95, '95%'), { n: 200, correct: 190 })
     expect(r.verdict).toBe('supported')
-    expect(r.suggestedStatement).toMatch(/^At least \d+\.\d+% precision \(/)
+    expect(r.suggestedStatement).toMatch(/^On this sample, at least \d+\.\d+% precision \(/)
     expect(assessU(claimOf('precision', 0.99), { n: 200, correct: 190 }).verdict).toBe('contradicted')
   })
 
   it('recall: n is the actual positives, correct the ones found', () => {
     const r = assessU(claimOf('recall', 0.9), { n: 400, correct: 380 })
     expect(r.verdict).toBe('supported')
-    expect(r.suggestedStatement).toMatch(/^At least \d+\.\d+% recall \(/)
+    expect(r.suggestedStatement).toMatch(/^On this sample, at least \d+\.\d+% recall \(/)
   })
 
   it('false-positive-rate and false-negative-rate: n is the actual negatives / positives, errors the misses', () => {
     const fpr = assessU(claimOf('false-positive-rate', 0.003, '0.3%'), { n: 4000, errors: 12 })
     expect(fpr.verdict).toBe('supported')
-    expect(fpr.suggestedStatement).toMatch(/^At most \d+\.\d+% false-positive rate \(/)
+    expect(fpr.suggestedStatement).toMatch(/^On this sample, at most \d+\.\d+% false-positive rate \(/)
     const fnr = assessU(claimOf('false-negative-rate', 0.02), { n: 500, errors: 40 })
     expect(fnr.verdict).toBe('contradicted')
     expect(fnr.suggestedStatement).toMatch(/false-negative rate/)
@@ -1772,7 +1772,7 @@ describe('an honest report of the observed rate is supported by default', () => 
     expect(r.verdict).toBe('supported')
     expect(r.reasons).toEqual(['matches-observed-rate'])
     expect(r.explanation[0]).toContain('matches the observed rate')
-    expect(r.suggestedStatement).toMatch(/^At least 93\.\d+% accurate \(95% Wilson interval/) // the interval is still given
+    expect(r.suggestedStatement).toMatch(/^On this sample, at least 93\.\d+% accurate \(95% Wilson interval/) // the interval is still given
     expect(r.interval).not.toBeNull()
   })
 

@@ -693,3 +693,62 @@ describe('false-pass:F6 an agreement statistic computed on too few items cannot 
     expect(outcome(assessAccuracyClaim(sampled({ metric: 'accuracy', value: 0.95, display: '95%' }, { n: 10_000, correct: 9500 }, { provenance: { source: 'human', raters: 1 } })))).toBe('supported [matches-observed-rate]')
   })
 })
+
+describe('false-pass:F9 docs-release:D2 the suggested statement leads with its scope and says it covers sampling error only', () => {
+  const lead = /^On this sample( of .+?)?, at (?:least|most) /
+  const honest = (extra: Partial<AccuracyClaimInput> = {}, claim: AccuracyClaimInput['claim'] = { metric: 'accuracy', value: 0.998, display: '99.8%' }): AccuracyAssessment =>
+    assessAccuracyClaim(sampled(claim, { n: 500, correct: 499 }, extra))
+
+  it('false-pass:F9 docs-release:D2 the worked example reads as a statement about the sample', () => {
+    expect(honest().suggestedStatement).toBe(
+      'On this sample, at least 98.87% accurate (95% Wilson interval 98.87% to 99.97%, n = 500, human labels, random sample); the interval covers sampling error only; print it to at most 0 decimal place(s)',
+    )
+  })
+
+  it('false-pass:F9 docs-release:D2 every judged metric and sampling method gets the lead and the caveat', () => {
+    const metrics: [AccuracyClaimInput['claim'], 'least' | 'most'][] = [
+      [{ metric: 'accuracy', value: 0.99 }, 'least'],
+      [{ metric: 'precision', value: 0.99 }, 'least'],
+      [{ metric: 'recall', value: 0.99 }, 'least'],
+      [{ metric: 'error-rate', value: 0.02 }, 'most'],
+      [{ metric: 'false-positive-rate', value: 0.02 }, 'most'],
+      [{ metric: 'false-negative-rate', value: 0.02 }, 'most'],
+    ]
+    for (const [claim, word] of metrics) {
+      for (const sampling of ['random', 'cross-validation'] as const) {
+        const r = assessAccuracyClaim(sampled(claim, { n: 1000, correct: 980, errors: 20 }, { sampling }))
+        expect(r.suggestedStatement, `${claim.metric} ${sampling}`).toMatch(lead)
+        expect(r.suggestedStatement).toContain(`, at ${word} `)
+        expect(r.suggestedStatement).toContain('sampling error only')
+      }
+    }
+    const strata = [{ name: 'a', n: 500, correct: 490 }, { name: 'b', n: 500, correct: 490 }]
+    const stratified = assessAccuracyClaim(sampled({ metric: 'accuracy', value: 0.98 }, { n: 1000, correct: 980 }, { sampling: 'stratified', strata }))
+    expect(stratified.suggestedStatement).toMatch(lead)
+    expect(stratified.suggestedStatement).toContain('sampling error only')
+  })
+
+  it('false-pass:F9 the evaluated population is named when it is declared', () => {
+    const r = honest({ population: { claimed: 'English tweets', evaluated: 'English tweets' } }, { metric: 'accuracy', value: 0.998 })
+    expect(r.suggestedStatement).toMatch(/^On this sample of English tweets, at least 98\.\d+% accurate \(/)
+    expect(honest({ population: { claimed: 'ENGLISH  tweets', evaluated: 'English Tweets' } }).suggestedStatement).toMatch(/^On this sample of English Tweets, at least /)
+    expect(honest().suggestedStatement.startsWith('On this sample, at least')).toBe(true)
+  })
+
+  it('false-pass:F9 a cross-validation estimate says the interval is optimistic, and a random sample does not', () => {
+    const cv = honest({ sampling: 'cross-validation' })
+    expect(cv.suggestedStatement).toContain('cross-validation estimate')
+    expect(cv.suggestedStatement).toContain('optimistic')
+    expect(honest().suggestedStatement).not.toContain('optimistic')
+  })
+
+  it('false-pass:F9 the statement never opens with a bare figure, and a refusal still gives no figure', () => {
+    expect(honest().suggestedStatement).not.toMatch(/^At (least|most)/)
+    expect(assessAccuracyClaim(sampled({ metric: 'accuracy', value: 0.99 }, { n: 1000, correct: 990 }, { sampling: 'convenience' })).suggestedStatement).not.toMatch(/\d/)
+  })
+
+  it('false-pass:F9 a complete set already scopes itself and is unchanged', () => {
+    const r = assessAccuracyClaim(census({ metric: 'accuracy', value: 0.799, display: '79.9%' }, { n: 50_000, correct: 39_950 }, 'Ridgeview validation set'))
+    expect(r.suggestedStatement).toBe('39950 of 50000 correct on Ridgeview validation set (complete set, human labels): 79.90% accuracy. This describes that set only; it is not an estimate for other data')
+  })
+})
