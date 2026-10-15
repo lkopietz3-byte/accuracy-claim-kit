@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { assessAccuracyClaim, cohenKappa, gwetAC1, percentAgreement, wilsonInterval } from '../src/index.js'
 import type { AccuracyAssessment, AccuracyClaimInput, Claim } from '../src/index.js'
+import { confidenceLabel } from '../src/format.js'
 import { foldText } from '../src/text.js'
 
 // Regression rows for the findings of the release gate. Every row name starts
@@ -693,5 +694,33 @@ describe('gate-false-pass:G10 the declarations accept the names of refused metri
     // @ts-expect-error a judged metric must be written in lower case
     const claim: Claim = { metric: 'Accuracy', value: 0.9 }
     expect(() => assessAccuracyClaim(sampled(claim, { n: 100, correct: 90 }))).toThrow(/did you mean "accuracy"/)
+  })
+})
+
+describe('gate-hostile:F8 a confidence written as 1 - alpha prints the level a person wrote', () => {
+  const statementFor = (confidence: number): string =>
+    assessAccuracyClaim(sampled({ metric: 'accuracy', value: 0.9 }, { n: 1000, correct: 900 }), { confidence }).suggestedStatement
+
+  it('gate-hostile:F8 1 - 0.07 is 93%, as 1 - 0.05 is 95% and 1 - 0.01 is 99%', () => {
+    expect(1 - 0.07).not.toBe(0.93)
+    expect(statementFor(1 - 0.07)).toContain('93% Wilson interval')
+    expect(statementFor(1 - 0.05)).toContain('95% Wilson interval')
+    expect(statementFor(1 - 0.01)).toContain('99% Wilson interval')
+  })
+
+  it('gate-hostile:F8 every alpha from 0.001 to 0.499 in steps of 0.001 prints as the percent it was written as', () => {
+    const wrong: string[] = []
+    for (let k = 1; k < 500; k++) {
+      const alpha = k / 1000
+      const expected = `${String((1000 - k) / 10)}% Wilson interval`
+      if (!statementFor(1 - alpha).includes(expected)) wrong.push(`${String(alpha)}: want ${expected}`)
+    }
+    expect(wrong.slice(0, 5)).toEqual([])
+  })
+
+  it('gate-hostile:F8 a level a hair under 1 stays under 100%, and a level typed with many digits keeps them', () => {
+    expect(confidenceLabel(0.9999999999999999)).not.toBe('100%')
+    expect(confidenceLabel(0.999999999)).toBe('99.9999999%')
+    expect(confidenceLabel(0.95)).toBe('95%')
   })
 })

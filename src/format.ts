@@ -1,4 +1,4 @@
-import { valueDigits } from './census.js'
+import { shortestWithinNoise, valueDigits } from './census.js'
 import { splitDouble } from './exact.js'
 
 // Number formatting for statements. Bounds are rounded in the direction that
@@ -78,12 +78,15 @@ export function decimalCut(x: number, decimals: number, direction: 'down' | 'up'
 
 /**
  * A confidence level as a percent label, rounded down to at most 9 decimals
- * and never 100%. It works on the shortest decimal text of the number (0.95
- * reads "95%", not "94.999999999%"), so a level a person typed keeps the
- * digits they typed.
+ * and never 100%. It works on the shortest decimal text of the number within
+ * float noise (0.95 reads "95%", not "94.999999999%", and 1 - 0.07 reads "93%"),
+ * so a level a person typed or computed keeps the digits they meant.
  */
 export function confidenceLabel(confidence: number): string {
-  let text = String(confidence)
+  // 1 - 0.07 is 0.9299999999999999: the level a person wrote, 93%, is the shortest decimal within
+  // float noise of it. A level that noise would carry up to 1 keeps its own digits (never 100%).
+  const nearest = shortestWithinNoise(confidence)
+  let text = Number(nearest) < 1 ? nearest : String(confidence)
   const at = text.indexOf('e')
   if (at >= 0) {
     // 1.5e-7 is 0.00000015: expand the digits the number is written with, never the binary expansion
