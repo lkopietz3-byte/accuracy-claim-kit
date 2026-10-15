@@ -1,5 +1,5 @@
 import { MAX_LABEL_LENGTH } from './text.js'
-import { assertKnownKeys, isRecord, readCount, readLength } from './validate.js'
+import { assertKnownKeys, assertPlainObject, readCount, readLength, requireRecord } from './validate.js'
 
 /** A categorical label. Compared exactly: 1 and "1" are different labels. */
 export type Label = string | number | boolean
@@ -170,10 +170,11 @@ export function gwetAC1(
   pairs: readonly (readonly [Label, Label])[],
   options?: GwetOptions,
 ): AgreementResult {
-  if (options !== undefined && !isRecord(options)) {
-    throw new TypeError('options must be an object')
+  if (options !== undefined) {
+    const record = requireRecord(options, 'options')
+    assertPlainObject(record, 'options')
+    assertKnownKeys(record, ['categories'], 'options')
   }
-  if (options !== undefined) assertKnownKeys(options, ['categories'], 'options')
   const declared = options === undefined ? undefined : options.categories
   const t = tally(pairs)
   const seen = t.byLabel.size

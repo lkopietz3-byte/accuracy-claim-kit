@@ -474,3 +474,37 @@ describe('gate-false-pass:G5 gate-hostile:F9 an error message never carries a ra
     expect((error as RangeError).message).toContain(`${'a'.repeat(60)}..."`)
   })
 })
+
+describe('gate-review:R5-F4 gate-hostile:F5 wilsonInterval and gwetAC1 reject an options value that is not a plain object', () => {
+  const pairs: [string, string][] = [['a', 'a'], ['b', 'b'], ['a', 'b'], ['b', 'b']]
+  const shapes: [string, () => object][] = [
+    ['Map', () => new Map([['confidence', 0.99]])],
+    ['Set', () => new Set(['confidence'])],
+    ['Date', () => new Date(0)],
+    ['boxed Number', () => Object(5) as object],
+    ['boxed String', () => Object('abc') as object],
+    ['RegExp', () => /x/u],
+    ['array', () => []],
+  ]
+
+  for (const [label, make] of shapes) {
+    it(`gate-hostile:F5 ${label} as options throws TypeError in wilsonInterval and gwetAC1, as in assessAccuracyClaim`, () => {
+      expect(() => wilsonInterval(5, 10, make() as never), label).toThrow(TypeError)
+      expect(() => gwetAC1(pairs, make() as never), label).toThrow(TypeError)
+      expect(() => assessAccuracyClaim(sampled({ metric: 'accuracy', value: 0.9 }, { n: 100, correct: 90 }), make() as never), label).toThrow(TypeError)
+    })
+  }
+
+  it('gate-review:R5-F4 a plain object, a null-prototype object, a class instance and nothing at all still work', () => {
+    expect(wilsonInterval(950, 1000, { confidence: 0.99 }).confidence).toBe(0.99)
+    expect(wilsonInterval(950, 1000, Object.assign(Object.create(null) as object, { confidence: 0.9 })).confidence).toBe(0.9)
+    class Settings {
+      confidence = 0.8
+    }
+    expect(wilsonInterval(950, 1000, new Settings()).confidence).toBe(0.8)
+    expect(wilsonInterval(950, 1000, {}).confidence).toBe(0.95)
+    expect(gwetAC1(pairs, { categories: 5 }).categories).toBe(5)
+    expect(gwetAC1(pairs, Object.assign(Object.create(null) as object, { categories: 4 })).categories).toBe(4)
+    expect(gwetAC1(pairs).categories).toBe(2)
+  })
+})

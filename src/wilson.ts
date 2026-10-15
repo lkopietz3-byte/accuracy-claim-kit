@@ -1,5 +1,5 @@
 import { centralQuantile, normalQuantile } from './normal.js'
-import { assertKnownKeys, readCount, readOpenUnit } from './validate.js'
+import { assertKnownKeys, assertPlainObject, readCount, readOpenUnit, requireRecord } from './validate.js'
 
 export const DEFAULT_CONFIDENCE = 0.95
 
@@ -92,10 +92,11 @@ export function wilsonInterval(
   n: number,
   options?: WilsonOptions,
 ): WilsonInterval {
-  if (options !== undefined && (typeof options !== 'object' || options === null)) {
-    throw new TypeError('options must be an object')
+  if (options !== undefined) {
+    const record = requireRecord(options, 'options')
+    assertPlainObject(record, 'options')
+    assertKnownKeys(record, ['confidence'], 'options')
   }
-  if (options !== undefined) assertKnownKeys(options as Record<string, unknown>, ['confidence'], 'options')
   const confidenceInput = options === undefined ? undefined : options.confidence
   const nValue = readCount(n, 'n', 1)
   const s = readCount(successes, 'successes', 0)
