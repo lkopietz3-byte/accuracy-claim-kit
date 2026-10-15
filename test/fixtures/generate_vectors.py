@@ -378,7 +378,9 @@ def main():
     #   a value x (double) is 'more favorable' than f when x > f (higher) / x < f (lower).
     #   point match of f to k/n: 0 and 1 are exact (k == 0 / k == n), otherwise
     #     |f - k/n| <= 1/2 * 10^-(decimals+2); "1 in N": k/n within
-    #     [1/(N+h), 1/(N-h)] with h = half of the unit of N's last significant digit.
+    #     [1/(N+h), 1/(N-h)] with h = 1/2 (N is exact), or, when the figure is written
+    #     as approximate ("about 1 in N", "~1 in N"), h = half of the unit of N's
+    #     last significant digit (trailing zeros are placeholders: 100 means 50 to 150).
     #   bound check on the census: floor f <= k/n (strict: <), ceiling f >= k/n (strict: >).
     #   census: ok = display_ok and value_ok where value_ok is a point match of the
     #     value when the value is more favorable than f or the display is a plain
@@ -392,10 +394,13 @@ def main():
     def match_point(digits, decimals, k, n):
         return match_display(digits, decimals, k, n)
 
-    def match_one_in_n(N, k, n):
+    def one_in_n_half_width(N, approx):
         digits = str(N)
         zeros = len(digits) - len(digits.rstrip("0"))
-        h = Fraction(10 ** zeros, 2)
+        return Fraction(10 ** zeros, 2) if approx else Fraction(1, 2)
+
+    def match_one_in_n(N, k, n, approx):
+        h = one_in_n_half_width(N, approx)
         return Fraction(1, 1) / (N + h) <= Fraction(k, n) <= Fraction(1, 1) / (N - h)
 
     words = {
@@ -410,6 +415,7 @@ def main():
     pvals = [("0", 0), ("0.5", 1), ("1", 0), ("1.0", 1), ("2.5", 1), ("5", 0), ("50", 0), ("95", 0), ("98", 0), ("98.9", 1), ("99", 0), ("99.5", 1), ("99.9", 1), ("100", 0)]
     ns2 = [100, 1000, 100000]
     drows = []
+    arows = []  # "about 1 in N" rows, sampled separately so the other rows keep their selection
     for metric in ("accuracy", "error-rate"):
         higher = metric == "accuracy"
         for n in ns2:
@@ -434,14 +440,20 @@ def main():
                 for key, txt in (("range", f"{a}-{b}%"), ("range", f"{a} to {b}%")):
                     end = Fraction(Decimal(b if higher else a)) / 100
                     forms.append((key, txt, 0, end))
-                forms.append(("one_in_n", "1 in " + str(int(Fraction(1) / f)) if f != 0 and (Fraction(1) / f).denominator == 1 else "1 in 1000", 0, None))
+                one_text = "1 in " + str(int(Fraction(1) / f)) if f != 0 and (Fraction(1) / f).denominator == 1 else "1 in 1000"
+                forms.append(("one_in_n", one_text, 0, None))
+                for prefix in ("about ", "~", "roughly "):
+                    forms.append(("one_in_n_approx", prefix + one_text, 0, None))
                 for (key, txt, d, fig) in forms:
-                    if key == "one_in_n":
+                    if key.startswith("one_in_n"):
                         N = int(txt.split()[-1])
                         fig = Fraction(1, N)
                     for k in sorted(ks):
                         # value: the figure itself, or (for a point/bound) a more favorable value within half a unit
                         xs = {float(fig)}
+                        if key == "one_in_n_approx":
+                            xs.add(float(fig * Fraction(6, 5)))
+                            xs.add(float(fig * Fraction(4, 5)))
                         if key in ("point", "approx", "floor_inc", "floor_strict", "ceil_inc", "ceil_strict"):
                             half = Fraction(1, 2 * 10 ** (d + 2))
                             xs.add(float(fig + (half * Fraction(4, 5) if higher else -half * Fraction(4, 5))))
@@ -449,8 +461,8 @@ def main():
                         for x in sorted(xs):
                             if not 0 <= x <= 1:
                                 continue
-                            drows.append((metric, higher, key, txt, d, fig, x, k, n))
-    keep = rng4.sample(drows, 1800)
+                            (arows if key == "one_in_n_approx" else drows).append((metric, higher, key, txt, d, fig, x, k, n))
+    keep = rng4.sample(drows, 1800) + random.Random(23).sample(arows, 600)
 
     def ulp_apart(x, y):
         """True when two doubles are within one ulp of x."""
@@ -470,9 +482,9 @@ def main():
             ulp = Fraction(math.ulp(x))
             if not (lo - ulp <= Fraction(x) <= hi + ulp):
                 return None
-        elif key == "one_in_n":
+        elif key.startswith("one_in_n"):
             N = int(txt.split()[-1])
-            digs = str(N); h = Fraction(10 ** (len(digs) - len(digs.rstrip("0"))), 2)
+            h = one_in_n_half_width(N, key == "one_in_n_approx")
             ulp = Fraction(math.ulp(x))
             if not (Fraction(1, 1) / (N + h) - ulp <= Fraction(x) <= Fraction(1, 1) / (N - h) + ulp):
                 return None
@@ -483,8 +495,8 @@ def main():
         # --- point match of the display
         if key == "none":
             dmatch = None
-        elif key == "one_in_n":
-            dmatch = match_one_in_n(int(txt.split()[-1]), succ, n)
+        elif key.startswith("one_in_n"):
+            dmatch = match_one_in_n(int(txt.split()[-1]), succ, n, key == "one_in_n_approx")
         elif key in ("point", "approx", "range"):
             digits = int(fig * 100 * 10 ** d)
             dmatch = match_display(digits, d, succ, n)

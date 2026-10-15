@@ -671,6 +671,9 @@ export function assessAccuracyClaim(
       censusReasons.push('claim-differs-from-count')
       censusNotes.push(`The figure does not match the exact count (${String(k)} of ${String(n)}, ${exactText}). It may be stale or mistyped.`)
     }
+    if (figure !== undefined && figure.bandNote !== null) {
+      censusNotes[0] = `${censusNotes[0] as string} ${figure.bandNote}`
+    }
     let censusPrecisionNote = ''
     if (displayDecimals !== null && displayDecimals > countDecimals(n)) {
       if (strictPrecision && censusVerdict === 'supported') {
@@ -781,6 +784,10 @@ export function assessAccuracyClaim(
         ? `${subject} is inside the ${cl} Wilson interval but above its lower end (${bottom}), which is the most the evidence supports.`
         : `${subject}${qualifier} is inside the ${cl} Wilson interval but below its upper end (${top}), which is the least the evidence supports.`,
     )
+  }
+
+  if (figure !== undefined && figure.bandNote !== null) {
+    explanation[0] = `${explanation[0] as string} ${figure.bandNote}`
   }
 
   let precisionNote = ''

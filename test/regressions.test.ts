@@ -854,3 +854,78 @@ describe('false-pass:F4 a figure in claim.text that differs from the figure judg
     expect(big / small).toBeLessThan(12)
   })
 })
+
+describe('false-pass:F2 "1 in N" is exact unless it is written as approximate', () => {
+  const oneIn = (display: string, value: number, n: number, errors: number, extra: Partial<AccuracyClaimInput> = {}): AccuracyAssessment =>
+    assessAccuracyClaim(sampled({ metric: 'error-rate', value, display }, { n, errors }, extra))
+
+  it('false-pass:F2 "1 in 100" with 1500 of 100000 (a true 1.5%) is contradicted, "about 1 in 100" with the same counts is supported', () => {
+    expect(outcome(oneIn('1 in 100', 0.01, 100_000, 1500))).toBe('contradicted [claim-outside-interval]')
+    expect(outcome(oneIn('about 1 in 100', 0.01, 100_000, 1500))).toBe('supported [matches-observed-rate]')
+  })
+
+  it('false-pass:F2 the other audit cases: 20 of 1000 and 200 of 1000 no longer pass as 1 in 100 and 1 in 10', () => {
+    expect(outcome(oneIn('1 in 100', 0.01, 1000, 20)).startsWith('contradicted')).toBe(true)
+    expect(outcome(oneIn('1 in 10', 0.1, 1000, 200)).startsWith('contradicted')).toBe(true)
+    expect(outcome(oneIn('about 1 in 10', 0.1, 1000, 100))).toBe('supported [matches-observed-rate]')
+    // the audit control: 2.5% was always contradicted
+    expect(outcome(oneIn('1 in 100', 0.01, 100_000, 2500)).startsWith('contradicted')).toBe(true)
+  })
+
+  it('false-pass:F2 N is exact to the half: the observed 1.0% is "1 in 100", 1.2% is overstated, and the band is 1/100.5 to 1/99.5', () => {
+    expect(outcome(oneIn('1 in 100', 0.01, 1000, 10))).toBe('supported [matches-observed-rate]')
+    expect(oneIn('1 in 100', 0.01, 1000, 12).verdict).toBe('overstated')
+    // 995 / 100000 = 1 / 100.5025 is just outside the exact band; 2010 / 200000 = 1 / 99.5025 is inside, 2011 / 200000 is outside
+    expect(oneIn('1 in 100', 0.01, 100_000, 995).verdict).not.toBe('supported')
+    expect(oneIn('1 in 100', 0.01, 100_000, 1000).verdict).toBe('supported')
+    expect(oneIn('1 in 100', 0.01, 200_000, 2010).verdict).toBe('supported')
+    expect(oneIn('1 in 100', 0.01, 200_000, 2011).verdict).not.toBe('supported')
+  })
+
+  it('false-pass:F2 every approximate prefix restores the placeholder band, spelled any of these ways', () => {
+    for (const display of ['about 1 in 100', 'around 1 in 100', 'roughly 1 in 100', 'approximately 1 in 100', 'approx 1 in 100', 'approx. 1 in 100', '~1 in 100', '~ 1 in 100', '≈1 in 100', 'About 1 in 100']) {
+      expect(outcome(oneIn(display, 0.01, 100_000, 1500)), display).toBe('supported [matches-observed-rate]')
+      expect(oneIn(display, 0.01, 100_000, 3000).verdict, display).toBe('contradicted')
+    }
+  })
+
+  it('false-pass:F2 the explanation names the band that was applied', () => {
+    const exact = oneIn('1 in 100', 0.01, 100_000, 1500)
+    expect(exact.explanation[0]).toContain('"1 in 100" is read as exactly 1 in 100')
+    expect(exact.explanation[0]).toContain('about 1 in 100')
+    const approx = oneIn('about 1 in 100', 0.01, 100_000, 1500)
+    expect(approx.explanation[0]).toContain('"about 1 in 100" is read as 1 in 50 to 1 in 150')
+    // N with no trailing zeros has no placeholder band either way
+    expect(oneIn('about 1 in 7', 1 / 7, 1000, 143).explanation[0]).toContain('1 in 6.5 to 1 in 7.5')
+  })
+
+  it('false-pass:F2 a bound on "1 in N" is not a figure the kit can read, and a bound before it is still a bound', () => {
+    for (const display of ['at least 1 in 100', 'under 1 in 100', 'fewer than 1 in 100', '<1 in 100']) {
+      expect(() => oneIn(display, 0.01, 1000, 10), display).toThrow(RangeError)
+    }
+  })
+
+  it('false-pass:F2 the complete-set path uses the same exact band', () => {
+    const set = (display: string, errors: number): AccuracyAssessment =>
+      assessAccuracyClaim(census({ metric: 'error-rate', value: 0.01, display }, { n: 100_000, errors }, 'Foo set'))
+    expect(outcome(set('1 in 100', 1000))).toBe('supported [census-matches-count]')
+    expect(outcome(set('1 in 100', 1500))).toBe('contradicted [claim-differs-from-count]')
+    expect(outcome(set('about 1 in 100', 1500))).toBe('supported [census-matches-count]')
+    expect(set('1 in 100', 1500).explanation[0]).toContain('does not match')
+  })
+
+  it('false-pass:F2 the value must sit in the band the display is read at', () => {
+    // exact: 1 in 100 with value 0.015 used to pass as a placeholder band; now it is a display that disagrees with its value
+    expect(() => oneIn('1 in 100', 0.015, 1000, 15)).toThrow(RangeError)
+    expect(outcome(oneIn('about 1 in 100', 0.015, 1000, 15))).toBe('supported [matches-observed-rate]')
+  })
+
+  it('false-pass:F2 "1 in N" in claim.text is read the same way for the text flag', () => {
+    const text = (t: string): AccuracyAssessment =>
+      assessAccuracyClaim(census({ metric: 'error-rate', value: 0.01, display: '1%', text: t }, { n: 100_000, errors: 1000 }, 'Foo set'))
+    expect(outcome(text('about 1 in 100 on the Foo set'))).toBe('supported [census-matches-count]')
+    expect(outcome(text('1 in 100 on the Foo set'))).toBe('supported [census-matches-count]')
+    expect(outcome(text('1 in 50 on the Foo set'))).toBe('supported [census-matches-count, text-figure-differs]')
+    expect(outcome(text('about 1 in 50 on the Foo set'))).toBe('supported [census-matches-count, text-figure-differs]')
+  })
+})

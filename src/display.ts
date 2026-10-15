@@ -26,6 +26,8 @@ export interface DisplayFigure {
   strict: boolean
   /** True when the printed value agrees with `value` to its rounding (plus one ulp). */
   consistentWith(value: number): boolean
+  /** For "1 in N": what band N was read at, to put in an explanation; null for every other form. */
+  bandNote: string | null
   /**
    * True when `value` is what this figure says: a point, approximate figure, range or
    * "1 in N" within its printed rounding, a floor at or below the value, a ceiling at or
@@ -109,6 +111,46 @@ function numLess(a: Num, b: Num): boolean {
   return a.digits * 10n ** BigInt(scale - a.decimals) < b.digits * 10n ** BigInt(scale - b.decimals)
 }
 
+/** A half-integer as text: 99.5, 100. `twice` is the value times two. */
+function halves(twice: bigint): string {
+  return twice % 2n === 0n ? String(twice / 2n) : `${String(twice / 2n)}.5`
+}
+
+function oneInN(text: string, approximate: boolean, display: string): DisplayFigure {
+  const digits = text.replace(/,/g, '')
+  const big = BigInt(digits)
+  const zeros = digits.length - digits.replace(/0+$/, '').length
+  const placeholder = 10n ** BigInt(zeros)
+  // twice the half-width of the band around N: 1 for an exact N, 10^zeros for an approximate one
+  const unit = approximate ? placeholder : 1n
+  const n2 = 2n * big
+  const figure = 1 / Number(digits)
+  const shown = `"${clip(display, 30)}"`
+  const band = `1 in ${halves(n2 - unit)} to 1 in ${halves(n2 + unit)}`
+  const widen = zeros > 0 ? `; write "about 1 in ${digits}" to allow 1 in ${halves(n2 - placeholder)} to 1 in ${halves(n2 + placeholder)}` : ''
+  const bandNote = approximate
+    ? `${shown} is read as ${band}.`
+    : `${shown} is read as exactly 1 in ${digits} (${band})${widen}.`
+  const within = (k: number, n: number): boolean => BigInt(k) * (n2 + unit) >= 2n * BigInt(n) && BigInt(k) * (n2 - unit) <= 2n * BigInt(n)
+  const consistentWith = (value: number): boolean => {
+    // 1/(N + h) <= value <= 1/(N - h), with one ulp of slack each way
+    const { mantissa, exponent } = splitDouble(value)
+    if (exponent >= 0) return false
+    const d = 1n << BigInt(-exponent)
+    return (mantissa + 1n) * (n2 + unit) >= 2n * d && (mantissa === 0n ? -1n : mantissa - 1n) * (n2 - unit) <= 2n * d
+  }
+  return {
+    info: { form: 'one-in-n', figure, decimals: null },
+    bound: null,
+    strict: false,
+    bandNote,
+    consistentWith,
+    agreesWith: consistentWith,
+    matchesObserved: within,
+    satisfiedBy: within,
+  }
+}
+
 /**
  * Parses the display for a metric where higher is better (accuracy, precision,
  * recall) or lower is better (error rates). Throws TypeError for a non-string
@@ -120,34 +162,6 @@ export function parseDisplayFigure(display: unknown, higherIsBetter: boolean): D
   if (display.length > 64) throw new RangeError('claim.display is too long to be a percent figure')
   let t = foldText(display)
   if (t.endsWith('.')) t = t.slice(0, -1)
-
-  // "1 in N": 1/N, to the precision N is written with (trailing zeros are placeholders).
-  const one = ONE_IN_N.exec(t)
-  if (one !== null) {
-    const digits = (one[1] as string).replace(/,/g, '')
-    const big = BigInt(digits)
-    const zeros = digits.length - digits.replace(/0+$/, '').length
-    const unit = 10n ** BigInt(zeros) // twice the half-unit of N's last significant digit
-    const n2 = 2n * big
-    const figure = 1 / Number(digits)
-    return {
-      info: { form: 'one-in-n', figure, decimals: null },
-      bound: null,
-      strict: false,
-      consistentWith(value: number): boolean {
-        // 1/(N + h) <= value <= 1/(N - h), with one ulp of slack each way
-        const { mantissa, exponent } = splitDouble(value)
-        if (exponent >= 0) return false
-        const d = 1n << BigInt(-exponent)
-        return (mantissa + 1n) * (n2 + unit) >= 2n * d && (mantissa === 0n ? -1n : mantissa - 1n) * (n2 - unit) <= 2n * d
-      },
-      agreesWith(value: number): boolean {
-        return this.consistentWith(value)
-      },
-      matchesObserved: (k, n) => BigInt(k) * (n2 + unit) >= 2n * BigInt(n) && BigInt(k) * (n2 - unit) <= 2n * BigInt(n),
-      satisfiedBy: (k, n) => BigInt(k) * (n2 + unit) >= 2n * BigInt(n) && BigInt(k) * (n2 - unit) <= 2n * BigInt(n),
-    }
-  }
 
   let kind: 'percent' | 'floor' | 'ceiling' | 'approx' = 'percent'
   let strict = false
@@ -167,6 +181,17 @@ export function parseDisplayFigure(display: unknown, higherIsBetter: boolean): D
     }
   }
 
+  // "1 in N": 1/N. N is exact (plus or minus one half) unless the figure is
+  // written as approximate ("about 1 in 100"), when the trailing zeros of N are
+  // placeholders: 100 means 50 to 150. A bound on it is not a form the kit reads.
+  const one = ONE_IN_N.exec(t)
+  if (one !== null) {
+    if (kind === 'floor' || kind === 'ceiling') {
+      throw new RangeError(`claim.display "${clip(display)}" puts a bound on "1 in N", which is not read; write the bound as a percent such as "<1%"`)
+    }
+    return oneInN(one[1] as string, kind === 'approx', display)
+  }
+
   if (kind === 'percent') {
     const range = RANGE.exec(t)
     if (range !== null) {
@@ -178,6 +203,7 @@ export function parseDisplayFigure(display: unknown, higherIsBetter: boolean): D
         info: { form: 'range', figure: proportionOf(end), decimals: end.decimals },
         bound: null,
         strict: false,
+        bandNote: null,
         consistentWith(value: number): boolean {
           // inside the range, with only one ulp of representation error at each end
           return atLeastDecimal(value, low.digits, low.decimals + 2) && atMostDecimal(value, high.digits, high.decimals + 2)
@@ -217,6 +243,7 @@ export function parseDisplayFigure(display: unknown, higherIsBetter: boolean): D
     info: { form, figure: proportionOf(num), decimals: num.decimals },
     bound: isBound ? form : null,
     strict: isBound && strict,
+    bandNote: null,
     consistentWith: (value) => withinHalfUnit(value, num.digits, scale, scale),
     agreesWith(value: number): boolean {
       const shown = proportionOf(num)
