@@ -462,5 +462,326 @@
     "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf26/K262168.pdf"
    }
   ]
+ },
+ "holdout": {
+  "read_on": "2026-10-14",
+  "families": [
+   "open-access peer-reviewed papers that evaluate a language model on exam or case questions (llm-exam-paper)",
+   "open-access peer-reviewed papers that evaluate a trained classifier (ml-paper)",
+   "a detector vendor's benchmark page that prints error counts (vendor-benchmark)"
+  ],
+  "how_found": "Europe PMC REST search (https://www.ebi.ac.uk/europepmc/webservices/rest/search) for open-access articles from 2024 and 2025 whose reported license is CC BY, with queries on confusion matrices, large language model exam accuracy, diagnostic sensitivity and specificity, and random-sample audits. 1,964 articles listed, 937 full texts read as text (fullTextXML), 93 contained a sentence pairing a count out of a total with a percentage near the words accuracy, sensitivity, specificity, precision, recall or correct. Claims were taken from 30 of them, at most five per paper. The vendor page was found by web search for AI-text-detector benchmarks; of the six vendor, blog and model-card pages opened for counts, only this one printed counts.",
+  "stored": "counts, the printed percentage, and a short description in the repository's own words; no article text. Each claim carries its source URL.",
+  "license_note": "Facts (counts and rates) are stored with attribution to the article. The articles are CC BY per Europe PMC; the vendor page is not licensed for reuse, so only its printed numbers are stored.",
+  "papers": [
+   {
+    "pmcid": "PMC10853856",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10853856/",
+    "title": "A Machine Learning Approach with Human-AI Collaboration for Automated Classification of Patient Safety Event Reports: Algorithm Development and Validation Study.",
+    "doi": "10.2196/53378",
+    "journal": null,
+    "year": 2024,
+    "license": "CC BY (the license field Europe PMC reports for the article)",
+    "claims": 4
+   },
+   {
+    "pmcid": "PMC10918540",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10918540/",
+    "title": "Evaluating Large Language Models for the National Premedical Exam in India: Comparative Analysis of GPT-3.5, GPT-4, and Bard.",
+    "doi": "10.2196/51523",
+    "journal": null,
+    "year": 2024,
+    "license": "CC BY (the license field Europe PMC reports for the article)",
+    "claims": 5
+   },
+   {
+    "pmcid": "PMC11104281",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11104281/",
+    "title": "Assessment of Artificial Intelligence Platforms With Regard to Medical Microbiology Knowledge: An Analysis of ChatGPT and Gemini.",
+    "doi": "10.7759/cureus.60675",
+    "journal": null,
+    "year": 2024,
+    "license": "CC BY (the license field Europe PMC reports for the article)",
+    "claims": 4
+   },
+   {
+    "pmcid": "PMC11162509",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11162509/",
+    "title": "Optimizing Diagnostic Performance of ChatGPT: The Impact of Prompt Engineering on Thoracic Radiology Cases.",
+    "doi": "10.7759/cureus.60009",
+    "journal": null,
+    "year": 2024,
+    "license": "CC BY (the license field Europe PMC reports for the article)",
+    "claims": 5
+   },
+   {
+    "pmcid": "PMC11449684",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11449684/",
+    "title": "Enhancing brain tumor detection: a novel CNN approach with advanced activation functions for accurate medical imaging analysis.",
+    "doi": "10.3389/fonc.2024.1437185",
+    "journal": null,
+    "year": 2024,
+    "license": "CC BY (the license field Europe PMC reports for the article)",
+    "claims": 4
+   },
+   {
+    "pmcid": "PMC11466054",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11466054/",
+    "title": "Performance of ChatGPT on Nursing Licensure Examinations in the United States and China: Cross-Sectional Study.",
+    "doi": "10.2196/52746",
+    "journal": null,
+    "year": 2024,
+    "license": "CC BY (the license field Europe PMC reports for the article)",
+    "claims": 4
+   },
+   {
+    "pmcid": "PMC11579975",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11579975/",
+    "title": "Enhancing SARS-CoV-2 Lineage Surveillance through the Integration of a Simple and Direct qPCR-Based Protocol Adaptation with Established Machine Learning Algorithms.",
+    "doi": "10.1021/acs.analchem.4c04492",
+    "journal": null,
+    "year": 2024,
+    "license": "CC BY (the license field Europe PMC reports for the article)",
+    "claims": 1
+   },
+   {
+    "pmcid": "PMC11627524",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11627524/",
+    "title": "Comparing the Accuracy of Two Generated Large Language Models in Identifying Health-Related Rumors or Misconceptions and the Applicability in Health Science Popularization: Proof-of-Concept Study.",
+    "doi": "10.2196/63188",
+    "journal": null,
+    "year": 2024,
+    "license": "CC BY (the license field Europe PMC reports for the article)",
+    "claims": 2
+   },
+   {
+    "pmcid": "PMC11633516",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11633516/",
+    "title": "Performance of GPT-3.5 and GPT-4 on the Korean Pharmacist Licensing Examination: Comparison Study.",
+    "doi": "10.2196/57451",
+    "journal": null,
+    "year": 2024,
+    "license": "CC BY (the license field Europe PMC reports for the article)",
+    "claims": 5
+   },
+   {
+    "pmcid": "PMC11683658",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11683658/",
+    "title": "Evaluating Bard Gemini Pro and GPT-4 Vision Against Student Performance in Medical Visual Question Answering: Comparative Case Study.",
+    "doi": "10.2196/57592",
+    "journal": null,
+    "year": 2024,
+    "license": "CC BY (the license field Europe PMC reports for the article)",
+    "claims": 3
+   },
+   {
+    "pmcid": "PMC11845889",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11845889/",
+    "title": "Unveiling GPT-4V's hidden challenges behind high accuracy on USMLE questions: Observational Study.",
+    "doi": "10.2196/65146",
+    "journal": null,
+    "year": 2025,
+    "license": "CC BY (the license field Europe PMC reports for the article)",
+    "claims": 4
+   },
+   {
+    "pmcid": "PMC11913316",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11913316/",
+    "title": "Medical Misinformation in AI-Assisted Self-Diagnosis: Development of a Method (EvalPrompt) for Analyzing Large Language Models.",
+    "doi": "10.2196/66207",
+    "journal": null,
+    "year": 2025,
+    "license": "CC BY (the license field Europe PMC reports for the article)",
+    "claims": 1
+   },
+   {
+    "pmcid": "PMC11923463",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11923463/",
+    "title": "Characterizing Public Sentiments and Drug Interactions in the COVID-19 Pandemic Using Social Media: Natural Language Processing and Network Analysis.",
+    "doi": "10.2196/63755",
+    "journal": null,
+    "year": 2025,
+    "license": "CC BY (the license field Europe PMC reports for the article)",
+    "claims": 1
+   },
+   {
+    "pmcid": "PMC11939018",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11939018/",
+    "title": "Performance of ChatGPT-4 on Taiwanese Traditional Chinese Medicine Licensing Examinations: Cross-Sectional Study.",
+    "doi": "10.2196/58897",
+    "journal": null,
+    "year": 2025,
+    "license": "CC BY (the license field Europe PMC reports for the article)",
+    "claims": 3
+   },
+   {
+    "pmcid": "PMC12005600",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12005600/",
+    "title": "Large Language Models in Biochemistry Education: Comparative Evaluation of Performance.",
+    "doi": "10.2196/67244",
+    "journal": null,
+    "year": 2025,
+    "license": "CC BY (the license field Europe PMC reports for the article)",
+    "claims": 4
+   },
+   {
+    "pmcid": "PMC12018347",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12018347/",
+    "title": "GPT-4's capabilities for formative and summative assessments in Norwegian medicine exams-an intrinsic case study in the early phase of intervention.",
+    "doi": "10.3389/fmed.2025.1441747",
+    "journal": null,
+    "year": 2025,
+    "license": "CC BY (the license field Europe PMC reports for the article)",
+    "claims": 2
+   },
+   {
+    "pmcid": "PMC12046268",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12046268/",
+    "title": "Large-Scale Deep Learning-Enabled Infodemiological Analysis of Substance Use Patterns on Social Media: Insights From the COVID-19 Pandemic.",
+    "doi": "10.2196/59076",
+    "journal": null,
+    "year": 2025,
+    "license": "CC BY (the license field Europe PMC reports for the article)",
+    "claims": 2
+   },
+   {
+    "pmcid": "PMC12233955",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12233955/",
+    "title": "ChatGPT performance in answering medical residency questions in nephrology: a pilot study in Brazil.",
+    "doi": "10.1590/2175-8239-jbn-2024-0254en",
+    "journal": null,
+    "year": 2025,
+    "license": "CC BY (the license field Europe PMC reports for the article)",
+    "claims": 4
+   },
+   {
+    "pmcid": "PMC12413321",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12413321/",
+    "title": "Identifying Transportation Needs in Ophthalmology Clinic Notes Using Natural Language Processing: Retrospective, Cross-Sectional Study.",
+    "doi": "10.2196/69216",
+    "journal": null,
+    "year": 2025,
+    "license": "CC BY (the license field Europe PMC reports for the article)",
+    "claims": 2
+   },
+   {
+    "pmcid": "PMC12429247",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12429247/",
+    "title": "Incidental pulmonary embolism in abdominal CT: detection rate and characteristics with artificial intelligence.",
+    "doi": "10.1093/radadv/umae009",
+    "journal": null,
+    "year": 2024,
+    "license": "CC BY (the license field Europe PMC reports for the article)",
+    "claims": 1
+   },
+   {
+    "pmcid": "PMC12565564",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12565564/",
+    "title": "MMSE-Based Dementia Prediction: Deep vs. Traditional Models.",
+    "doi": "10.3390/life15101544",
+    "journal": null,
+    "year": 2025,
+    "license": "CC BY (the license field Europe PMC reports for the article)",
+    "claims": 4
+   },
+   {
+    "pmcid": "PMC12607898",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12607898/",
+    "title": "Detection of protozoan and helminth parasites in concentrated wet mounts of stool using a deep convolutional neural network.",
+    "doi": "10.1128/jcm.01062-25",
+    "journal": null,
+    "year": 2025,
+    "license": "CC BY (the license field Europe PMC reports for the article)",
+    "claims": 2
+   },
+   {
+    "pmcid": "PMC12667437",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12667437/",
+    "title": "Machine learning predicts lipid emulsion stability in parenteral nutrition using multi-laboratory literature data.",
+    "doi": "10.3389/fnut.2025.1668464",
+    "journal": null,
+    "year": 2025,
+    "license": "CC BY (the license field Europe PMC reports for the article)",
+    "claims": 2
+   },
+   {
+    "pmcid": "PMC12685630",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12685630/",
+    "title": "Performance of o1 pro and GPT-4 in Self-Assessment Questions for Nephrology Board Renewal.",
+    "doi": "10.3389/fmed.2025.1702668",
+    "journal": null,
+    "year": 2025,
+    "license": "CC BY (the license field Europe PMC reports for the article)",
+    "claims": 5
+   },
+   {
+    "pmcid": "PMC12691344",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12691344/",
+    "title": "Digital Pathology with AI for Cervical Biopsies: Diagnostic Accuracy at the CIN2+ Threshold.",
+    "doi": "10.3390/cancers17233808",
+    "journal": null,
+    "year": 2025,
+    "license": "CC BY (the license field Europe PMC reports for the article)",
+    "claims": 3
+   },
+   {
+    "pmcid": "PMC12701348",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12701348/",
+    "title": "Comparison of ChatGPT and DeepSeek on a Standardized Audiologist Qualification Examination in Chinese: Observational Study.",
+    "doi": "10.2196/79534",
+    "journal": null,
+    "year": 2025,
+    "license": "CC BY (the license field Europe PMC reports for the article)",
+    "claims": 4
+   },
+   {
+    "pmcid": "PMC12711010",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12711010/",
+    "title": "Predicting clinical outcome of Escherichia coli O157:H7 infections using explainable machine learning.",
+    "doi": "10.1099/mgen.0.001591",
+    "journal": null,
+    "year": 2025,
+    "license": "CC BY (the license field Europe PMC reports for the article)",
+    "claims": 2
+   },
+   {
+    "pmcid": "PMC12730490",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12730490/",
+    "title": "Deep Learning and Machine Learning Modeling Identifies Thidiazuron as a Key Modulator of Somatic Embryogenesis and Shoot Organogenesis in Ferula assa-foetida L.",
+    "doi": "10.3390/biology14121703",
+    "journal": null,
+    "year": 2025,
+    "license": "CC BY (the license field Europe PMC reports for the article)",
+    "claims": 1
+   },
+   {
+    "pmcid": "PMC12823889",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12823889/",
+    "title": "Diagnostic performance of large language models on the NEJM image challenge: a comparative study with human evaluators and the impact of prompt engineering.",
+    "doi": "10.3389/fmed.2025.1709413",
+    "journal": null,
+    "year": 2025,
+    "license": "CC BY (the license field Europe PMC reports for the article)",
+    "claims": 4
+   },
+   {
+    "pmcid": "PMC12835224",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC12835224/",
+    "title": "Resting-state EEG power and machine-learning classification in adult males with gambling disorder.",
+    "doi": "10.3389/fnhum.2025.1725528",
+    "journal": null,
+    "year": 2025,
+    "license": "CC BY (the license field Europe PMC reports for the article)",
+    "claims": 4
+   }
+  ],
+  "vendor_pages": [
+   {
+    "url": "https://gptzero.me/news/chicago-booth-2026/",
+    "title": "GPTZero Tops Accuracy on Chicago Booth Benchmark in 2026",
+    "claims": 11,
+    "license": "all rights reserved (page text not reproduced; counts and printed rates only)"
+   }
+  ]
  }
 }
