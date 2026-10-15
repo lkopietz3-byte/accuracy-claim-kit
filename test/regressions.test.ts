@@ -899,12 +899,6 @@ describe('false-pass:F2 "1 in N" is exact unless it is written as approximate', 
     expect(oneIn('about 1 in 7', 1 / 7, 1000, 143).explanation[0]).toContain('1 in 6.5 to 1 in 7.5')
   })
 
-  it('false-pass:F2 a bound on "1 in N" is not a figure the kit can read, and a bound before it is still a bound', () => {
-    for (const display of ['at least 1 in 100', 'under 1 in 100', 'fewer than 1 in 100', '<1 in 100']) {
-      expect(() => oneIn(display, 0.01, 1000, 10), display).toThrow(RangeError)
-    }
-  })
-
   it('false-pass:F2 the complete-set path uses the same exact band', () => {
     const set = (display: string, errors: number): AccuracyAssessment =>
       assessAccuracyClaim(census({ metric: 'error-rate', value: 0.01, display }, { n: 100_000, errors }, 'Foo set'))
@@ -1167,5 +1161,104 @@ describe('hostile:F12 docs-release:D5 false-pass:F12 the metric and display mess
     expect(say(claim('about 1 in 100', 0.1, 'error-rate'))).toContain('the value must lie inside the band the display is read at (1 in 50 to 1 in 150)')
     expect(say(claim('1 in 100', 0.011, 'error-rate'))).toContain('1 in 99.5 to 1 in 100.5')
     expect(say(claim('99%+', 0.9))).toContain('(0.5 percentage points)')
+  })
+})
+
+describe('field:F6 false-pass:F12 ordinary acceptance-criteria wordings are read, and the ones that cannot be read still throw', () => {
+  const acc = (display: string, correct = 950): AccuracyAssessment =>
+    assessAccuracyClaim(sampled({ metric: 'accuracy', value: 0.95, display }, { n: 1000, correct }))
+  const err = (display: string, errors = 50, value = 0.05): AccuracyAssessment =>
+    assessAccuracyClaim(sampled({ metric: 'error-rate', value, display }, { n: 1000, errors }))
+  const same = (a: AccuracyAssessment, b: AccuracyAssessment, label: string): void => {
+    expect(outcome(a), label).toBe(outcome(b))
+    expect(a.parsedDisplay?.form, label).toBe(b.parsedDisplay?.form)
+    expect(a.parsedDisplay?.figure, label).toBe(b.parsedDisplay?.figure)
+    expect(a.assessedValue, label).toBe(b.assessedValue)
+  }
+
+  it('field:F6 floor wordings read as "at least"', () => {
+    for (const correct of [900, 940, 950, 960]) {
+      const base = acc('at least 95%', correct)
+      for (const display of ['greater than or equal to 95%', 'not less than 95%', 'no less than 95%', 'minimum of 95%', 'a minimum of 95%', '95% or higher', '95% or more', '95% or above', '95% or greater', '95%  or  Higher']) {
+        same(acc(display, correct), base, `${display} ${String(correct)}`)
+      }
+    }
+    expect(acc('greater than or equal to 95%').parsedDisplay).toEqual({ form: 'floor', figure: 0.95, decimals: 0 })
+  })
+
+  it('field:F6 ceiling wordings read as "at most"', () => {
+    for (const errors of [30, 50, 55, 70]) {
+      const base = err('at most 5%', errors)
+      for (const display of ['less than or equal to 5%', 'not more than 5%', 'maximum of 5%', 'a maximum of 5%', '5% or lower', '5% or less', '5% or below']) {
+        same(err(display, errors), base, `${display} ${String(errors)}`)
+      }
+    }
+  })
+
+  it('field:F6 the "or equal to" wordings are inclusive and the plain ones stay strict', () => {
+    const set = (display: string, correct: number): AccuracyAssessment =>
+      assessAccuracyClaim(census({ metric: 'accuracy', value: 0.95, display }, { n: 1000, correct }, 'Foo set'))
+    expect(outcome(set('greater than or equal to 95%', 950))).toBe('supported [census-matches-count]')
+    expect(outcome(set('greater than 95%', 950))).toBe('contradicted [claim-differs-from-count]')
+    expect(outcome(set('95% or higher', 950))).toBe('supported [census-matches-count]')
+    expect(outcome(set('95% or higher', 949))).toBe('contradicted [claim-differs-from-count]')
+    expect(outcome(set('not less than 95%', 951))).toBe('supported [census-matches-count]')
+  })
+
+  it('field:F6 a wording that points the wrong way for the metric, or stacks two directions, throws', () => {
+    expect(() => err('minimum of 5%')).toThrow(RangeError)
+    expect(() => err('5% or higher')).toThrow(RangeError)
+    expect(() => acc('not more than 95%')).toThrow(RangeError)
+    expect(() => acc('95% or lower')).toThrow(RangeError)
+    for (const display of ['at least 95% or higher', 'about 95% or higher', '95%+ or higher', 'minimum of 95% or more', '95% or higher or lower']) {
+      expect(() => acc(display), display).toThrow(RangeError)
+    }
+  })
+
+  it('false-pass:F12 a bound on "1 in N" is read as a bound at 1/N', () => {
+    const one = (display: string, errors: number, n = 5000, value = 0.001): AccuracyAssessment =>
+      assessAccuracyClaim(sampled({ metric: 'error-rate', value, display }, { n, errors }))
+    for (const display of ['fewer than 1 in 1,000', 'less than 1 in 1000', 'under 1 in 1,000', 'below 1 in 1,000', '<1 in 1,000']) {
+      expect(outcome(one(display, 0)), display).toBe('supported [claim-within-bound]')
+      expect(outcome(one(display, 10)), display).toBe('contradicted [claim-outside-interval]')
+      expect(one(display, 0).parsedDisplay).toEqual({ form: 'ceiling', figure: 0.001, decimals: null })
+    }
+    // a bound is never excused by matching the observed rate: 5 of 5000 is exactly 1 in 1,000
+    expect(one('fewer than 1 in 1,000', 5).verdict).not.toBe('supported')
+    expect(outcome(one('at most 1 in 1,000', 0))).toBe('supported [claim-within-bound]')
+    expect(one('at most 1 in 1,000', 5).verdict).toBe('overstated')
+    expect(() => one('at least 1 in 1,000', 0)).toThrow(RangeError)
+    // the value has to sit at the bound it is printed with
+    expect(() => one('fewer than 1 in 1,000', 0, 5000, 0.01)).toThrow(RangeError)
+  })
+
+  it('false-pass:F12 a floor on "1 in N" fits a higher-is-better metric, strictly or not, and the complete set compares exact counts', () => {
+    const acc1 = (display: string, correct: number): AccuracyAssessment =>
+      assessAccuracyClaim(census({ metric: 'accuracy', value: 0.5, display }, { n: 1000, correct }, 'Foo set'))
+    expect(outcome(acc1('at least 1 in 2', 500))).toBe('supported [census-matches-count]')
+    expect(outcome(acc1('more than 1 in 2', 500))).toBe('contradicted [claim-differs-from-count]')
+    expect(outcome(acc1('more than 1 in 2', 501))).toBe('supported [census-matches-count]')
+    expect(() => acc1('over 1 in 1', 1000)).toThrow(RangeError)
+    const set = (display: string, errors: number): AccuracyAssessment =>
+      assessAccuracyClaim(census({ metric: 'error-rate', value: 0.001, display }, { n: 5000, errors }, 'Foo set'))
+    expect(outcome(set('at most 1 in 1,000', 5))).toBe('supported [census-matches-count]')
+    expect(outcome(set('fewer than 1 in 1,000', 5))).toBe('contradicted [claim-differs-from-count]')
+    expect(outcome(set('fewer than 1 in 1,000', 4))).toBe('supported [census-matches-count]')
+  })
+
+  it('field:F6 false-pass:F12 the figures in claim.text understand the same wordings', () => {
+    const text = (t: string): AccuracyAssessment =>
+      assessAccuracyClaim(census({ metric: 'accuracy', value: 0.95, display: '95%', text: t }, { n: 1000, correct: 950 }, 'Foo set'))
+    expect(outcome(text('minimum of 90% on the Foo set'))).toBe('supported [census-matches-count]')
+    expect(outcome(text('90% or higher on the Foo set'))).toBe('supported [census-matches-count]')
+    expect(outcome(text('minimum of 99% on the Foo set'))).toBe('supported [census-matches-count, text-figure-differs]')
+    expect(outcome(text('99% or higher on the Foo set'))).toBe('supported [census-matches-count, text-figure-differs]')
+    expect(outcome(text('greater than or equal to 99% on the Foo set'))).toBe('supported [census-matches-count, text-figure-differs]')
+  })
+
+  it('false-pass:F12 documented limits: a decimal comma and words after the figure are not read', () => {
+    for (const display of ['99,8%', '99.8% accurate', '99 percent', 'a 99% or higher score']) {
+      expect(() => acc(display), display).toThrow(RangeError)
+    }
   })
 })

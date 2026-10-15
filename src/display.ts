@@ -58,6 +58,9 @@ const RANGE = new RegExp(`^${NUM} ?%? ?(?:-|–|—|to) ?${NUM} ?%$`)
 const SINGLE = new RegExp(`^${NUM} ?%$`)
 const PLUS_BEFORE_PERCENT = new RegExp(`^${NUM}\\+ ?%$`)
 const ONE_IN_N = /^1 in ((?:[1-9]\d{0,2}(?:,\d{3})+)|(?:[1-9]\d{0,14}))$/
+/** A bound written after the figure: "95% or higher", "5% or lower". */
+const BOUND_SUFFIX = /^(.*) or (higher|more|above|greater|lower|less|below)$/
+const FLOOR_SUFFIXES: readonly string[] = ['higher', 'more', 'above', 'greater']
 
 const PREFIXES: readonly (readonly [string, 'floor' | 'ceiling' | 'approx', boolean, boolean])[] = [
   // [text, kind, needs a space after, strict]
@@ -70,11 +73,20 @@ const PREFIXES: readonly (readonly [string, 'floor' | 'ceiling' | 'approx', bool
   ['≈', 'approx', false, false],
   ['~', 'approx', false, false],
   ['at least', 'floor', true, false],
+  ['greater than or equal to', 'floor', true, false],
+  ['not less than', 'floor', true, false],
+  ['no less than', 'floor', true, false],
+  ['a minimum of', 'floor', true, false],
+  ['minimum of', 'floor', true, false],
   ['more than', 'floor', true, true],
   ['greater than', 'floor', true, true],
   ['over', 'floor', true, true],
   ['above', 'floor', true, true],
   ['at most', 'ceiling', true, false],
+  ['less than or equal to', 'ceiling', true, false],
+  ['not more than', 'ceiling', true, false],
+  ['a maximum of', 'ceiling', true, false],
+  ['maximum of', 'ceiling', true, false],
   ['no more than', 'ceiling', true, false],
   ['less than', 'ceiling', true, true],
   ['fewer than', 'ceiling', true, true],
@@ -118,21 +130,26 @@ function halves(twice: bigint): string {
   return twice % 2n === 0n ? String(twice / 2n) : `${String(twice / 2n)}.5`
 }
 
-function oneInN(text: string, approximate: boolean, display: string): DisplayFigure {
+function oneInN(text: string, kind: 'percent' | 'approx' | 'floor' | 'ceiling', strict: boolean, folded: string, display: string): DisplayFigure {
   const digits = text.replace(/,/g, '')
   const big = BigInt(digits)
+  const bound = kind === 'floor' || kind === 'ceiling' ? kind : null
+  if (kind === 'floor' && strict && big === 1n) {
+    // nothing is above 100%
+    throw new RangeError(`claim.display "${clip(display)}" asks for more than 100%, which is impossible`)
+  }
+  const approximate = kind === 'approx'
   const zeros = digits.length - digits.replace(/0+$/, '').length
   const placeholder = 10n ** BigInt(zeros)
   // twice the half-width of the band around N: 1 for an exact N, 10^zeros for an approximate one
   const unit = approximate ? placeholder : 1n
   const n2 = 2n * big
   const figure = 1 / Number(digits)
-  const shown = `"${clip(display, 30)}"`
+  const shown = `"${clip(folded, 30)}"`
   const band = `1 in ${halves(n2 - unit)} to 1 in ${halves(n2 + unit)}`
   const widen = zeros > 0 ? `; write "about 1 in ${digits}" to allow 1 in ${halves(n2 - placeholder)} to 1 in ${halves(n2 + placeholder)}` : ''
-  const bandNote = approximate
-    ? `${shown} is read as ${band}.`
-    : `${shown} is read as exactly 1 in ${digits} (${band})${widen}.`
+  const bandNote =
+    bound !== null ? null : approximate ? `${shown} is read as ${band}.` : `${shown} is read as exactly 1 in ${digits} (${band})${widen}.`
   const within = (k: number, n: number): boolean => BigInt(k) * (n2 + unit) >= 2n * BigInt(n) && BigInt(k) * (n2 - unit) <= 2n * BigInt(n)
   const consistentWith = (value: number): boolean => {
     // 1/(N + h) <= value <= 1/(N - h), with one ulp of slack each way
@@ -141,16 +158,28 @@ function oneInN(text: string, approximate: boolean, display: string): DisplayFig
     const d = 1n << BigInt(-exponent)
     return (mantissa + 1n) * (n2 + unit) >= 2n * d && (mantissa === 0n ? -1n : mantissa - 1n) * (n2 - unit) <= 2n * d
   }
+  const satisfiedBy = (k: number, n: number): boolean => {
+    if (bound === null) return within(k, n)
+    // k / n against 1 / N, by integer arithmetic: floor 1/N <= k/n is k N >= n
+    const lhs = BigInt(k) * big - BigInt(n)
+    if (bound === 'floor') return strict ? lhs > 0n : lhs >= 0n
+    return strict ? lhs < 0n : lhs <= 0n
+  }
+  const agreesWith = (value: number): boolean => {
+    if (bound === 'floor') return strict ? beyondOneUlp(value, figure, true) : !beyondOneUlp(figure, value, true)
+    if (bound === 'ceiling') return strict ? beyondOneUlp(value, figure, false) : !beyondOneUlp(figure, value, false)
+    return consistentWith(value)
+  }
   return {
-    info: { form: 'one-in-n', figure, decimals: null },
-    bound: null,
-    strict: false,
+    info: { form: bound ?? 'one-in-n', figure, decimals: null },
+    bound,
+    strict: bound !== null && strict,
     bandNote,
     mismatchHint: `the value must lie inside the band the display is read at (${band})`,
     consistentWith,
-    agreesWith: consistentWith,
-    matchesObserved: within,
-    satisfiedBy: within,
+    agreesWith,
+    matchesObserved: (k, n) => bound === null && within(k, n),
+    satisfiedBy,
   }
 }
 
@@ -185,15 +214,26 @@ export function parseDisplayFigure(display: unknown, higherIsBetter: boolean): D
     }
   }
 
+  // "95% or higher" is "at least 95%": a bound written after the figure. It does
+  // not combine with a word in front, and on "1 in N" it would be ambiguous
+  // ("1 in 100 or lower": a lower rate, or a lower N?), so those are not read.
+  const suffix = BOUND_SUFFIX.exec(t)
+  if (suffix !== null) {
+    if (kind !== 'percent' || ONE_IN_N.test(suffix[1] as string)) throw bad(display)
+    kind = FLOOR_SUFFIXES.includes(suffix[2] as string) ? 'floor' : 'ceiling'
+    strict = false
+    t = suffix[1] as string
+  }
+
   // "1 in N": 1/N. N is exact (plus or minus one half) unless the figure is
   // written as approximate ("about 1 in 100"), when the trailing zeros of N are
-  // placeholders: 100 means 50 to 150. A bound on it is not a form the kit reads.
+  // placeholders: 100 means 50 to 150. A bound on it ("fewer than 1 in 1,000")
+  // is a bound at 1/N.
   const one = ONE_IN_N.exec(t)
   if (one !== null) {
-    if (kind === 'floor' || kind === 'ceiling') {
-      throw new RangeError(`claim.display "${clip(display)}" puts a bound on "1 in N", which is not read; write the bound as a percent such as "<1%"`)
-    }
-    return oneInN(one[1] as string, kind === 'approx', folded)
+    if (kind === 'floor' && !higherIsBetter) throw new RangeError(`claim.display "${clip(display)}" is a lower bound, which does not fit a metric where lower is better`)
+    if (kind === 'ceiling' && higherIsBetter) throw new RangeError(`claim.display "${clip(display)}" is an upper bound, which does not fit a metric where higher is better`)
+    return oneInN(one[1] as string, kind, strict, folded, display)
   }
 
   if (kind === 'percent') {
@@ -278,7 +318,7 @@ const PREFIX_ALTERNATIVES = PREFIXES.map(([text]) => text)
 const TEXT_NUM = '\\d{1,3}(?:\\.\\d{1,15})?'
 /** A printed figure inside prose: an optional bound or approximation word, then a percent, a range or "1 in N". */
 const TEXT_FIGURE = new RegExp(
-  `(?<![\\p{L}\\p{N}.])(?:(?:${PREFIX_ALTERNATIVES}) ?)?(?:${TEXT_NUM}(?: ?%)? ?(?:-|to) ?${TEXT_NUM} ?%|${TEXT_NUM} ?\\+? ?%\\+?|1 in (?:[1-9]\\d{0,2}(?:,\\d{3})+|[1-9]\\d{0,14}))(?![\\p{N}])`,
+  `(?<![\\p{L}\\p{N}.])(?:(?:${PREFIX_ALTERNATIVES}) ?)?(?:${TEXT_NUM}(?: ?%)? ?(?:-|to) ?${TEXT_NUM} ?%|${TEXT_NUM} ?\\+? ?%\\+?(?: or (?:higher|more|above|greater|lower|less|below))?|1 in (?:[1-9]\\d{0,2}(?:,\\d{3})+|[1-9]\\d{0,14}))(?![\\p{N}])`,
   'gu',
 )
 const ABSOLUTE_WORDS = /(?<![\p{L}\p{N}])(?:perfect|flawless|error-free|no errors|zero errors)(?![\p{L}\p{N}])/u
