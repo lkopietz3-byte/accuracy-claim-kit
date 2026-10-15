@@ -27,7 +27,7 @@ import {
   readOpenUnit,
   requireRecord,
 } from './validate.js'
-import { foldText, MAX_LABEL_LENGTH, MAX_TEXT_LENGTH, mentionsName, readName } from './text.js'
+import { assertPlainText, foldText, MAX_LABEL_LENGTH, MAX_TEXT_LENGTH, mentionsName, readName } from './text.js'
 import { DEFAULT_CONFIDENCE, wilsonWithZ, zForConfidence, zForTail } from './wilson.js'
 
 /** Lowest confidence level `assessAccuracyClaim` accepts. `wilsonInterval` takes any level strictly between 0 and 1. */
@@ -210,6 +210,7 @@ function readStrata(raw: unknown): Stratum[] {
     if (nameRaw.length > MAX_LABEL_LENGTH) {
       throw new RangeError(`strata[${i}].name must be at most ${String(MAX_LABEL_LENGTH)} characters`)
     }
+    assertPlainText(nameRaw, `strata[${i}].name`)
     if (names.has(nameRaw)) throw new RangeError(`strata[${i}].name "${clip(nameRaw)}" is a duplicate`)
     names.add(nameRaw)
     const counts = readCounts(rec, `strata[${i}]`)
@@ -392,6 +393,7 @@ export function assessAccuracyClaim(
   if (textRaw !== undefined) {
     if (typeof textRaw !== 'string') throw new TypeError('claim.text must be a string')
     if (textRaw.length > MAX_TEXT_LENGTH) throw new RangeError(`claim.text must be at most ${String(MAX_TEXT_LENGTH)} characters`)
+    assertPlainText(textRaw, 'claim.text')
     claimText = textRaw
   }
 

@@ -160,7 +160,8 @@ function oneInN(text: string, approximate: boolean, display: string): DisplayFig
 export function parseDisplayFigure(display: unknown, higherIsBetter: boolean): DisplayFigure {
   if (typeof display !== 'string') throw new TypeError('claim.display must be a string')
   if (display.length > 64) throw new RangeError('claim.display is too long to be a percent figure')
-  let t = foldText(display)
+  const folded = foldText(display)
+  let t = folded
   if (t.endsWith('.')) t = t.slice(0, -1)
 
   let kind: 'percent' | 'floor' | 'ceiling' | 'approx' = 'percent'
@@ -189,7 +190,7 @@ export function parseDisplayFigure(display: unknown, higherIsBetter: boolean): D
     if (kind === 'floor' || kind === 'ceiling') {
       throw new RangeError(`claim.display "${clip(display)}" puts a bound on "1 in N", which is not read; write the bound as a percent such as "<1%"`)
     }
-    return oneInN(one[1] as string, kind === 'approx', display)
+    return oneInN(one[1] as string, kind === 'approx', folded)
   }
 
   if (kind === 'percent') {

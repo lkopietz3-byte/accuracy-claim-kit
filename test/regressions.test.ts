@@ -1042,3 +1042,72 @@ describe('field:F2 specificity, NPV and the diagnostic agreement names are metri
     expect(r.suggestedStatement).toBe('No specificity figure can be supported from this evidence: the labels were not checked by people.')
   })
 })
+
+describe('hostile:F8 control and bidirectional characters in an echoed string throw', () => {
+  const bad = ['\u0000', '\n', '\r', '\u001b', '\u007f', '\u0085', '\u2028', '\u2029', '\u202a', '\u202b', '\u202c', '\u202d', '\u202e', '\u2066', '\u2067', '\u2068', '\u2069']
+  const codes = (c: string): string => `U+${(c.codePointAt(0) as number).toString(16).toUpperCase().padStart(4, '0')}`
+
+  const named = (benchmark: string, text = `Scores 79.9% on ${benchmark}`): AccuracyClaimInput =>
+    census({ metric: 'accuracy', value: 0.799, display: '79.9%', text }, { n: 50_000, correct: 39_950 }, benchmark)
+  const scoped = (claimed: string, evaluated: string): AccuracyClaimInput =>
+    sampled({ metric: 'accuracy', value: 0.98 }, { n: 1000, correct: 990 }, { population: { claimed, evaluated } })
+  const withText = (text: string): AccuracyClaimInput => sampled({ metric: 'accuracy', value: 0.98, text }, { n: 1000, correct: 990 })
+  const withStratum = (name: string): AccuracyClaimInput => sampled(
+    { metric: 'accuracy', value: 0.98 }, { n: 1000, correct: 990 },
+    { sampling: 'stratified', strata: [{ name, n: 500, correct: 495 }, { name: 'other', n: 500, correct: 495 }] },
+  )
+
+  it('hostile:F8 the audit repro (override, newlines, a NUL and markup in a benchmark name) throws RangeError', () => {
+    const name = 'Bench\u202e\n\n**Verdict: all clear**\u0000<script>x</script>'
+    expect(() => assessAccuracyClaim(named(name))).toThrow(RangeError)
+    expect(() => assessAccuracyClaim(scoped('adults\n\u202eFINE', 'kids'))).toThrow(RangeError)
+  })
+
+  it('hostile:F8 every one of them is rejected in benchmark.name, population.claimed, population.evaluated, claim.text and a stratum name', () => {
+    for (const c of bad) {
+      expect(() => assessAccuracyClaim(named(`Foo${c}set`)), `benchmark ${codes(c)}`).toThrow(RangeError)
+      expect(() => assessAccuracyClaim(named('Foo set', `Scores 79.9% on Foo set${c}`)), `text ${codes(c)}`).toThrow(RangeError)
+      expect(() => assessAccuracyClaim(scoped(`adults${c}`, 'adults')), `claimed ${codes(c)}`).toThrow(RangeError)
+      expect(() => assessAccuracyClaim(scoped('adults', `${c}adults`)), `evaluated ${codes(c)}`).toThrow(RangeError)
+      expect(() => assessAccuracyClaim(withText(`98% accurate${c}`)), `sample text ${codes(c)}`).toThrow(RangeError)
+      expect(() => assessAccuracyClaim(withStratum(`a${c}b`)), `stratum ${codes(c)}`).toThrow(RangeError)
+    }
+  })
+
+  it('hostile:F8 text is rejected whatever the metric or sampling (a refusal would echo nothing, but the input is still malformed)', () => {
+    expect(() => assessAccuracyClaim(sampled({ metric: 'f1', value: 0.9, text: 'x\u202ey' }, { n: 100, correct: 90 }))).toThrow(RangeError)
+    expect(() => assessAccuracyClaim(sampled({ metric: 'accuracy', value: 0.9, text: 'x\ny' }, { n: 100, correct: 90 }, { sampling: 'ranked' }))).toThrow(RangeError)
+  })
+
+  it('hostile:F8 the message names the field and the character, not the string', () => {
+    let error: unknown
+    try {
+      assessAccuracyClaim(scoped('adults\u202e', 'adults'))
+    } catch (e) {
+      error = e
+    }
+    const message = (error as RangeError).message
+    expect(message).toContain('population.claimed')
+    expect(message).toContain('U+202E')
+    expect(message).toContain('position 6')
+    expect(message).not.toContain('\u202e')
+  })
+
+  it('hostile:F8 a horizontal tab is spacing, not a control that can hide anything, and is allowed', () => {
+    expect(assessAccuracyClaim(scoped('adults\tkids', 'adults\tkids')).verdict).toBe('supported')
+  })
+
+  it('hostile:F8 ordinary text is unchanged: other scripts, punctuation, emoji, no-break and ideographic spaces, joiners and direction marks', () => {
+    for (const name of ['Ridgeview validation set', 'テスト', 'C++ tests', 'café \u2019s', 'Foo\u00a0set', 'Foo\u3000set', '😀 set', 'a\u200db set', 'בדיקה\u200f set']) {
+      expect(outcome(assessAccuracyClaim(named(name))), name).toBe('supported [census-matches-count]')
+    }
+    expect(assessAccuracyClaim(withText('98% accurate, measured on 1,000 items')).verdict).toBe('supported')
+    expect(assessAccuracyClaim(scoped('English tweets', 'english  tweets')).verdict).toBe('supported')
+  })
+
+  it('hostile:F8 a display with line breaks is read as the figure it is and never echoed raw', () => {
+    const r = assessAccuracyClaim(sampled({ metric: 'error-rate', value: 0.01, display: 'about\n1 in\u2028100' }, { n: 100_000, errors: 1500 }))
+    expect(r.explanation.join('\n')).not.toMatch(/[\n\u2028]/)
+    expect(r.explanation[0]).toContain('"about 1 in 100" is read as 1 in 50 to 1 in 150')
+  })
+})

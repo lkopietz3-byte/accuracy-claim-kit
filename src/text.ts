@@ -34,6 +34,27 @@ export function foldText(text: string): string {
   return words.filter((word) => word !== '').join(' ')
 }
 
+// A string that is echoed into a statement or an explanation must read the same
+// to a person as it does to the kit. C0 and C1 controls (newlines, NUL, escape),
+// line and paragraph separators, and the bidirectional embedding, override and
+// isolate characters can reorder or hide the text around them, so they throw.
+// The horizontal tab is plain spacing and stays, like the direction marks
+// (U+200E, U+200F) and joiners: scripts written right to left need them.
+// eslint-disable-next-line no-control-regex
+const UNSAFE_TEXT = /[\u0000-\u0008\u000a-\u001f\u007f-\u009f\u2028\u2029\u202a-\u202e\u2066-\u2069]/u
+
+/**
+ * Throws RangeError when `value` holds a control or bidirectional-formatting
+ * character, naming the field, the code point and where it sits (never echoing
+ * the string itself).
+ */
+export function assertPlainText(value: string, name: string): void {
+  const found = UNSAFE_TEXT.exec(value)
+  if (found === null) return
+  const code = (found[0].codePointAt(0) as number).toString(16).toUpperCase().padStart(4, '0')
+  throw new RangeError(`${name} must not contain a control or bidirectional-formatting character (U+${code} at position ${String(found.index)})`)
+}
+
 const WORDISH = /[\p{L}\p{N}\p{M}]/u
 const HAS_LETTER_OR_DIGIT = /[\p{L}\p{N}]/u
 /** Characters that join a name to a suffix or prefix without a space: MMLU-Pro, MMLU_pro, MMLU/pro, MMLU.pro. */
@@ -109,6 +130,7 @@ export function mentionsName(text: string, name: string): boolean {
 export function readName(value: unknown, name: string, max = MAX_NAME_LENGTH): string {
   if (typeof value !== 'string') throw new TypeError(`${name} must be a string`)
   if (value.length > max) throw new RangeError(`${name} must be at most ${max} characters`)
+  assertPlainText(value, name)
   const folded = foldText(value)
   if (folded === '') throw new RangeError(`${name} must not be blank`)
   if (!HAS_LETTER_OR_DIGIT.test(folded)) throw new RangeError(`${name} must contain at least one letter or digit`)
