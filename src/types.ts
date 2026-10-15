@@ -7,7 +7,12 @@ import type { WilsonInterval } from './wilson.js'
  * positives; `correct` are the true positives), recall (actual positives;
  * `correct` are the ones found), false-positive-rate (actual negatives;
  * `errors` are the false positives), false-negative-rate (actual positives;
- * `errors` are the misses).
+ * `errors` are the misses), specificity (actual negatives; `correct` are the
+ * true negatives), npv (predicted negatives; `correct` are the true negatives).
+ * The rest are the same proportions under the names diagnostic tables use, so
+ * the statement speaks in the claimant's words: sensitivity and ppa are recall,
+ * ppv is precision, npa is specificity, and opa (overall percent agreement with
+ * a comparator) is accuracy.
  */
 export type ClaimMetric =
   | 'accuracy'
@@ -16,6 +21,13 @@ export type ClaimMetric =
   | 'recall'
   | 'false-positive-rate'
   | 'false-negative-rate'
+  | 'specificity'
+  | 'npv'
+  | 'sensitivity'
+  | 'ppa'
+  | 'ppv'
+  | 'npa'
+  | 'opa'
 /** Metrics the kit knows but refuses (`metric-not-supported`) instead of throwing. */
 export type UnsupportedMetric =
   | 'f1' | 'auc' | 'roc-auc' | 'wer' | 'cer' | 'bleu' | 'rouge' | 'map' | 'composite' | 'other'

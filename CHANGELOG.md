@@ -25,6 +25,7 @@ First version. The package is private and unlicensed and has not been published,
 ### Added
 - `strata-not-reweighted` (informational): every stratified result carries it, and its statement says `stratified sample, unweighted pooled`. Verdicts are unchanged.
 - `text-figure-differs` (informational): a percent, range, bound or `1 in N` in `claim.text` that is not the figure judged, or "perfect"-style wording when the figure is not 100%. Verdicts are unchanged.
+- Metrics `specificity` and `npv`, and the diagnostic names `sensitivity` and `ppa` (recall), `ppv` (precision), `npa` (specificity) and `opa` (accuracy): each is judged as the metric it stands for and the statement uses the claimant's words ("specificity", "negative percent agreement") instead of "accurate". `ClaimMetric` gains the new members.
 - New reason code `agreement-sample-too-small`; `AgreementInput` accepts an optional `n`.
 - The result carries `checks` (`retractions`, `scope`, `age`, `agreement`, `strata`, each `applied` or `not-supplied`) so a check that was left out is visible. New exported types `GateChecks` and `GateStatus`.
 - First version: `wilsonInterval`, `zForConfidence`, `percentAgreement`, `cohenKappa`, `gwetAC1`, `assessAccuracyClaim`, `maxDisplayDecimals`.

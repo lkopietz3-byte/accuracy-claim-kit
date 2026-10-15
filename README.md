@@ -94,6 +94,19 @@ Each metric is a proportion with a stated meaning of `sample.n`:
 | `recall` | actual positives | `correct` (found) | higher |
 | `false-positive-rate` | actual negatives | `errors` (false positives) | lower |
 | `false-negative-rate` | actual positives | `errors` (misses) | lower |
+| `specificity` | actual negatives | `correct` (true negatives) | higher |
+| `npv` | predicted negatives | `correct` (true negatives) | higher |
+
+Diagnostic and agreement tables use other names for the same proportions. Each is accepted, judged exactly as the metric it stands for, and the statement uses the claimant's word instead of "accurate":
+
+| Name | Same as | The statement says |
+| --- | --- | --- |
+| `sensitivity`, `ppa` | `recall` (n = actual positives, `correct` = found) | sensitivity, positive percent agreement |
+| `npa` | `specificity` (n = actual negatives, `correct` = true negatives) | negative percent agreement |
+| `ppv` | `precision` (n = predicted positives) | positive predictive value |
+| `opa` | `accuracy` (n = items compared with the comparator, `correct` = items that agree) | overall percent agreement |
+
+A published "Negative Agreement 82.7% (755/913)" is `metric: 'npa'` (or `'specificity'`) with `n: 913, correct: 755`; encoding it as `accuracy` would make the statement call a negatives-only figure "accurate". The kit cannot tell which population `n` counts: the metric name is your declaration, as with `accuracy`. Names are exact and lower case; `Specificity` or `sens` throws `RangeError` and lists the valid names.
 
 `f1`, `auc`, `roc-auc`, `wer`, `cer`, `bleu`, `rouge`, `map`, `composite` and `other` are not proportions of independently checked items; they come back `refused` with `metric-not-supported` (their `value` is only required to be a number, since a word error rate can pass 1). A metric name the kit does not know at all (a typo) throws `RangeError`.
 

@@ -973,3 +973,72 @@ describe('false-pass:F8 a stratified result says its pooled interval is not rewe
     expect(r.reasons).toEqual(['stratified-without-strata'])
   })
 })
+
+describe('field:F2 specificity, NPV and the diagnostic agreement names are metrics, and the statement uses the claimant\'s word', () => {
+  // [metric, the metric it is judged as, the words the statement uses]
+  const names: [string, 'accuracy' | 'precision' | 'recall', string][] = [
+    ['specificity', 'accuracy', 'specificity'],
+    ['npv', 'accuracy', 'negative predictive value'],
+    ['sensitivity', 'recall', 'sensitivity'],
+    ['npa', 'accuracy', 'negative percent agreement'],
+    ['ppa', 'recall', 'positive percent agreement'],
+    ['ppv', 'precision', 'positive predictive value'],
+    ['opa', 'accuracy', 'overall percent agreement'],
+  ]
+  const claimOf = (metric: string, value: number, display: string): AccuracyClaimInput['claim'] =>
+    ({ metric, value, display }) as AccuracyClaimInput['claim']
+
+  it('field:F2 "Negative Agreement 82.7% (755/913)" as specificity says specificity, not accurate', () => {
+    const r = assessAccuracyClaim(sampled(claimOf('specificity', 0.827, '82.7%'), { n: 913, correct: 755 }))
+    expect(outcome(r)).toBe('supported [matches-observed-rate, precision-too-fine]')
+    expect(r.metric).toBe('specificity')
+    expect(r.suggestedStatement).toMatch(/^On this sample, at least 80\.10% specificity \(/)
+    expect(r.suggestedStatement).not.toMatch(/accurate/)
+  })
+
+  it('field:F2 each name is judged exactly like the metric it stands for, and says its own words', () => {
+    const cases: [number, string, number, number][] = [
+      [0.827, '82.7%', 913, 755], [0.9, '90%', 1000, 940], [0.99, '99%', 1000, 990], [0.95, '95%', 400, 360],
+      [0.997, '99.7%', 5000, 4985], [1, '100%', 290, 290], [0.5, '50%', 40, 30],
+    ]
+    for (const [metric, as, words] of names) {
+      for (const [value, display, n, correct] of cases) {
+        const named = assessAccuracyClaim(sampled(claimOf(metric, value, display), { n, correct }))
+        const base = assessAccuracyClaim(sampled({ metric: as, value, display }, { n, correct }))
+        expect(outcome(named), `${metric} ${display}`).toBe(outcome(base))
+        expect(named.interval, `${metric} ${display}`).toEqual(base.interval)
+        expect(named.metric).toBe(metric)
+        if (named.verdict !== 'refused') {
+          expect(named.suggestedStatement, metric).toMatch(new RegExp(`^On this sample, at least [\\d.]+% ${words} \\(`))
+          expect(named.suggestedStatement).not.toContain('accurate')
+        }
+      }
+    }
+  })
+
+  it('field:F2 errors work in place of correct, and a complete set says the name too', () => {
+    const r = assessAccuracyClaim(sampled(claimOf('specificity', 0.827, '82.7%'), { n: 913, errors: 158 }))
+    expect(outcome(r)).toBe('supported [matches-observed-rate, precision-too-fine]')
+    const set = assessAccuracyClaim(census(claimOf('npv', 0.827, '82.7%'), { n: 913, correct: 755 }, 'Foo set'))
+    expect(set.verdict).toBe('supported')
+    expect(set.suggestedStatement).toContain('82.7% negative predictive value')
+    expect(set.suggestedStatement).not.toContain('accuracy')
+  })
+
+  it('field:F2 they are higher-is-better: a floor fits, a ceiling throws', () => {
+    expect(assessAccuracyClaim(sampled(claimOf('specificity', 0.9, 'at least 90%'), { n: 1000, correct: 940 })).verdict).toBe('supported')
+    expect(() => assessAccuracyClaim(sampled(claimOf('specificity', 0.1, 'under 10%'), { n: 1000, correct: 940 }))).toThrow(RangeError)
+  })
+
+  it('field:F2 names the kit does not know still throw, and the message lists the metrics it judges', () => {
+    for (const metric of ['Specificity', 'tnr', 'f-score', 'sensitivty']) {
+      expect(() => assessAccuracyClaim(sampled(claimOf(metric, 0.9, '90%'), { n: 1000, correct: 900 })), metric).toThrow(RangeError)
+    }
+    expect(() => assessAccuracyClaim(sampled(claimOf('sensitivty', 0.9, '90%'), { n: 1000, correct: 900 }))).toThrow(/sensitivity/)
+  })
+
+  it('field:F2 refusals still say the metric as written', () => {
+    const r = assessAccuracyClaim(sampled(claimOf('specificity', 0.9, '90%'), { n: 1000, correct: 900 }, { provenance: { source: 'model' } }))
+    expect(r.suggestedStatement).toBe('No specificity figure can be supported from this evidence: the labels were not checked by people.')
+  })
+})

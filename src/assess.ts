@@ -57,12 +57,19 @@ const METRICS: readonly ClaimMetric[] = [
   'recall',
   'false-positive-rate',
   'false-negative-rate',
+  'specificity',
+  'npv',
+  'sensitivity',
+  'ppa',
+  'ppv',
+  'npa',
+  'opa',
 ]
 /** Metrics the kit knows it cannot judge: they get a refusal, not a throw. */
 const UNSUPPORTED_METRICS: readonly UnsupportedMetric[] = [
   'f1', 'auc', 'roc-auc', 'wer', 'cer', 'bleu', 'rouge', 'map', 'composite', 'other',
 ]
-const HIGHER_IS_BETTER: readonly ClaimMetric[] = ['accuracy', 'precision', 'recall']
+const HIGHER_IS_BETTER: readonly ClaimMetric[] = ['accuracy', 'precision', 'recall', 'specificity', 'npv', 'sensitivity', 'ppa', 'ppv', 'npa', 'opa']
 const METRIC_PHRASE: Record<ClaimMetric, string> = {
   accuracy: 'accurate',
   'error-rate': 'error rate',
@@ -70,10 +77,17 @@ const METRIC_PHRASE: Record<ClaimMetric, string> = {
   recall: 'recall',
   'false-positive-rate': 'false-positive rate',
   'false-negative-rate': 'false-negative rate',
+  specificity: 'specificity',
+  npv: 'negative predictive value',
+  sensitivity: 'sensitivity',
+  ppa: 'positive percent agreement',
+  ppv: 'positive predictive value',
+  npa: 'negative percent agreement',
+  opa: 'overall percent agreement',
 }
 /** What a bare value (no display) is read at; nothing was printed, so the text must not say so. */
 const VALUE_PRECISION = 'the precision of the value (a whole percent at the coarsest)'
-const SUPPORTED_LIST = 'accuracy, error-rate, precision, recall, false-positive-rate and false-negative-rate'
+const SUPPORTED_LIST = 'accuracy, error-rate, precision, recall, false-positive-rate, false-negative-rate, specificity, npv and the diagnostic names sensitivity, ppa, ppv, npa and opa'
 // The keys each caller-supplied object may carry. Anything else is a typo that
 // would silently switch a check off, so it throws.
 const OPTION_KEYS = ['confidence', 'minN', 'minAgreement', 'maxAgeDays', 'now', 'strictPrecision', 'conservative', 'requireScope'] as const
