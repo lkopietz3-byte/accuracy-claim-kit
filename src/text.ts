@@ -20,18 +20,25 @@ const DASHES = /[‐-―⁃−⸺⸻]/g
 // ("MMLU", ZWSP, "-Pro") and one inside a name copied from the web does not
 // break the match.
 const INVISIBLE = /\p{Default_Ignorable_Code_Point}/gu
+// toLowerCase writes a Greek capital sigma as the final form when it ends a word
+// and as the ordinary one otherwise, and "word" depends on the characters around
+// it, so the same name folds two ways ("ΟΔΥΣΣΕΥΣ" alone, "ΟΔΥΣΣΕΥΣ's" in a sentence).
+const FINAL_SIGMA = /\u03c2/g
 
 /**
  * Folds a string for comparison: NFKC (so full-width and compatibility forms
  * match their plain forms), lower case, typographic quotes and apostrophes to
  * ' and ", every dash variant and the minus sign to -, every invisible
- * default-ignorable character (including the soft hyphen) dropped, and any run
- * of whitespace becomes one space. Look-alike letters from other scripts are NOT folded.
+ * default-ignorable character (including the soft hyphen) dropped, a Greek
+ * final sigma written as an ordinary one (lower-casing picks between them by
+ * the word around it), and any run of whitespace becomes one space. Look-alike
+ * letters from other scripts are NOT folded.
  */
 export function foldText(text: string): string {
   const plain = text
     .normalize('NFKC')
     .toLowerCase()
+    .replace(FINAL_SIGMA, '\u03c3')
     .replace(INVISIBLE, '')
     .replace(APOSTROPHES, "'")
     .replace(DOUBLE_QUOTES, '"')

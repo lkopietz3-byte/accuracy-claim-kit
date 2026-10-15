@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { assessAccuracyClaim } from '../src/index.js'
 import type { AccuracyAssessment, AccuracyClaimInput } from '../src/index.js'
+import { foldText } from '../src/text.js'
 
 // Regression rows for the findings of the release gate. Every row name starts
 // with the finding id (or ids) it pins, so `vitest -t "gate-hostile:F1"` runs
@@ -278,5 +279,60 @@ describe('gate-hostile:F2 invisible format characters do not change what a name 
       population: { claimed: 'English tweets', evaluated: 'English‍ tweets' },
     })
     expect(r.verdict).toBe('supported')
+  })
+})
+
+describe('gate-hostile:F2 sweep: every default-ignorable code point is invisible to the name matcher', () => {
+  it('gate-hostile:F2 none of them, placed next to a name or inside the suffix, lets MMLU-Pro pass for MMLU', () => {
+    const ignorable = /^\p{Default_Ignorable_Code_Point}$/u
+    const failures: string[] = []
+    let seen = 0
+    for (let cp = 0; cp <= 0x10ffff; cp++) {
+      if (cp >= 0xd800 && cp <= 0xdfff) continue
+      const c = String.fromCodePoint(cp)
+      if (!ignorable.test(c)) continue
+      seen += 1
+      for (const text of [`70% on MMLU${c}-Pro`, `70% on MMLU-${c}Pro`, `70% on MMLU${c}+`]) {
+        let verdict: string
+        try {
+          verdict = assessAccuracyClaim({
+            claim: { metric: 'accuracy', value: 0.7, text },
+            sample: { n: 1000, correct: 700 },
+            provenance: { source: 'human' },
+            sampling: 'complete',
+            benchmark: { name: 'MMLU' },
+          }).verdict
+        } catch {
+          continue // controls and bidirectional marks throw: they never reach a verdict
+        }
+        if (verdict !== 'refused') failures.push(`U+${cp.toString(16)} in "${text}"`)
+      }
+    }
+    expect(seen).toBeGreaterThan(300)
+    expect(failures.slice(0, 5)).toEqual([])
+  })
+})
+
+describe('gate-hostile:F10 a Greek final sigma folds the same wherever the word sits', () => {
+  const scoped = (name: string, text: string): AccuracyAssessment =>
+    assessAccuracyClaim({
+      claim: { metric: 'accuracy', value: 0.7, text },
+      sample: { n: 1000, correct: 700 },
+      provenance: { source: 'human' },
+      sampling: 'complete',
+      benchmark: { name },
+    })
+
+  it("gate-hostile:F10 a possessive after an upper-case Greek name still matches it", () => {
+    expect(outcome(scoped('ΟΔΥΣΣΕΥΣ', "Reaches 70% on ΟΔΥΣΣΕΥΣ's held-out set"))).toBe('supported [census-matches-count]')
+    expect(outcome(scoped('ΟΔΥΣΣΕΥΣ', 'Reaches 70% on ΟΔΥΣΣΕΥΣ held-out set'))).toBe('supported [census-matches-count]')
+  })
+
+  it('gate-hostile:F10 upper case, lower case and a word-final or word-internal sigma all fold alike', () => {
+    expect(foldText('ΟΔΥΣΣΕΥΣ')).toBe(foldText('οδυσσευς'))
+    expect(foldText("ΟΔΥΣΣΕΥΣ's")).toBe(foldText("οδυσσευς's"))
+    expect(foldText('ΣΟΦΟΣ ΣΟΦΟΣ')).toBe(foldText('σοφοσ σοφος'))
+    expect(outcome(scoped('οδυσσευς', "Reaches 70% on ΟΔΥΣΣΕΥΣ's held-out set"))).toBe('supported [census-matches-count]')
+    expect(outcome(scoped('ΟΔΥΣΣΕΥΣ', "Reaches 70% on οδυσσευς's held-out set"))).toBe('supported [census-matches-count]')
   })
 })
