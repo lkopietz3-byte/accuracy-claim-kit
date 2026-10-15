@@ -4,6 +4,8 @@
 //   node scripts/verify-package.mjs --update-api  rewrite api-surface.json
 //
 // What it does, in order:
+//   0. Check that the root entry of package-lock.json matches package.json
+//      (name, version, license).
 //   1. `npm pack` the built package (run `npm run build` first).
 //   2. Fail if the tarball contains anything outside the intended file set
 //      (tests, configs, CI files, env files, node_modules); the license ships.
@@ -45,6 +47,18 @@ function run(command, args, cwd = root) {
 }
 
 console.log(`Package verification evidence: ${evidence}`);
+
+// 0. The lockfile's root entry describes this package ---------------------------
+// A lock written before the license or version changed still installs, but it
+// ships stale metadata (a root "license": "UNLICENSED" beside an MIT package).
+const lock = JSON.parse(readFileSync(join(root, 'package-lock.json'), 'utf8'));
+const lockRoot = lock.packages?.[''];
+assert.ok(lockRoot, 'package-lock.json has no root entry');
+for (const key of ['name', 'version', 'license']) {
+  assert.equal(lockRoot[key], pkg[key], `package-lock.json root ${key} (${String(lockRoot[key])}) must match package.json (${String(pkg[key])}); run npm install --package-lock-only`);
+}
+assert.equal(lock.name, pkg.name, 'package-lock.json name must match package.json');
+assert.equal(lock.version, pkg.version, 'package-lock.json version must match package.json');
 
 // 1. Pack ------------------------------------------------------------------
 const manifestText = run('npm', [

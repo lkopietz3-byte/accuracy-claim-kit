@@ -47,7 +47,7 @@ Two further checks do not depend on this package's own reasoning. `test/referenc
 
 ## Packaging
 
-`scripts/verify-package.mjs` packs the build, installs the tarball into a clean project offline, imports every export, compares names with `api-surface.json`, runs `scripts/consumer-probe.mjs`, and type-checks `scripts/consumer-probe.mts` under strict NodeNext. It requires `LICENSE` in the tarball, `license: MIT` and no `private` flag in `package.json`, and fails if the tarball holds anything other than `dist/`, `README.md`, `METHOD.md`, `LICENSE`, `CHANGELOG.md` and `package.json`.
+`scripts/verify-package.mjs` first checks that the root entry of `package-lock.json` has the same name, version and license as `package.json`, then packs the build, installs the tarball into a clean project offline, imports every export, compares names with `api-surface.json`, runs `scripts/consumer-probe.mjs`, and type-checks `scripts/consumer-probe.mts` under strict NodeNext. It requires `LICENSE` in the tarball, `license: MIT` and no `private` flag in `package.json`, and fails if the tarball holds anything other than `dist/`, `README.md`, `METHOD.md`, `LICENSE`, `CHANGELOG.md` and `package.json`.
 
 ## Release and CI
 
