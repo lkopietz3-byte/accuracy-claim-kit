@@ -1,3 +1,4 @@
+import vm from 'node:vm'
 import { describe, expect, it } from 'vitest'
 import { assessAccuracyClaim } from '../src/index.js'
 import type { AccuracyAssessment, AccuracyClaimInput, AssessOptions } from '../src/index.js'
@@ -1331,5 +1332,49 @@ describe('hostile:F6 more distinct labels than the cap throw a clear error inste
     const pairs: [number, number][] = distinct(500)
     for (let i = 0; i < 20_000; i++) pairs.push([i % 500, (i * 7) % 500])
     expect(cohenKappa(pairs).status).toBe('defined')
+  })
+})
+
+describe('hostile:F7 an options value that is not a plain object throws, and a sample with no counts stays a refusal', () => {
+  const withSample = (sample: unknown): AccuracyClaimInput => sampled({ metric: 'accuracy', value: 0.9 }, sample as AccuracyClaimInput['sample'])
+
+  it('hostile:F7 a misspelled counts key throws and names the key, which is what used to be hidden behind "counts were not supplied"', () => {
+    expect(() => assessAccuracyClaim(withSample({ total: 1000, right: 900 }))).toThrow(/unknown key "total"/)
+    expect(() => assessAccuracyClaim(withSample({ n: 1000, right: 900 }))).toThrow(/unknown key "right"/)
+  })
+
+  it('hostile:F7 an object with none of n, correct or errors (an empty object, a Map, a Number object) is an undisclosed sample: refused, never a pass', () => {
+    for (const sample of [{}, new Map<string, number>(), new Number(5)]) {
+      const r = assessAccuracyClaim(withSample(sample))
+      expect(r.reasons).toEqual(['n-undisclosed'])
+      expect(r.explanation[0]).toContain('n and correct or errors')
+    }
+    expect(assessAccuracyClaim(sampled({ metric: 'accuracy', value: 0.9 }, undefined)).reasons).toEqual(['n-undisclosed'])
+  })
+
+  it('hostile:F7 options that are a Map, a Number object or a Date would silently switch every gate off, so they throw', () => {
+    const input = sampled({ metric: 'accuracy', value: 0.9 }, { n: 10, correct: 9 })
+    for (const options of [new Map([['minN', 5000]]), new Number(1), new Date(0), new Set(['minN'])]) {
+      expect(() => assessAccuracyClaim(input, options as unknown as AssessOptions), Object.prototype.toString.call(options)).toThrow(TypeError)
+    }
+    expect(() => assessAccuracyClaim(input, new Number(1) as unknown as AssessOptions)).toThrow(/options must be a plain object, got \[object Number\]/)
+    expect(assessAccuracyClaim(input, {}).reasons).toEqual(['sample-too-small'])
+  })
+
+  it('hostile:F7 class instances, null-prototype objects and objects from another realm are plain options and counts', () => {
+    class Counts {
+      n = 1000
+      correct = 900
+    }
+    class Opts {
+      minN = 5000
+    }
+    expect(assessAccuracyClaim(withSample(new Counts())).verdict).toBe('supported')
+    expect(assessAccuracyClaim(withSample(Object.assign(Object.create(null) as object, { n: 1000, correct: 900 }))).verdict).toBe('supported')
+    expect(assessAccuracyClaim(withSample(vm.runInNewContext('({ n: 1000, correct: 900 })'))).verdict).toBe('supported')
+    const input = sampled({ metric: 'accuracy', value: 0.9 }, { n: 1000, correct: 900 })
+    expect(assessAccuracyClaim(input, new Opts()).reasons).toEqual(['sample-too-small'])
+    expect(assessAccuracyClaim(input, Object.assign(Object.create(null) as object, { minN: 5000 })).reasons).toEqual(['sample-too-small'])
+    expect(assessAccuracyClaim(input, vm.runInNewContext('({ minN: 5000 })') as AssessOptions).reasons).toEqual(['sample-too-small'])
   })
 })

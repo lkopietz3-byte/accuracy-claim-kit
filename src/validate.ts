@@ -22,6 +22,19 @@ export function requireRecord(value: unknown, name: string): Record<string, unkn
   return value
 }
 
+/**
+ * Throws TypeError for a built-in object that is not a plain record (a Map, a
+ * boxed Number or String, a Date, a Set). Such a value has no own keys, so for
+ * an object whose fields are all optional and whose absence turns a check off
+ * (the options) it would read as "nothing was asked for" and fail open. Class
+ * instances, null-prototype objects, Proxies of plain objects and objects from
+ * another realm are plain. The caller's Symbol.toStringTag is read once here.
+ */
+export function assertPlainObject(value: Record<string, unknown>, name: string): void {
+  const tag = Object.prototype.toString.call(value)
+  if (tag !== '[object Object]') throw new TypeError(`${name} must be a plain object, got ${tag}`)
+}
+
 /** Reads a whole number in [min, MAX_COUNT]. Normalizes -0 to 0. */
 export function readCount(value: unknown, name: string, min = 0): number {
   if (typeof value !== 'number') {

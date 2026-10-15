@@ -24,6 +24,7 @@ import {
   readFiniteInRange,
   readLength,
   assertKnownKeys,
+  assertPlainObject,
   readOpenUnit,
   requireRecord,
 } from './validate.js'
@@ -322,7 +323,10 @@ export function assessAccuracyClaim(
   if (options !== undefined && !isRecord(options)) {
     throw new TypeError('options must be an object')
   }
-  if (options !== undefined) assertKnownKeys(options, OPTION_KEYS, 'options')
+  if (options !== undefined) {
+    assertPlainObject(options, 'options')
+    assertKnownKeys(options, OPTION_KEYS, 'options')
+  }
   const confidenceRaw: unknown = options === undefined ? undefined : options.confidence
   const minNRaw: unknown = options === undefined ? undefined : options.minN
   const minAgreementRaw: unknown = options === undefined ? undefined : options.minAgreement
