@@ -72,7 +72,7 @@ export interface SampleCounts {
 /** A reported agreement statistic: a result from this kit, or a plain {statistic, value}. */
 export type AgreementInput =
   | AgreementResult
-  | { statistic: AgreementStatistic; value: number; status?: 'defined' | undefined }
+  | { statistic: AgreementStatistic; value: number; status?: 'defined' | undefined; n?: number | undefined }
 
 export interface LabelProvenance {
   source: LabelSource
@@ -158,6 +158,7 @@ export type ReasonCode =
   | 'agreement-missing'
   | 'agreement-undefined'
   | 'agreement-below-minimum'
+  | 'agreement-sample-too-small'
   | 'metric-not-supported'
   | 'n-undisclosed'
   | 'stratified-without-strata'
@@ -187,8 +188,9 @@ export type GateStatus = 'applied' | 'not-supplied'
  * Which optional checks the call ran, so a check that was left out is visible
  * in the result. `retractions`: a `retractions` block was supplied. `scope`: a
  * `population` was supplied. `age`: `options.maxAgeDays` was set. `agreement`:
- * `options.minAgreement` was set (a statistic that is only echoed is not a
- * check). `strata`: `strata` were supplied for a sample (a complete set does
+ * `options.minAgreement` was set, or the supplied statistic carries its `n` so
+ * its size was checked (a hand-written statistic with no `n` that is only
+ * echoed is not a check). `strata`: `strata` were supplied for a sample (a complete set does
  * not compare strata).
  */
 export interface GateChecks {

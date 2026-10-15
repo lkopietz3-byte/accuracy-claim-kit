@@ -146,6 +146,8 @@ function readCounts(raw: unknown, name: string): Counts {
 interface Agreement {
   statistic: AgreementStatistic
   value: number | null
+  /** Items the statistic was computed on; null for a hand-written {statistic, value}, which is trusted. */
+  n: number | null
 }
 
 function readAgreement(raw: unknown): Agreement {
@@ -154,10 +156,12 @@ function readAgreement(raw: unknown): Agreement {
   const statisticRaw: unknown = rec.statistic
   const statusRaw: unknown = rec.status
   const valueRaw: unknown = rec.value
+  const nRaw: unknown = rec.n
   const statistic = readEnum(statisticRaw, STATISTICS, 'provenance.agreement.statistic')
   if (statusRaw !== undefined && statusRaw !== 'defined' && statusRaw !== 'undefined') {
     throw new RangeError('provenance.agreement.status must be "defined" or "undefined"')
   }
+  const n = nRaw === undefined ? null : readCount(nRaw, 'provenance.agreement.n', 0)
   if (statusRaw === 'undefined') {
     // A statistic that has no value must say so with null; NaN, 0 or text in
     // its place is malformed input, not "cannot tell".
@@ -165,9 +169,9 @@ function readAgreement(raw: unknown): Agreement {
       const message = 'provenance.agreement.value must be null when status is "undefined"'
       throw typeof valueRaw === 'number' ? new RangeError(message) : new TypeError(message)
     }
-    return { statistic, value: null }
+    return { statistic, value: null, n }
   }
-  return { statistic, value: readFiniteInRange(valueRaw, 'provenance.agreement.value', -1, 1) }
+  return { statistic, value: readFiniteInRange(valueRaw, 'provenance.agreement.value', -1, 1), n }
 }
 
 interface Stratum {
@@ -215,6 +219,7 @@ const REFUSAL_PHRASE: Record<string, string> = {
   'agreement-missing': 'no agreement statistic was supplied for the required agreement check',
   'agreement-undefined': 'the agreement statistic could not be computed',
   'agreement-below-minimum': 'the raters agreed less than the required minimum',
+  'agreement-sample-too-small': 'the agreement statistic was computed on too few items',
   'stratified-without-strata': 'the sample is stratified but the strata were not supplied, so the pooled counts cannot be read as the population rate',
   'benchmark-unnamed': 'a complete-set or held-out-split claim needs the name of the fixed set',
   'claim-not-scoped-to-benchmark': 'the claim wording does not name the benchmark, so a benchmark score is standing in for a general claim',
@@ -366,8 +371,12 @@ export function assessAccuracyClaim(
   const ratersRaw: unknown = provRec.raters
   const agreementRaw: unknown = provRec.agreement
   const source = readEnum(sourceRaw, SOURCES, 'provenance.source')
-  if (ratersRaw !== undefined) readCount(ratersRaw, 'provenance.raters', 1)
+  const raters = ratersRaw === undefined ? undefined : readCount(ratersRaw, 'provenance.raters', 1)
   const agreement = agreementRaw === undefined ? undefined : readAgreement(agreementRaw)
+  if (agreement !== undefined && raters !== undefined && raters < 2) {
+    // Agreement is between raters; one rater cannot have produced it.
+    throw new RangeError(`provenance.raters is ${String(raters)} but provenance.agreement was supplied; agreement needs at least 2 raters`)
+  }
 
   const sampling = readEnum(samplingRaw, SAMPLINGS, 'sampling')
   const isFixedSet = sampling === 'complete' || sampling === 'held-out-split'
@@ -453,7 +462,7 @@ export function assessAccuracyClaim(
     retractions: retractionsRaw !== undefined ? 'applied' : 'not-supplied',
     scope: population !== undefined ? 'applied' : 'not-supplied',
     age: maxAgeDays !== undefined ? 'applied' : 'not-supplied',
-    agreement: minAgreement !== undefined ? 'applied' : 'not-supplied',
+    agreement: minAgreement !== undefined || (agreement !== undefined && agreement.n !== null) ? 'applied' : 'not-supplied',
     strata: strata !== undefined && !isFixedSet ? 'applied' : 'not-supplied',
   }
 
@@ -577,6 +586,14 @@ export function assessAccuracyClaim(
         `${STATISTIC_LABEL[agreement.statistic]} is ${agreement.value.toFixed(3)}, below the required ${minAgreement.toFixed(3)}.`,
       )
     }
+  }
+
+  // An agreement statistic from a handful of items is noise (kappa of 1.0 from 6
+  // pairs), whether or not a minimum is required. A hand-written statistic with
+  // no n cannot be checked and is trusted.
+  if (agreement !== undefined && agreement.value !== null && agreement.n !== null && agreement.n < minN) {
+    refusals.push('agreement-sample-too-small')
+    notes.push(`${STATISTIC_LABEL[agreement.statistic]} was computed on ${String(agreement.n)} items, below the minimum of ${String(minN)}, so it says too little about the raters to count.`)
   }
 
   if (refusals.length > 0 || counts === null) {

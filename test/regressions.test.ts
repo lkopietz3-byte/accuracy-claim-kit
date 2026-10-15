@@ -613,3 +613,83 @@ describe('hostile:F5 an assessment confidence below one half is rejected', () =>
     expect(wilsonInterval(5, 10, { confidence: 1e-9 }).low).toBeLessThanOrEqual(0.5)
   })
 })
+
+describe('false-pass:F6 an agreement statistic computed on too few items cannot carry a sample', () => {
+  const sixPairs: [string, string][] = [['a', 'a'], ['b', 'b'], ['a', 'a'], ['b', 'b'], ['a', 'a'], ['b', 'b']]
+  const big = (agreement: unknown, extra: Record<string, unknown> = {}): AccuracyClaimInput =>
+    sampled({ metric: 'accuracy', value: 0.95, display: '95%' }, { n: 10_000, correct: 9500 }, {
+      provenance: { source: 'human', raters: 2, agreement } as AccuracyClaimInput['provenance'],
+      ...extra,
+    })
+
+  it('false-pass:F6 AC1 of 6 pairs clears minAgreement 0.8 on a 10,000-item sample: now refused', () => {
+    const agreement = gwetAC1(sixPairs, { categories: 2 })
+    expect(agreement).toMatchObject({ status: 'defined', value: 1, n: 6 })
+    const r = assessAccuracyClaim(big(agreement), { minAgreement: 0.8 })
+    expect(outcome(r)).toBe('refused [agreement-sample-too-small]')
+    expect(r.interval).toBeNull()
+    expect(r.explanation[0]).toContain('6 items')
+    expect(r.explanation[0]).toContain('30')
+  })
+
+  it('false-pass:F6 percent agreement and kappa on a handful of pairs are refused the same way', () => {
+    for (const agreement of [percentAgreement(sixPairs.slice(0, 3)), cohenKappa(sixPairs), gwetAC1(sixPairs)]) {
+      const r = assessAccuracyClaim(big(agreement), { minAgreement: 0.5 })
+      expect(outcome(r), String(agreement.statistic)).toBe('refused [agreement-sample-too-small]')
+    }
+  })
+
+  it('false-pass:F6 the size is judged against options.minN, so a larger minimum refuses a larger statistic', () => {
+    const pairs = Array.from({ length: 60 }, (_, i): [string, string] => (i % 2 === 0 ? ['a', 'a'] : ['b', 'b']))
+    const agreement = cohenKappa(pairs)
+    expect(outcome(assessAccuracyClaim(big(agreement), { minAgreement: 0.8 }))).toBe('supported [matches-observed-rate]')
+    expect(outcome(assessAccuracyClaim(big(agreement), { minAgreement: 0.8, minN: 100 }))).toBe('refused [agreement-sample-too-small]')
+    // exactly minN items is enough
+    expect(outcome(assessAccuracyClaim(big(agreement), { minAgreement: 0.8, minN: 60 }))).toBe('supported [matches-observed-rate]')
+  })
+
+  it('false-pass:F6 a small agreement is refused even when no minimum agreement is set (it would be quoted in the statement)', () => {
+    const r = assessAccuracyClaim(big(gwetAC1(sixPairs, { categories: 2 })))
+    expect(outcome(r)).toBe('refused [agreement-sample-too-small]')
+    expect(r.checks.agreement).toBe('applied')
+  })
+
+  it('false-pass:F6 it is listed beside the other failed preconditions, and an undefined statistic keeps its own reason', () => {
+    const r = assessAccuracyClaim(big(gwetAC1(sixPairs, { categories: 2 }), { sampling: 'convenience' }), { minAgreement: 0.8 })
+    expect(r.reasons).toEqual(['convenience-sample', 'agreement-sample-too-small'])
+    const undef = cohenKappa([['a', 'a'], ['a', 'a']])
+    expect(assessAccuracyClaim(big(undef), { minAgreement: 0.5 }).reasons).toEqual(['agreement-undefined'])
+  })
+
+  it('false-pass:F6 a hand-written {statistic, value} with no n is trusted, as documented', () => {
+    const r = assessAccuracyClaim(big({ statistic: 'cohen-kappa', value: 0.9 }), { minAgreement: 0.8 })
+    expect(outcome(r)).toBe('supported [matches-observed-rate]')
+    expect(r.checks.agreement).toBe('applied')
+    // with no gate and no n, nothing was checked
+    expect(assessAccuracyClaim(big({ statistic: 'cohen-kappa', value: 0.9 })).checks.agreement).toBe('not-supplied')
+  })
+
+  it('false-pass:F6 a hand-written n is read: whole number, 0 or more', () => {
+    expect(outcome(assessAccuracyClaim(big({ statistic: 'cohen-kappa', value: 0.9, n: 12 }), { minAgreement: 0.8 }))).toBe('refused [agreement-sample-too-small]')
+    expect(outcome(assessAccuracyClaim(big({ statistic: 'cohen-kappa', value: 0.9, n: 0 }), { minAgreement: 0.8 }))).toBe('refused [agreement-sample-too-small]')
+    expect(outcome(assessAccuracyClaim(big({ statistic: 'cohen-kappa', value: 0.9, n: 400 }), { minAgreement: 0.8 }))).toBe('supported [matches-observed-rate]')
+    expect(() => assessAccuracyClaim(big({ statistic: 'cohen-kappa', value: 0.9, n: -1 }))).toThrow(RangeError)
+    expect(() => assessAccuracyClaim(big({ statistic: 'cohen-kappa', value: 0.9, n: 2.5 }))).toThrow(RangeError)
+    expect(() => assessAccuracyClaim(big({ statistic: 'cohen-kappa', value: 0.9, n: '400' }))).toThrow(TypeError)
+  })
+
+  it('false-pass:F6 raters below 2 with an agreement statistic is inconsistent input and throws', () => {
+    const agreement = { statistic: 'cohen-kappa', value: 0.9 }
+    const withRaters = (raters: number): AccuracyClaimInput => sampled(
+      { metric: 'accuracy', value: 0.95, display: '95%' }, { n: 10_000, correct: 9500 },
+      { provenance: { source: 'human', raters, agreement } as AccuracyClaimInput['provenance'] },
+    )
+    expect(() => assessAccuracyClaim(withRaters(1), { minAgreement: 0.8 })).toThrow(RangeError)
+    expect(() => assessAccuracyClaim(withRaters(1))).toThrow(/provenance\.raters.*agreement/)
+    expect(() => assessAccuracyClaim(withRaters(0))).toThrow(RangeError)
+    expect(outcome(assessAccuracyClaim(withRaters(2), { minAgreement: 0.8 }))).toBe('supported [matches-observed-rate]')
+    expect(outcome(assessAccuracyClaim(withRaters(5), { minAgreement: 0.8 }))).toBe('supported [matches-observed-rate]')
+    // raters: 1 with no agreement block is still fine: one person labeled it
+    expect(outcome(assessAccuracyClaim(sampled({ metric: 'accuracy', value: 0.95, display: '95%' }, { n: 10_000, correct: 9500 }, { provenance: { source: 'human', raters: 1 } })))).toBe('supported [matches-observed-rate]')
+  })
+})
