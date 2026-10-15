@@ -346,13 +346,38 @@ Gwet     pi_k = (a_k + b_k) / (2N)
 
 `npm run verify` runs lint, type check, tests, the build and a packaging check that installs the packed tarball into a clean project. `npm run attw` checks the type resolution of the packed package, and `npm run audit:dependencies` audits the dev tooling in the lockfile (it needs registry access).
 
-Expected values come from `test/fixtures/generate_vectors.py`, which uses only the Python standard library (`math`, `decimal`, `fractions`, `random` with a fixed seed, `statistics.NormalDist`). The Wilson reference runs in 60-digit decimal arithmetic; agreement statistics run in exact rational arithmetic. The committed output is `test/fixtures/vectors.json`.
+### Cross-checked against reference libraries
+
+`test/reference.test.ts` requires the kit to match statsmodels, scipy, scikit-learn and irrCAC to a maximum absolute difference of 1e-12. The numbers those libraries produced are in `test/fixtures/reference.json`, written by `scripts/reference/gen.py` (a developer tool that is not shipped; the versions are recorded in the file: statsmodels 0.15.0, scipy 1.18.1, scikit-learn 1.9.1, irrCAC 0.4.4). The kit has no runtime dependency on any of them.
+
+| Quantity | Compared with | Cases | Largest difference |
+| --- | --- | --- | --- |
+| Wilson interval, both limits | statsmodels `proportion_confint(method="wilson")` and scipy `binomtest(...).proportion_ci(method="wilson")` | 8,899 (n from 1 to 10^12, confidence 50% to 99.99%) | 4.9e-15 |
+| z for a confidence level | scipy `norm.isf` | 9 levels | 1.1e-15 |
+| Percent agreement | scikit-learn `accuracy_score`, irrCAC | 1,499 of 1,500 two-rater tables | 6.7e-16 |
+| Cohen's kappa | scikit-learn `cohen_kappa_score`, irrCAC (table and raw classes) | 1,314 defined, plus 186 undefined in every library and in the kit | 3.3e-16 against scikit-learn, 6.7e-14 against irrCAC |
+| Gwet's AC1 | irrCAC (table and raw classes) | 1,353 defined | 1.1e-14 |
+
+The tables run from 2 to 8 categories and 1 to 1,000 items, with skewed, diagonal-heavy and negative-kappa shapes, unused categories, and irrCAC's own documentation tables. A kappa or AC1 that every library leaves undefined is undefined in the kit and never `NaN`. The libraries disagree with one another on one degenerate case: when every item falls in one category, Gwet's formula divides by zero, irrCAC's table class returns nothing and its raw class returns 1; the kit returns `undefined` with reason `single-category` (146 tables in the grid).
+
+### Field benchmark
+
+`npm run bench` runs the kit over 216 percentages with counts printed in 75 public FDA 510(k) summaries (derived numbers and source URLs only; `bench/README.md` has the method and licenses). Each is judged by `bench/oracle.py`, a second implementation of the rules in this README. The oracle restates this README's policy, so agreement shows the kit does what it documents, not that the policy is right.
+
+- Of the 957 altered claims the oracle says the counts do not carry, the kit passed 0 as `supported`.
+- Of the 726 claims the oracle says the counts carry, the kit said `supported` for 726.
+- The kit's verdict equals the oracle's on 2,001 of 2,001 judged claims (also under `strictPrecision` and `conservative`), 216 of 216 with each document's declared sampling and label source, 3,498 of 3,498 as claims about a whole fixed set, and 95 of 95 pooled site tables.
+
+A slice of the corpus (547 cases) runs in the test suite (`test/field-corpus.test.ts`).
+
+### Vectors
+
+Expected values for the printed-form, complete-set and noisy-value grids come from `test/fixtures/generate_vectors.py`, which uses only the Python standard library (`math`, `decimal`, `fractions`, `random` with a fixed seed, `statistics.NormalDist`). The Wilson reference runs in 60-digit decimal arithmetic; agreement statistics run in exact rational arithmetic. The committed output is `test/fixtures/vectors.json`.
 
 Where published values were available they are included and labeled in the fixture:
 
 - Cohen's kappa: the worked examples on the Cohen's kappa Wikipedia page (0.40, 0.1304, 0.2593, 0.0089, -0.0667). These were read from the page.
-- Wilson intervals: three rows of Newcombe (1998) Table I (81/263, 15/148, 0/20). The paper could not be retrieved, so those 4-decimal values were recalled and are not checked against it; they do agree with the independent computation.
-- Wilson's 1927 formula and Gwet's (2008) AC1 example could not be retrieved; those statistics rest on the independent reference implementation only.
+- Wilson's 1927 formula and Gwet's (2008) AC1 example could not be retrieved. Wilson's formula is checked against statsmodels and scipy, and AC1 against irrCAC, as above. No value in the fixtures is recalled from memory.
 
 ## Layout
 
@@ -370,6 +395,7 @@ src/format.ts      cautious rounding, display precision rule
 src/dates.ts       YYYY-MM-DD checks for age limits
 src/text.ts        identifier folding for scope and benchmark names
 src/validate.ts    input readers
-test/              verdict table, numeric vectors, hostile inputs
-scripts/           package verification and consumer probes
+test/              verdict table, numeric vectors, reference cross-check, field slice, hostile inputs
+scripts/           package verification and consumer probes; reference/gen.py (developer tool)
+bench/             field benchmark and holdout (not shipped)
 ```

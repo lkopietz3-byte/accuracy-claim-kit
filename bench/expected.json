@@ -1,0 +1,21 @@
+{
+  "_comment": "Headline numbers `npm run bench` must reproduce. They are measured, not targets: if the kit changes and one moves, find out why before editing this file.",
+  "headline": {
+    "items": 216,
+    "documents": 75,
+    "variantsDefault": 2001,
+    "mainVariants": 1959,
+    "notCarriedByOracle": 957,
+    "falsePasses": 0,
+    "carriedByOracle": 726,
+    "carriedAndSupported": 726,
+    "div100Variants": 42,
+    "div100Disagreements": 0,
+    "agreementDefault": "2001/2001",
+    "agreementStrictPrecision": "2001/2001",
+    "agreementConservative": "2001/2001",
+    "agreementDeclared": "216/216",
+    "agreementCompleteSet": "3498/3498",
+    "agreementStrata": "95/95"
+  }
+}

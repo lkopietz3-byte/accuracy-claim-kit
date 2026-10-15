@@ -46,6 +46,7 @@
     "audit:dependencies": "npm audit --package-lock-only --include=dev --ignore-scripts --audit-level=low",
     "verify:package": "node scripts/verify-package.mjs",
     "attw": "attw --pack . --ignore-rules cjs-resolves-to-esm",
+    "bench": "npm run build && python3 -I bench/fda/build.py && node bench/run.mjs",
     "verify": "npm run lint && npm run typecheck && npm test && npm run build && npm run verify:package",
     "prepublishOnly": "npm run verify"
   },

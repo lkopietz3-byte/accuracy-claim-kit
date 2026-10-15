@@ -1,0 +1,466 @@
+{
+ "_comment": "Every source behind bench/. Only derived numbers (counts, printed percentages, printed intervals) and URLs are stored; no document text and no PDF.",
+ "fda": {
+  "name": "FDA 510(k) decision summaries (public PDFs)",
+  "read_on": "2026-10-12",
+  "listing": "https://api.fda.gov/device/510k.json (openFDA), advisory committees MI, IM, PA, HE, TX, RA and CH, decisions dated 2021-01-01 to 2026-09-30, summaries only",
+  "pdf_url_pattern": "https://www.accessdata.fda.gov/cdrh_docs/pdf{YY}/{Knumber}.pdf",
+  "license_listing": "CC0 1.0 per https://open.fda.gov/license/ (the API response points to this page)",
+  "license_documents": "510(k) summaries are written by device sponsors and posted by the US FDA. FDA's website policy treats FDA-created content as public domain unless marked (https://www.fda.gov/about-fda/about-website/website-policies). Whether each sponsor-written passage is itself free of restriction was not checked. This repository stores only facts from them (counts and printed percentages) with the document URL, and no text.",
+  "documents_read": 2433,
+  "documents_contributing_rates": 75,
+  "rates": 216,
+  "documents": [
+   {
+    "document": "K200230",
+    "device": "Aptiva Celiac Disease IgG Reagent",
+    "decision_date": "2021-08-26",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf20/K200230.pdf"
+   },
+   {
+    "document": "K200839",
+    "device": "APAS Independence with IC Chromogenic MRSA BD Analysis Module; APAS Independence with IC Chromogenic MRSA TFS/S Analysis Module",
+    "decision_date": "2021-10-28",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf20/K200839.pdf"
+   },
+   {
+    "document": "K201496",
+    "device": "N Latex FLC kappa, N Latex FLC lambda",
+    "decision_date": "2021-10-29",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf20/K201496.pdf"
+   },
+   {
+    "document": "K202540",
+    "device": "EliA Rib-P",
+    "decision_date": "2021-09-13",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf20/K202540.pdf"
+   },
+   {
+    "document": "K202541",
+    "device": "EliA RNA Pol III",
+    "decision_date": "2021-09-13",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf20/K202541.pdf"
+   },
+   {
+    "document": "K202573",
+    "device": "LIAISON Lyme IgM, LIAISON Lyme IgM Control Set, LIAISON Lyme Total Antibody Plus",
+    "decision_date": "2021-02-18",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf20/K202573.pdf"
+   },
+   {
+    "document": "K202574",
+    "device": "LIAISON Lyme IgG, LIAISON Lyme IgG Control Set, LIAISON Lyme Total Antibody Plus",
+    "decision_date": "2021-02-18",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf20/K202574.pdf"
+   },
+   {
+    "document": "K202852",
+    "device": "DiviTum TKa",
+    "decision_date": "2022-07-29",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf20/K202852.pdf"
+   },
+   {
+    "document": "K203292",
+    "device": "Gold Standard Diagnostics Borrelia burgdorferi IgG/IgM ELISA Test Kit",
+    "decision_date": "2021-03-22",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf20/K203292.pdf"
+   },
+   {
+    "document": "K203295",
+    "device": "Gold Standard Diagnostics Borrelia burgdorferi IgM ELISA Test Kit",
+    "decision_date": "2021-03-22",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf20/K203295.pdf"
+   },
+   {
+    "document": "K203296",
+    "device": "Gold Standard Diagnostics Borrelia burgdorferi IgG ELISA Test Kit",
+    "decision_date": "2021-03-22",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf20/K203296.pdf"
+   },
+   {
+    "document": "K211181",
+    "device": "Idylla MSI Test",
+    "decision_date": "2023-02-27",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf21/K211181.pdf"
+   },
+   {
+    "document": "K212181",
+    "device": "ImmunoCAP Allergen f433, Allergen component rTri a 14 LTP, Wheat, ImmunoCAP Allergen f416, Allergen component rTri a 19 Omega-5 Gliadin, Wheat, ImmunoCAP Allergen f449, Allergen component rSes i 1 Sesame seed",
+    "decision_date": "2022-08-03",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf21/K212181.pdf"
+   },
+   {
+    "document": "K212213",
+    "device": "Xpert Xpress MVP, GeneXpert Dx System, GeneXpert Infinity System",
+    "decision_date": "2022-02-09",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf21/K212213.pdf"
+   },
+   {
+    "document": "K212623",
+    "device": "Healgen Strep A Rapid Test Strip (Throat Swab)",
+    "decision_date": "2022-03-16",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf21/K212623.pdf"
+   },
+   {
+    "document": "K213348",
+    "device": "BOND MMR Antibody Panel",
+    "decision_date": "2023-02-21",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf21/K213348.pdf"
+   },
+   {
+    "document": "K213362",
+    "device": "BioFire Global Fever Special Pathogens Panel; BIOFIRE SHIELD Control Kit for the BioFire Global Fever Special Pathogens Panel",
+    "decision_date": "2023-03-22",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf21/K213362.pdf"
+   },
+   {
+    "document": "K220963",
+    "device": "Simplexa COVID-19 & Flu A/B Direct",
+    "decision_date": "2023-03-17",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf22/K220963.pdf"
+   },
+   {
+    "document": "K221925",
+    "device": "ID NOW COVID-19 2.0",
+    "decision_date": "2023-08-10",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf22/K221925.pdf"
+   },
+   {
+    "document": "K223591",
+    "device": "cobas® SARS-CoV-2 & Influenza A/B Nucleic acid test for use on the cobas® Liat® System",
+    "decision_date": "2023-07-27",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf22/K223591.pdf"
+   },
+   {
+    "document": "K223783",
+    "device": "cobas SARS-CoV-2 Nucleic acid test for use on the cobas Liat System",
+    "decision_date": "2023-12-04",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf22/K223783.pdf"
+   },
+   {
+    "document": "K230901",
+    "device": "Premier HpSA Flex (619096)",
+    "decision_date": "2023-07-03",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf23/K230901.pdf"
+   },
+   {
+    "document": "K230917",
+    "device": "FebriDx Bacterial / Non-bacterial Point of Care Assay",
+    "decision_date": "2023-06-30",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf23/K230917.pdf"
+   },
+   {
+    "document": "K231187",
+    "device": "Nano-Check COVID-19 Antigen Test",
+    "decision_date": "2024-01-23",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf23/K231187.pdf"
+   },
+   {
+    "document": "K231214",
+    "device": "LIAISON VZV IgG HT, LIAISON Control VZV IgG HT",
+    "decision_date": "2023-10-27",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf23/K231214.pdf"
+   },
+   {
+    "document": "K231221",
+    "device": "MDx-Chex for BC-GP",
+    "decision_date": "2023-07-27",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf23/K231221.pdf"
+   },
+   {
+    "document": "K231223",
+    "device": "MDx-Chex for BC-GN",
+    "decision_date": "2023-07-27",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf23/K231223.pdf"
+   },
+   {
+    "document": "K231336",
+    "device": "T2 Biothreat Panel",
+    "decision_date": "2023-09-15",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf23/K231336.pdf"
+   },
+   {
+    "document": "K231381",
+    "device": "Xpert Xpress MVP; GeneXpert Xpress System",
+    "decision_date": "2023-10-19",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf23/K231381.pdf"
+   },
+   {
+    "document": "K231601",
+    "device": "FLC Kappa, FLC Lambda,FLC Control Level 1, FLC Control Level 2",
+    "decision_date": "2024-02-23",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf23/K231601.pdf"
+   },
+   {
+    "document": "K231758",
+    "device": "NxTAG Respiratory Pathogen Panel v2 (NxTAG RPP v2)",
+    "decision_date": "2024-03-11",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf23/K231758.pdf"
+   },
+   {
+    "document": "K232377",
+    "device": "Healgen Rapid COVID-19 Antigen Test",
+    "decision_date": "2024-04-19",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf23/K232377.pdf"
+   },
+   {
+    "document": "K232954",
+    "device": "BIOFIRE SPOTFIRE Respiratory/Sore Throat (R/ST) Panel",
+    "decision_date": "2024-03-26",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf23/K232954.pdf"
+   },
+   {
+    "document": "K233184",
+    "device": "T2Bacteria® Panel",
+    "decision_date": "2024-02-08",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf23/K233184.pdf"
+   },
+   {
+    "document": "K233842",
+    "device": "iHealth COVID-19 Antigen Rapid Test",
+    "decision_date": "2024-05-31",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf23/K233842.pdf"
+   },
+   {
+    "document": "K240627",
+    "device": "LIAISON PLEX Yeast Blood Culture Assay",
+    "decision_date": "2024-06-04",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf24/K240627.pdf"
+   },
+   {
+    "document": "K240867",
+    "device": "cobas® SARS-CoV-2 Qualitative for use on the cobas® 5800/6800/8800 Systems",
+    "decision_date": "2025-02-11",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf24/K240867.pdf"
+   },
+   {
+    "document": "K241313",
+    "device": "OHC COVID-19 Antigen Self Test",
+    "decision_date": "2025-05-30",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf24/K241313.pdf"
+   },
+   {
+    "document": "K241317",
+    "device": "Wondfo 2019-nCoV Antigen Test (Lateral Flow Method)",
+    "decision_date": "2024-09-30",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf24/K241317.pdf"
+   },
+   {
+    "document": "K241427",
+    "device": "Access Syphilis",
+    "decision_date": "2024-09-06",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf24/K241427.pdf"
+   },
+   {
+    "document": "K241915",
+    "device": "CareSuperb COVID-19 Antigen Home Test",
+    "decision_date": "2025-01-29",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf24/K241915.pdf"
+   },
+   {
+    "document": "K242531",
+    "device": "NOVEOS Specific IgE (sIgE) Assay; Capture Reagent G010, Johnson Grass (Sorghum halepense); Capture Reagent T007, Oak (Quercus alba) ; Capture Reagent G002, Bermuda Grass (Cynodon dactylon); Capture Reagent W001, Common Ragweed (Ambrosia artemisiifolia); Capture Reagent E005, Dog Dander (Canis familiaris); Capture Reagent T003, Common Silver Birch (Betula verrucosa); Capture Reagent F001, Egg White (Gallus gallus); Capture Reagent F002, Cow's Milk (Bos taurus); NOVEOS Immunoassay Analyz",
+    "decision_date": "2025-04-23",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf24/K242531.pdf"
+   },
+   {
+    "document": "K242594",
+    "device": "DEEPECHO",
+    "decision_date": "2025-05-23",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf24/K242594.pdf"
+   },
+   {
+    "document": "K242877",
+    "device": "BioCode Gastrointestinal Pathogen Panel (GPP)",
+    "decision_date": "2025-01-10",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf24/K242877.pdf"
+   },
+   {
+    "document": "K243256",
+    "device": "WELLlife COVID-19 / Influenza A&B Home Test; WELLlife COVID-19 / Influenza A&B AntigenTest",
+    "decision_date": "2025-01-16",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf24/K243256.pdf"
+   },
+   {
+    "document": "K243262",
+    "device": "QuickFinder COVID-19/Flu Antigen Self Test / QuickFinder COVID-19/Flu Antigen Pro Test",
+    "decision_date": "2025-01-13",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf24/K243262.pdf"
+   },
+   {
+    "document": "K243490",
+    "device": "LIAISON PLEX Gram-Positive Blood Culture Assay",
+    "decision_date": "2025-06-06",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf24/K243490.pdf"
+   },
+   {
+    "document": "K243518",
+    "device": "BinaxNOW COVID-19 Antigen Self Test",
+    "decision_date": "2025-02-11",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf24/K243518.pdf"
+   },
+   {
+    "document": "K243561",
+    "device": "Nano-Check Influenza+COVID-19 Dual Test",
+    "decision_date": "2025-06-17",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf24/K243561.pdf"
+   },
+   {
+    "document": "K250050",
+    "device": "miDiagnostics HSV-1&2 CSF Test",
+    "decision_date": "2025-09-30",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf25/K250050.pdf"
+   },
+   {
+    "document": "K250816",
+    "device": "ADVIA Centaur Anti-Thyroglobulin II (aTgII)",
+    "decision_date": "2025-12-04",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf25/K250816.pdf"
+   },
+   {
+    "document": "K251085",
+    "device": "iHealth Flu A&B/COVID-19/RSV Rapid Test; iHealth Flu A&B/COVID-19/RSV Rapid Test Pro",
+    "decision_date": "2025-12-12",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf25/K251085.pdf"
+   },
+   {
+    "document": "K251604",
+    "device": "CareSuperb COVID-19/Flu A&B Antigen Combo Home Test",
+    "decision_date": "2025-08-22",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf25/K251604.pdf"
+   },
+   {
+    "document": "K251742",
+    "device": "VELO Respiratory Test",
+    "decision_date": "2026-02-13",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf25/K251742.pdf"
+   },
+   {
+    "document": "K251753",
+    "device": "GenaCheck COVID-19 Rapid Self-Test",
+    "decision_date": "2025-09-05",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf25/K251753.pdf"
+   },
+   {
+    "document": "K251978",
+    "device": "LIAISON NES FLU A/B, RSV & COVID-19",
+    "decision_date": "2025-12-23",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf25/K251978.pdf"
+   },
+   {
+    "document": "K252283",
+    "device": "Nano-Check Influenza A+B Test",
+    "decision_date": "2026-01-15",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf25/K252283.pdf"
+   },
+   {
+    "document": "K252387",
+    "device": "Simplexa COVID-19/ Flu A/B & RSV Direct (MOL4450); Simplexa COVID-19/ Flu A/B & RSV Positive Control Pack (MOL4460)",
+    "decision_date": "2025-10-30",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf25/K252387.pdf"
+   },
+   {
+    "document": "K253528",
+    "device": "Atellica IM CA 19-9 II",
+    "decision_date": "2026-08-10",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf25/K253528.pdf"
+   },
+   {
+    "document": "K253687",
+    "device": "Access anti-HBc Total",
+    "decision_date": "2026-02-19",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf25/K253687.pdf"
+   },
+   {
+    "document": "K253722",
+    "device": "LIAISON PLEX Gastrointestinal Flex Assay",
+    "decision_date": "2026-05-19",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf25/K253722.pdf"
+   },
+   {
+    "document": "K253971",
+    "device": "Visby Medical Flu and COVID-19 Test",
+    "decision_date": "2026-05-27",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf25/K253971.pdf"
+   },
+   {
+    "document": "K254139",
+    "device": "BioCode® Respiratory Pathogen Panel (RPP)",
+    "decision_date": "2026-05-01",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf25/K254139.pdf"
+   },
+   {
+    "document": "K254166",
+    "device": "MDx-Chex for BCN",
+    "decision_date": "2026-03-23",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf25/K254166.pdf"
+   },
+   {
+    "document": "K254167",
+    "device": "MDx-Chex for BCY",
+    "decision_date": "2026-03-17",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf25/K254167.pdf"
+   },
+   {
+    "document": "K254194",
+    "device": "QIAstat-Dx BCID GPF Plus AMR Panel",
+    "decision_date": "2026-08-06",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf25/K254194.pdf"
+   },
+   {
+    "document": "K260041",
+    "device": "MDx-Chex for BCP",
+    "decision_date": "2026-03-27",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf26/K260041.pdf"
+   },
+   {
+    "document": "K260095",
+    "device": "Heal-Check Rapid COVID-19 Antigen Self-Test",
+    "decision_date": "2026-04-13",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf26/K260095.pdf"
+   },
+   {
+    "document": "K260184",
+    "device": "Onclarity Self-Collection Kit",
+    "decision_date": "2026-04-02",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf26/K260184.pdf"
+   },
+   {
+    "document": "K260331",
+    "device": "IMMULITE 2000 3gAllergy Specific IgE Vantage; IMMULITE 2000 Systems Peanut Allergen (F13)",
+    "decision_date": "2026-09-04",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf26/K260331.pdf"
+   },
+   {
+    "document": "K260333",
+    "device": "LIAISON NES Group A Strep; LIAISON NES Group A Strep Control Swab Kit",
+    "decision_date": "2026-06-15",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf26/K260333.pdf"
+   },
+   {
+    "document": "K260342",
+    "device": "AllTest Strep A Rapid Test",
+    "decision_date": "2026-04-30",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf26/K260342.pdf"
+   },
+   {
+    "document": "K260754",
+    "device": "Fastep COVID-19 Antigen Pen Home Test; Fastep COVID-19 Antigen Pen Test",
+    "decision_date": "2026-06-05",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf26/K260754.pdf"
+   },
+   {
+    "document": "K260787",
+    "device": "FebriDx Bacterial/Non-bacterial Assay",
+    "decision_date": "2026-03-24",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf26/K260787.pdf"
+   },
+   {
+    "document": "K262168",
+    "device": "QIAstat-Dx BCID GN Plus AMR Panel",
+    "decision_date": "2026-09-24",
+    "url": "https://www.accessdata.fda.gov/cdrh_docs/pdf26/K262168.pdf"
+   }
+  ]
+ }
+}

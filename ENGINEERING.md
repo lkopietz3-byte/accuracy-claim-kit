@@ -43,6 +43,8 @@ npm run audit:dependencies
 
 The verdict table (`test/verdict-table.test.ts`) is the regression record: honest inputs that must pass and bad inputs that must be flagged. Numeric vectors (`test/numerics.test.ts`) come from `test/fixtures/generate_vectors.py`, an independent standard-library implementation (60-digit decimal for Wilson, exact fractions for agreement, `NormalDist().inv_cdf` for z).
 
+Two further checks do not depend on this package's own reasoning. `test/reference.test.ts` compares the kit with statsmodels, scipy, scikit-learn and irrCAC (numbers in `test/fixtures/reference.json`, written by `scripts/reference/gen.py`, a developer tool) to a maximum absolute difference of 1e-12. `test/field-corpus.test.ts` runs a slice of the published-rate benchmark in `bench/` against an oracle written from the README (`bench/oracle.py`); `npm run bench` runs the whole corpus and checks the headline numbers pinned in `bench/expected.json`. `bench/` and `scripts/reference/` are not in `files`, so neither ships.
+
 ## Packaging
 
 `scripts/verify-package.mjs` packs the build, installs the tarball into a clean project offline, imports every export, compares names with `api-surface.json`, runs `scripts/consumer-probe.mjs`, and type-checks `scripts/consumer-probe.mts` under strict NodeNext. It does not require a LICENSE file; the package is `UNLICENSED` and private until the owner chooses a license.
