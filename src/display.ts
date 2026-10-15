@@ -3,7 +3,7 @@
 // favorable reading, and answers the exact questions the verdict needs.
 
 import { matchesCount } from './census.js'
-import { atLeastDecimal, atMostDecimal, beyondNoise, splitDouble, withinHalfUnit } from './exact.js'
+import { atLeastDecimal, atMostDecimal, beyondNoise, snapAbsolute, splitDouble, withinHalfUnit } from './exact.js'
 import { foldText } from './text.js'
 import { clip } from './validate.js'
 
@@ -148,10 +148,20 @@ function oneInN(text: string, kind: 'percent' | 'approx' | 'floor' | 'ceiling', 
   const shown = `"${clip(folded, 30)}"`
   const band = `1 in ${halves(n2 - unit)} to 1 in ${halves(n2 + unit)}`
   const widen = zeros > 0 ? `; write "about 1 in ${digits}" to allow 1 in ${halves(n2 - placeholder)} to 1 in ${halves(n2 + placeholder)}` : ''
+  // "1 in 1" is 100%: an absolute claim, never a band (1 in 0.5 to 1 in 1.5 would take in any rate from 66.7% up)
+  const everything = big === 1n && bound === null
   const bandNote =
-    bound !== null ? null : approximate ? `${shown} is read as ${band}.` : `${shown} is read as exactly 1 in ${digits} (${band})${widen}.`
-  const within = (k: number, n: number): boolean => BigInt(k) * (n2 + unit) >= 2n * BigInt(n) && BigInt(k) * (n2 - unit) <= 2n * BigInt(n)
+    bound !== null
+      ? null
+      : everything
+        ? `${shown} is read as 100%, an absolute claim that matches only n of n.`
+        : approximate
+          ? `${shown} is read as ${band}.`
+          : `${shown} is read as exactly 1 in ${digits} (${band})${widen}.`
+  const within = (k: number, n: number): boolean =>
+    everything ? k === n : BigInt(k) * (n2 + unit) >= 2n * BigInt(n) && BigInt(k) * (n2 - unit) <= 2n * BigInt(n)
   const consistentWith = (value: number): boolean => {
+    if (everything) return snapAbsolute(value) === 1
     // 1/(N + h) <= value <= 1/(N - h), with one ulp of slack each way
     const { mantissa, exponent } = splitDouble(value)
     if (exponent >= 0) return false
@@ -175,7 +185,7 @@ function oneInN(text: string, kind: 'percent' | 'approx' | 'floor' | 'ceiling', 
     bound,
     strict: bound !== null && strict,
     bandNote,
-    mismatchHint: `the value must lie inside the band the display is read at (${band})`,
+    mismatchHint: everything ? 'the value must be 1 (100%), which is what "1 in 1" means' : `the value must lie inside the band the display is read at (${band})`,
     consistentWith,
     agreesWith,
     matchesObserved: (k, n) => bound === null && within(k, n),

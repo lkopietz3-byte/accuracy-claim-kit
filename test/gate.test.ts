@@ -163,3 +163,31 @@ describe('gate-review:R5-F2 gate-false-pass:G3 a value within float noise of 1 o
     expect(far.verdict).toBe('supported')
   })
 })
+
+describe('gate-hostile:F4 "1 in 1" is 100%, an absolute claim that matches only n of n', () => {
+  it('gate-hostile:F4 a complete set of 100 with 70 correct is contradicted for "1 in 1", "about 1 in 1" and "100%" alike', () => {
+    for (const display of ['1 in 1', 'about 1 in 1', '~1 in 1', '100%']) {
+      const r = assessAccuracyClaim(census({ metric: 'accuracy', value: 1, display }, { n: 100, correct: 70 }, 'Ridgeview'))
+      expect(outcome(r), display).toBe('contradicted [claim-differs-from-count]')
+    }
+    for (const display of ['1 in 1', 'about 1 in 1', '100%']) {
+      const r = assessAccuracyClaim(census({ metric: 'accuracy', value: 1, display }, { n: 100, correct: 100 }, 'Ridgeview'))
+      expect(outcome(r), display).toBe('supported [census-matches-count]')
+    }
+  })
+
+  it('gate-hostile:F4 on a sample "1 in 1" is overstated or contradicted, never supported, and a value short of 1 does not match the print', () => {
+    const r = assessAccuracyClaim(sampled({ metric: 'accuracy', value: 1, display: '1 in 1' }, { n: 100, correct: 100 }))
+    expect(outcome(r)).toBe('overstated [claim-beyond-conservative-bound]')
+    const off = assessAccuracyClaim(sampled({ metric: 'accuracy', value: 1, display: '1 in 1' }, { n: 100, correct: 99 }))
+    expect(off.verdict).toBe('contradicted')
+    expect(() => assessAccuracyClaim(sampled({ metric: 'accuracy', value: 0.7, display: '1 in 1' }, { n: 100, correct: 70 }))).toThrow(RangeError)
+  })
+
+  it('gate-hostile:F4 the explanation says why, and "1 in 2" keeps its band', () => {
+    const r = assessAccuracyClaim(census({ metric: 'accuracy', value: 1, display: '1 in 1' }, { n: 100, correct: 100 }, 'Ridgeview'))
+    expect(r.explanation.join(' ')).toContain('100%')
+    const half = assessAccuracyClaim(census({ metric: 'accuracy', value: 0.5, display: '1 in 2' }, { n: 100, correct: 50 }, 'Ridgeview'))
+    expect(outcome(half)).toBe('supported [census-matches-count]')
+  })
+})

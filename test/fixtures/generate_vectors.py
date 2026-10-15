@@ -268,22 +268,34 @@ def main():
     #   * 0 (or 0%) matches only k = 0 and 1 (or 100%) matches only k = n;
     #   * a printed percent with `decimals` places matches when
     #     |digits/10^(decimals+2) - k/n| <= 1/2 * 10^-(decimals+2);
-    #   * a value (a double) is read as D, the SHORTEST decimal text (1 to 16
-    #     significant digits) within one ulp of the value, from mantissa and
-    #     exponent: a double one ulp from a shorter decimal (82.7/100) is that
-    #     decimal. It matches when |D - k/n| <= 1/2 * 10^-scale + 1 ulp, where
-    #     scale is the number of decimals of D, never less than 2: a value is not
-    #     read coarser than a whole percent (0.9 means 90% +/- 0.5 points).
+    #   * a value (a double) within NOISE = 2^-50 (about 8.9e-16) of 0 or 1 is the
+    #     absolute claim 0 or 1 (matches only k = 0 or k = n);
+    #   * any other value is read as D, the SHORTEST decimal text (1 to 16
+    #     significant digits) within NOISE of the value, from mantissa and
+    #     exponent: a double a little from a shorter decimal (82.7/100, 1 - 0.8)
+    #     is that decimal. It matches when |D - k/n| <= 1/2 * 10^-scale + NOISE,
+    #     where scale is the number of decimals of D, never less than 2: a value
+    #     is not read coarser than a whole percent (0.9 means 90% +/- 0.5 points).
     # Every figure supplied (value, and display if any) must match. A matching
     # display with more decimals than the count resolves (10^(d+2) > 10 n) is
     # still 'supported' (the precision is only noted) and 'overstated' under
     # strictPrecision; otherwise a match is 'supported' and a miss 'contradicted'.
+    NOISE = Fraction(1, 2 ** 50)
+
+    def snap(x):
+        """0.0 or 1.0 when x is within NOISE of it, else x."""
+        if abs(Fraction(x)) <= NOISE:
+            return 0.0
+        if abs(1 - Fraction(x)) <= NOISE:
+            return 1.0
+        return x
+
     def shortest(x):
         r = repr(x)
         if x != 0:
             for p in range(1, 17):
                 t = format(x, ".%de" % (p - 1))
-                if abs(Fraction(float(t)) - Fraction(x)) <= Fraction(math.ulp(x)):
+                if abs(Fraction(float(t)) - Fraction(x)) <= NOISE:
                     r = t
                     break
         m, e = (r.split("e") + ["0"])[:2] if "e" in r else (r, "0")
@@ -293,13 +305,14 @@ def main():
         return int(whole + frac), len(frac) - e
 
     def match_value(x, k, n):
+        x = snap(x)
         if x == 0:
             return k == 0
         if x == 1:
             return k == n
         digits, own = shortest(x)
         scale = max(own, 2)
-        return abs(Fraction(digits, 10 ** own) - Fraction(k, n)) <= Fraction(1, 2 * 10 ** scale) + Fraction(math.ulp(x))
+        return abs(Fraction(digits, 10 ** own) - Fraction(k, n)) <= Fraction(1, 2 * 10 ** scale) + NOISE
 
     def match_display(digits, decimals, k, n):
         scale = decimals + 2
@@ -394,6 +407,8 @@ def main():
         return Fraction(10 ** zeros, 2) if approx else Fraction(1, 2)
 
     def match_one_in_n(N, k, n, approx):
+        if N == 1:
+            return k == n  # "1 in 1" is 100%, an absolute claim, never a band
         h = one_in_n_half_width(N, approx)
         return Fraction(1, 1) / (N + h) <= Fraction(k, n) <= Fraction(1, 1) / (N - h)
 
@@ -459,8 +474,8 @@ def main():
     keep = rng4.sample(drows, 1800) + random.Random(23).sample(arows, 600)
 
     def ulp_apart(x, y):
-        """True when two doubles are within one ulp of x."""
-        return abs(Fraction(x) - Fraction(y)) <= Fraction(math.ulp(x))
+        """True when two doubles are within NOISE of each other (the same figure)."""
+        return abs(Fraction(x) - Fraction(y)) <= NOISE
 
     def judge(metric, higher, key, txt, d, fig, x, k, n):
         """Expected census and interval verdicts for one row, or None when the value
@@ -480,7 +495,10 @@ def main():
             N = int(txt.split()[-1])
             h = one_in_n_half_width(N, key == "one_in_n_approx")
             ulp = Fraction(math.ulp(x))
-            if not (Fraction(1, 1) / (N + h) - ulp <= Fraction(x) <= Fraction(1, 1) / (N - h) + ulp):
+            if N == 1:
+                if snap(x) != 1.0:
+                    return None  # "1 in 1" is 100%
+            elif not (Fraction(1, 1) / (N + h) - ulp <= Fraction(x) <= Fraction(1, 1) / (N - h) + ulp):
                 return None
         else:
             half = Fraction(1, 2 * 10 ** (d + 2))
@@ -527,6 +545,7 @@ def main():
             assessed = x
         else:
             assessed = x if more_fav else float(fig)
+        assessed = snap(assessed)
         absolute = assessed in (0.0, 1.0)
         if bound:
             matches_obs = False
@@ -585,7 +604,8 @@ def main():
                     continue
                 fig = Fraction(pct) / 100
                 lit = float(fig)
-                spellings = {lit, float(pct) / 100, float(pct) * 0.01, math.nextafter(lit, 2.0), math.nextafter(lit, -1.0)}
+                spellings = {lit, float(pct) / 100, float(pct) * 0.01, math.nextafter(lit, 2.0), math.nextafter(lit, -1.0),
+                             1 - (1 - lit), (100 - (100 - float(pct))) / 100}
                 for x in sorted(spellings):
                     nrows.append((metric, higher, "point", format(pct, "f") + "%", 1, fig, x, k, n))
                     nrows.append((metric, higher, "none", None, None, None, x, k, n))
