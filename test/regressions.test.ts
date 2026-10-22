@@ -6,7 +6,7 @@ import { cohenKappa, gwetAC1, percentAgreement, wilsonInterval } from '../src/in
 import { foldText, mentionsName } from '../src/text.js'
 import { confidenceLabel } from '../src/format.js'
 import { vectors } from './vectors.js'
-import { bestCpuMs, cpuMs, GROWTH_LIMIT, growthRatio } from './cpu-growth.js'
+import { bestCpuMs, cpuMs, GROWTH_LIMIT, GROWTH_TEST_TIMEOUT, growthRatio } from './cpu-growth.js'
 
 // Regression rows for the findings of the round 1 audit. Every row name starts
 // with the finding id it pins, so `vitest -t "field:F1"` runs one finding.
@@ -321,7 +321,7 @@ describe('hostile:F1 and codex:CX-1 the name matcher is linear in the claim text
     expect(ms).toBeLessThan(250) // 3,800 ms before the fix; about 1 ms after
   })
 
-  it('hostile:F1 codex:CX-1 CPU time grows less than 10x for 4x the text (500 and 2000 characters)', () => {
+  it('hostile:F1 codex:CX-1 CPU time grows less than 10x for 4x the text (500 and 2000 characters)', { timeout: GROWTH_TEST_TIMEOUT }, () => {
     // fail fast, before the repeated loops, if one call is already slow
     expect(cpuMs(() => assessAccuracyClaim(heavy(2000)))).toBeLessThan(250)
     const ratio = growthRatio((length) => {
@@ -333,7 +333,7 @@ describe('hostile:F1 and codex:CX-1 the name matcher is linear in the claim text
     expect(ratio).toBeLessThan(GROWTH_LIMIT)
   })
 
-  it('hostile:F1 a text full of matches that are all rejected is linear too', () => {
+  it('hostile:F1 a text full of matches that are all rejected is linear too', { timeout: GROWTH_TEST_TIMEOUT }, () => {
     const ratio = growthRatio((reps) => {
       const text = 'ab'.repeat(reps)
       return () => {
@@ -886,7 +886,7 @@ describe('false-pass:F4 a figure in claim.text that differs from the figure judg
     expect(r.reasons).toEqual(['no-human-labels'])
   })
 
-  it('false-pass:F4 the flag is listed once however many figures differ, and the text scan is linear', () => {
+  it('false-pass:F4 the flag is listed once however many figures differ, and the text scan is linear', { timeout: GROWTH_TEST_TIMEOUT }, () => {
     const many = setCensus('99.9% 98.9% 97.9% 96.9% on the Foo set')
     expect(many.reasons).toEqual(['census-matches-count', 'text-figure-differs'])
     // claim.text is capped at 2000 characters, so 320 copies (1,934 characters) is the largest 4x step; the old 100 and 300 were a 3x step

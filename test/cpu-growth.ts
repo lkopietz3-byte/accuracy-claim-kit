@@ -30,6 +30,15 @@ export function bestCpuMs(work: () => void, trials = 5): number {
 export const GROWTH_LIMIT = 10
 
 /**
+ * Per-test timeout for growth tests. The harness repeats each call until the
+ * small input costs at least 60 ms of CPU and takes the best of 5, which can run
+ * past vitest's 5 s default on a loaded machine or a slow CI runner (three growth
+ * tests timed out at 5 s under load on 2026-10-21). The ratio limit, not this
+ * timeout, is what catches a regression.
+ */
+export const GROWTH_TEST_TIMEOUT = 120_000
+
+/**
  * Why each measurement repeats the work: process.cpuUsage() counts CPU in
  * scheduler ticks of 1 to 4 ms on a Linux runner, so a call that costs a few
  * milliseconds is mostly tick rounding and fixed overhead. CI failures that led

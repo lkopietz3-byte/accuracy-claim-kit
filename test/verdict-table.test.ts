@@ -16,7 +16,7 @@ import type {
 } from '../src/index.js'
 import { gwetAC1, percentAgreement } from '../src/index.js'
 import { pctCeil, pctFloor } from '../src/format.js'
-import { GROWTH_LIMIT, growthRatio } from './cpu-growth.js'
+import { GROWTH_LIMIT, GROWTH_TEST_TIMEOUT, growthRatio } from './cpu-growth.js'
 import { vectors } from './vectors.js'
 
 // Verdict regression table. Each row is one honest input that must pass or one
@@ -922,7 +922,7 @@ describe('other realms and array proxies', () => {
 })
 
 describe('scales linearly on hostile sizes', () => {
-  it('kappa, AC1 and percent agreement: 20k vs 80k pairs stay under the 10x growth limit', () => {
+  it('kappa, AC1 and percent agreement: 20k vs 80k pairs stay under the 10x growth limit', { timeout: GROWTH_TEST_TIMEOUT }, () => {
     const make = (n: number): [string, string][] =>
       Array.from({ length: n }, (_, i) => [`c${i % 7}`, `c${(i * 3) % 5}`] as [string, string])
     const ratio = growthRatio((n) => {
@@ -934,7 +934,7 @@ describe('scales linearly on hostile sizes', () => {
     expect(ratio).toBeLessThan(GROWTH_LIMIT)
   })
 
-  it('strata: 20k vs 80k strata stay under the 10x growth limit', () => {
+  it('strata: 20k vs 80k strata stay under the 10x growth limit', { timeout: GROWTH_TEST_TIMEOUT }, () => {
     const make = (k: number): AccuracyClaimInput =>
       input({
         claim: accuracy(0.5),
