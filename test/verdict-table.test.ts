@@ -922,7 +922,7 @@ describe('other realms and array proxies', () => {
 })
 
 describe('scales linearly on hostile sizes', () => {
-  it('kappa, AC1 and percent agreement: 20k vs 80k pairs stay under the 10x growth limit', { timeout: GROWTH_TEST_TIMEOUT }, () => {
+  it('kappa, AC1 and percent agreement: 20k vs 160k pairs stay under the growth limit', { timeout: GROWTH_TEST_TIMEOUT }, () => {
     const make = (n: number): [string, string][] =>
       Array.from({ length: n }, (_, i) => [`c${i % 7}`, `c${(i * 3) % 5}`] as [string, string])
     const ratio = growthRatio((n) => {
@@ -930,11 +930,11 @@ describe('scales linearly on hostile sizes', () => {
       return () => {
         cohenKappa(p)
       }
-    }, 20_000, 80_000)
+    }, 20_000, 160_000, 'kappa/AC1/percent agreement')
     expect(ratio).toBeLessThan(GROWTH_LIMIT)
   })
 
-  it('strata: 20k vs 80k strata stay under the 10x growth limit', { timeout: GROWTH_TEST_TIMEOUT }, () => {
+  it('strata: 20k vs 160k strata stay under the growth limit', { timeout: GROWTH_TEST_TIMEOUT }, () => {
     const make = (k: number): AccuracyClaimInput =>
       input({
         claim: accuracy(0.5),
@@ -946,7 +946,7 @@ describe('scales linearly on hostile sizes', () => {
       return () => {
         assessAccuracyClaim(x)
       }
-    }, 20_000, 80_000)
+    }, 20_000, 160_000, 'strata')
     expect(ratio).toBeLessThan(GROWTH_LIMIT)
   })
 
