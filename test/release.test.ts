@@ -57,8 +57,8 @@ describe('release-review: the docs describe the 0.1.0 first publish exactly', ()
     expect(agents).toContain('The one exception is the 0.1.0 first publish')
   })
 
-  it('release-review:changelog-date the 0.1.0 entry is dated 2026-10-15', () => {
-    expect(changelog).toContain('## [0.1.0] - 2026-10-15')
+  it('release-review:changelog-date the 0.1.0 entry is dated 2026-10-21', () => {
+    expect(changelog).toContain('## [0.1.0] - 2026-10-21')
   })
 })
 
