@@ -29,10 +29,10 @@ First release. MIT licensed.
 - Wilson intervals, percent agreement, Cohen's kappa and Gwet's AC1 match statsmodels, scipy, scikit-learn and irrCAC to 1e-12 over 8,899 Wilson cases and 1,500 two-rater tables (largest difference seen: 4.9e-15 for Wilson, 6.7e-14 for kappa).
 - A field benchmark of 216 printed rates from 75 public FDA 510(k) summaries, with an independent oracle: 0 of 957 claims the counts do not carry were judged `supported`, 726 of 726 claims the counts carry were `supported`, and the kit equals the oracle on 2,001 of 2,001 judged claims.
 - A holdout of 103 public claims from other sources, labeled by hand before the kit ran: the kit equals the label on 103 of 103.
-- `npm run bench` reproduces these numbers from a clone. The README's "Accuracy on real data" section states what they do and do not show, and METHOD.md gives the measured false-flag or false-pass rate of each policy default.
+- `npm run bench` reproduces these numbers from a clone. The README's "Agreement with an independent oracle and a hand-labeled holdout" section states what they do and do not show, and METHOD.md gives the measured false-flag or false-pass rate of each policy default.
 
 ### Documentation
 
-- README: install, a first example that runs, the verdict table, printed forms and limits.
+- README: install, a first example that runs (with the reason a figure between the lower end and the observed rate is `overstated`), a TypeScript example with the node16 CommonJS note, the verdict table, printed forms and limits. It names what the text-figure scan does not read, that an exact rounding tie accepts both neighbors, and that echoed names are not judged.
 - METHOD.md: the reason for each verdict and default, how to change it, measured rates, honest limits and a plain mapping to NIST AI 800-3, the FTC order against Workado and EU AI Act Article 15(3). The kit checks evidence; it does not certify truth or compliance.
 - SECURITY.md: report vulnerabilities privately through GitHub private vulnerability reporting.

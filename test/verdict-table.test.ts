@@ -1681,7 +1681,7 @@ describe('real display forms are read as the figure a reader takes away', () => 
       expect(ok.verdict, display).toBe('supported')
       expect(ok.reasons).toEqual(['claim-within-bound'])
       expect(ok.parsedDisplay).toEqual({ form: 'floor', figure: 0.99, decimals: 0 })
-      expect(acc(0.99, display, 1000, 990).verdict, display).toBe('overstated') // lower end is 98.17%
+      expect(acc(0.99, display, 1000, 990).verdict, display).toBe('overstated') // lower end is 98.16%
       expect(acc(0.99, display, 1000, 900).verdict, display).toBe('contradicted')
     }
   })
@@ -1697,7 +1697,7 @@ describe('real display forms are read as the figure a reader takes away', () => 
   })
 
   it('a bound is never excused by matching the observed rate', () => {
-    // observed 99.0% on 990/1000: "99%+" matches it but the lower end is 98.17%
+    // observed 99.0% on 990/1000: "99%+" matches it but the lower end is 98.16%
     expect(acc(0.99, '99%+', 1000, 990).verdict).toBe('overstated')
   })
 
