@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Independent reference vectors for accuracy-claim-kit.
+"""Independent reference vectors for @evidencekit/accuracy-claims.
 
 Standard library only (math, decimal, fractions, random, statistics.NormalDist).
 Nothing here is shared with the TypeScript implementation.

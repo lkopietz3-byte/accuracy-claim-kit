@@ -17,7 +17,7 @@ import {
   type ReasonCode,
   type UnsupportedMetric,
   type WilsonInterval,
-} from 'accuracy-claim-kit';
+} from '@evidencekit/accuracy-claims';
 
 function assertEqual<T>(actual: T, expected: T, message: string): void {
   if (actual !== expected) {

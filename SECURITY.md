@@ -6,7 +6,7 @@ Security fixes go to the latest minor version only. If a vulnerability affects a
 
 ## Reporting a vulnerability
 
-Report suspected vulnerabilities privately through GitHub private vulnerability reporting on the repository: open https://github.com/lkopietz3-byte/accuracy-claim-kit/security/advisories/new, or use the "Report a vulnerability" button under the repository's Security tab. Please do not open a public issue or pull request for a vulnerability.
+Report suspected vulnerabilities privately through GitHub private vulnerability reporting on the repository: open https://github.com/evidencekit/accuracy-claims/security/advisories/new, or use the "Report a vulnerability" button under the repository's Security tab. Please do not open a public issue or pull request for a vulnerability.
 
 Include what you can: the affected version, a minimal reproduction, and the impact you expect.
 

@@ -1,5 +1,5 @@
 {
-  "accuracy-claim-kit": [
+  "@evidencekit/accuracy-claims": [
     "COMPARISON_TOLERANCE",
     "DEFAULT_CONFIDENCE",
     "DEFAULT_MIN_N",

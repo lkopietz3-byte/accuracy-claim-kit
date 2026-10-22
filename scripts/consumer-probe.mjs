@@ -13,7 +13,7 @@ import {
   percentAgreement,
   wilsonInterval,
   zForConfidence,
-} from 'accuracy-claim-kit';
+} from '@evidencekit/accuracy-claims';
 
 assert.equal(DEFAULT_CONFIDENCE, 0.95);
 assert.equal(DEFAULT_MIN_N, 30);

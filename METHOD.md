@@ -1,6 +1,6 @@
 # Method
 
-This page says what `accuracy-claim-kit` decides, why each rule and default is what it is, how to change it, and how often each heuristic was measured to flag or pass the wrong thing. The README says how to call the kit; this page says why it answers the way it does.
+This page says what `@evidencekit/accuracy-claims` decides, why each rule and default is what it is, how to change it, and how often each heuristic was measured to flag or pass the wrong thing. The README says how to call the kit; this page says why it answers the way it does.
 
 ## Read this first: what a verdict is
 

@@ -1,5 +1,5 @@
 {
-  "name": "accuracy-claim-kit",
+  "name": "@evidencekit/accuracy-claims",
   "version": "0.1.0",
   "description": "Does this accuracy or error-rate number have the evidence to carry it? Wilson intervals, inter-rater agreement (percent agreement, Cohen's kappa, Gwet's AC1) and a refuse-or-judge verdict on a claimed figure, computed from caller-supplied counts. Zero-dependency, offline TypeScript.",
   "keywords": [
@@ -19,17 +19,22 @@
     "error-bars",
     "statistics",
     "typescript",
-    "honesty-kits"
+    "accuracy-claim-kit",
+    "evidencekit"
   ],
   "author": "Lucas Kopietz",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/lkopietz3-byte/accuracy-claim-kit.git"
+    "url": "git+https://github.com/evidencekit/accuracy-claims.git"
   },
-  "homepage": "https://github.com/lkopietz3-byte/accuracy-claim-kit#readme",
+  "homepage": "https://github.com/evidencekit/accuracy-claims#readme",
   "bugs": {
-    "url": "https://github.com/lkopietz3-byte/accuracy-claim-kit/issues"
+    "url": "https://github.com/evidencekit/accuracy-claims/issues"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   },
   "type": "module",
   "main": "./dist/index.js",

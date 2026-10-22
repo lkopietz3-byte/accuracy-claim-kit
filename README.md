@@ -1,27 +1,27 @@
-# Accuracy Claim Kit
+# Evidence Kit: Accuracy Claims
 
 Does this accuracy or error-rate number have the evidence to carry it? You give the kit the counts behind a published figure, who labeled the items and how they were chosen. It says whether those counts can carry the figure, and writes a cautious statement the evidence supports, as plain text you can publish instead.
 
 It is for people who publish a figure from their own evaluation: an AI-eval author, a team with a model or detector in production, a maintainer writing a benchmark README or a methodology page. Most real claims fail on a missing declaration (nobody wrote down who labeled, how items were picked, or what was measured), so expect `refused` often and read it as "write this down", not "false".
 
-The kit checks evidence. It does not certify that a figure is true or that a system is accurate, and it makes no legal or regulatory determination. A `supported` verdict means the claim is no more favorable than the counts you supplied, or is an honest report of the rate you observed. See "What it does not do" and [METHOD.md](https://github.com/lkopietz3-byte/accuracy-claim-kit/blob/main/METHOD.md), which gives the reason for every rule and default.
+The kit checks evidence. It does not certify that a figure is true or that a system is accurate, and it makes no legal or regulatory determination. A `supported` verdict means the claim is no more favorable than the counts you supplied, or is an honest report of the rate you observed. See "What it does not do" and [METHOD.md](https://github.com/evidencekit/accuracy-claims/blob/main/METHOD.md), which gives the reason for every rule and default.
 
 Zero runtime dependencies, TypeScript types included, ESM, Node 20 or newer. It reads no clock and uses no randomness: the same input gives the same output (dates are passed in, never read).
 
 ## Install
 
 ```sh
-npm i accuracy-claim-kit
+npm i @evidencekit/accuracy-claims
 ```
 
-ESM only: `import` it. A CommonJS file can `require()` it on Node 20.19 or newer and 22.12 or newer (the releases that can require an ES module); on older Node 20 use `await import('accuracy-claim-kit')`.
+ESM only: `import` it. A CommonJS file can `require()` it on Node 20.19 or newer and 22.12 or newer (the releases that can require an ES module); on older Node 20 use `await import('@evidencekit/accuracy-claims')`.
 
 ## Quick start
 
 The same evidence (990 of 1000 right, labeled by people, drawn at random) against three claims. Save this as `check.mjs` and run `node check.mjs`:
 
 ```js
-import { assessAccuracyClaim } from 'accuracy-claim-kit'
+import { assessAccuracyClaim } from '@evidencekit/accuracy-claims'
 
 const evidence = { sample: { n: 1000, correct: 990 }, provenance: { source: 'human' }, sampling: 'random' }
 
@@ -51,8 +51,8 @@ It prints:
 The types ship with the package. Annotate the input as `AccuracyClaimInput`, and hoist shared evidence into a const with `satisfies`: a plain `const evidence = { provenance: { source: 'human' }, ... }` widens `'human'` to `string` (literal widening) and fails to compile, because `source` must be one of the label sources.
 
 ```ts
-import { assessAccuracyClaim } from 'accuracy-claim-kit'
-import type { AccuracyClaimInput } from 'accuracy-claim-kit'
+import { assessAccuracyClaim } from '@evidencekit/accuracy-claims'
+import type { AccuracyClaimInput } from '@evidencekit/accuracy-claims'
 
 const evidence = {
   sample: { n: 1000, correct: 990 },
@@ -64,7 +64,7 @@ const input: AccuracyClaimInput = { claim: { metric: 'accuracy', value: 0.98, di
 console.log(assessAccuracyClaim(input).verdict) // supported
 ```
 
-Every public type is exported from the package root (`AccuracyAssessment`, `ReasonCode`, `UnsupportedMetric` and the rest). The package is ESM only. With `"module": "node16"`, a TypeScript file that compiles to CommonJS (a `.ts` file in a package without `"type": "module"`, or a `.cts` file) gets TS1479 on `import ... from 'accuracy-claim-kit'`, and TS1541 on a type-only import. Make the file ESM (`"type": "module"` in your `package.json`, or the `.mts` extension) or load the package with `await import('accuracy-claim-kit')`. `"module": "nodenext"` accepts the import in TypeScript 5.9, the version checked.
+Every public type is exported from the package root (`AccuracyAssessment`, `ReasonCode`, `UnsupportedMetric` and the rest). The package is ESM only. With `"module": "node16"`, a TypeScript file that compiles to CommonJS (a `.ts` file in a package without `"type": "module"`, or a `.cts` file) gets TS1479 on `import ... from '@evidencekit/accuracy-claims'`, and TS1541 on a type-only import. Make the file ESM (`"type": "module"` in your `package.json`, or the `.mts` extension) or load the package with `await import('@evidencekit/accuracy-claims')`. `"module": "nodenext"` accepts the import in TypeScript 5.9, the version checked.
 
 ## Agreement with an independent oracle and a hand-labeled holdout
 
@@ -129,7 +129,7 @@ The "conservative bound" is the end of the interval a claim should not beat: the
 499 of 500 items were right, labeled by two people, drawn at random. The claim is "99.8% accurate".
 
 ```js
-import { assessAccuracyClaim } from 'accuracy-claim-kit'
+import { assessAccuracyClaim } from '@evidencekit/accuracy-claims'
 
 const result = assessAccuracyClaim({
   claim: { metric: 'accuracy', value: 0.998, display: '99.8%' },
@@ -405,9 +405,9 @@ Gwet     pi_k = (a_k + b_k) / (2N)
 - Length caps: `benchmark.name`, `population.claimed` and `population.evaluated` at most 200 characters, `claim.text` at most 2000, `claim.display` at most 64, agreement labels and stratum names at most 1000; at most 10,000,000 pairs or strata and 1,000,000 distinct labels. Anything over a cap throws `RangeError`.
 - Multiple raters beyond two, ordinal weighting (weighted kappa), and confidence intervals for kappa or AC1 are not included.
 
-## Relationship to advice-ledger-kit
+## Relationship to @evidencekit/advice-ledger
 
-`advice-ledger-kit` grades a log of recommendations against human judgments and outcomes, and it deliberately produces no confidence interval and never blends its counts into one accuracy number. This kit is the other half: when someone does want to publish an accuracy figure, it says whether the counts can carry it. They share no code.
+`@evidencekit/advice-ledger` grades a log of recommendations against human judgments and outcomes, and it deliberately produces no confidence interval and never blends its counts into one accuracy number. This kit is the other half: when someone does want to publish an accuracy figure, it says whether the counts can carry it. They share no code.
 
 ## Tests and vectors
 

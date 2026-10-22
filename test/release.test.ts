@@ -6,7 +6,7 @@ import release from '../.github/workflows/release.yml?raw'
 import verify from '../.github/workflows/verify.yml?raw'
 import changelog from '../CHANGELOG.md?raw'
 
-const NPM_TRUST = 'npm trust github accuracy-claim-kit --file release.yml --repo lkopietz3-byte/accuracy-claim-kit --allow-publish --yes'
+const NPM_TRUST = 'npm trust github @evidencekit/accuracy-claims --file release.yml --repo evidencekit/accuracy-claims --allow-publish --yes'
 
 describe('release-review: the release workflow publishes once, from a verified commit, with no cache', () => {
   it('release-review:no-cache-in-publish-job the publish job sets up Node with no npm cache', () => {

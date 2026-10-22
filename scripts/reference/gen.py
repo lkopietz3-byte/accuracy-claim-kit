@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Reference cross-check data for accuracy-claim-kit (developer tool, not shipped).
+"""Reference cross-check data for @evidencekit/accuracy-claims (developer tool, not shipped).
 
 Writes test/fixtures/reference.json: the same Wilson intervals and agreement
 statistics the kit computes, as computed by widely used libraries, so anyone can

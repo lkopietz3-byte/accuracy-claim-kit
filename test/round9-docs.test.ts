@@ -76,7 +76,7 @@ describe('first5:F6 an exact rounding tie accepts both neighbors', () => {
 
 describe('first5:F7 first5:F9 TypeScript use and the node16 note', () => {
   it('first5:F7 the README has a TypeScript example that hoists the evidence with satisfies and annotates AccuracyClaimInput', () => {
-    expect(readme).toContain("import type { AccuracyClaimInput } from 'accuracy-claim-kit'")
+    expect(readme).toContain("import type { AccuracyClaimInput } from '@evidencekit/accuracy-claims'")
     expect(readme).toContain('satisfies Pick<AccuracyClaimInput')
     expect(readme).toContain('literal widening')
   })
@@ -86,7 +86,7 @@ describe('first5:F7 first5:F9 TypeScript use and the node16 note', () => {
     expect(readme).toContain('TS1541')
     expect(readme).toContain('"module": "node16"')
     expect(readme).toContain('"type": "module"')
-    expect(readme).toContain("await import('accuracy-claim-kit')")
+    expect(readme).toContain("await import('@evidencekit/accuracy-claims')")
   })
 })
 
