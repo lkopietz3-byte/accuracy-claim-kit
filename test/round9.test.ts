@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { assessAccuracyClaim, wilsonInterval } from '../src/index.js'
-import type { AccuracyAssessment, UnsupportedMetric } from '../src/index.js'
+import type { AccuracyAssessment, AccuracyClaimInput, UnsupportedMetric } from '../src/index.js'
 
 // Regression rows for the round 9 findings. Every row name starts with the
 // finding id it pins, so `vitest -t "first5:F1"` runs one finding.
@@ -50,6 +50,38 @@ describe('first5:F1 an overstated figure below the observed rate says so', () =>
     const r = acc(0.997, '99.7%', 1000, 996)
     expect(r.verdict).toBe('overstated')
     expect(r.explanation[0]).not.toContain('observed rate')
+  })
+
+  it('first5:F1 the advice never recommends a figure the same assessment rejects: an absolute observed rate, conservative mode, strict precision', () => {
+    // 1000 of 1000 observed is 100%, which a sample can never show: only the lower end is offered
+    const absolute = acc(0.998, '99.8%', 1000, 1000)
+    expect(absolute.verdict).toBe('overstated')
+    const absoluteText = absolute.explanation[0] as string
+    expect(absoluteText).toContain('also below the observed rate (1000 of 1000, 100.000%)')
+    expect(absoluteText).not.toContain('print the observed rate')
+    expect(absoluteText).toContain('go down to the lower end (')
+    // conservative mode accepts only a claim at or below the lower end, and prints it at the permitted precision
+    const base: AccuracyClaimInput = {
+      claim: { metric: 'accuracy', value: 0.99, display: '99%' },
+      sample: { n: 1000, correct: 996 },
+      ...HUMAN,
+    }
+    for (const options of [{ conservative: true }, { strictPrecision: true }] as const) {
+      const r = assessAccuracyClaim(base, options)
+      expect(r.verdict).toBe('overstated')
+      const text = r.explanation[0] as string
+      expect(text).toContain('go down to the lower end (98.9%)')
+      if ('conservative' in options) expect(text).not.toContain('print the observed rate')
+      // following the advice passes the same gate
+      const followed = assessAccuracyClaim({ ...base, claim: { metric: 'accuracy', value: 0.989, display: '98.9%' } }, options)
+      expect(followed.verdict).toBe('supported')
+    }
+    // the error-rate mirror offers the upper end at the permitted precision
+    const mirror = assessAccuracyClaim(
+      { claim: { metric: 'error-rate', value: 0.01, display: 'at most 1%' }, sample: { n: 1000, errors: 5 }, ...HUMAN },
+      { strictPrecision: true },
+    )
+    expect(mirror.explanation[0]).toContain('go up to the upper end (1.2%)')
   })
 
   it('first5:F1 the error-rate mirror says the figure is above the observed rate: about 1 in 100 and at most 1% on 5 of 1000 errors', () => {

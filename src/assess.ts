@@ -903,12 +903,18 @@ export function assessAccuracyClaim(
         }
       }
       // A figure on the cautious side of the observed rate is the usual honest round-down or
-      // truncation (99.6 printed as 99): say so, and what to print instead.
+      // truncation (99.6 printed as 99): say so, and what to print instead. Only advise a figure the
+      // same assessment would pass: the observed rate is no way out when it is 0 or 100% (a sample
+      // cannot show certainty) or with options.conservative, and the bound is printed at the
+      // precision the interval permits when strictPrecision or conservative is set.
       if (beyondNoise(w.point, assessed, higherIsBetter)) {
-        const printDecimals = Math.min(maxDisplayDecimals(w.high - w.low) + 2, 5)
+        const allowed = maxDisplayDecimals(w.high - w.low)
+        const printDecimals = strictPrecision ? allowed : Math.min(allowed + 2, 5)
+        const observedWorks = !conservative && w.point !== 0 && w.point !== 1
+        const observedPart = observedWorks ? 'print the observed rate, or ' : ''
         sentence += higherIsBetter
-          ? ` The figure is also below the observed rate (${observedText}, ${pctNearest(w.point, 3)}): print the observed rate, or go down to the lower end (${pctFloor(w.low, printDecimals)}).`
-          : ` The figure is also above the observed rate (${observedText}, ${pctNearest(w.point, 3)}): print the observed rate, or go up to the upper end (${pctCeil(w.high, printDecimals)}).`
+          ? ` The figure is also below the observed rate (${observedText}, ${pctNearest(w.point, 3)}): ${observedPart}go down to the lower end (${pctFloor(w.low, printDecimals)}).`
+          : ` The figure is also above the observed rate (${observedText}, ${pctNearest(w.point, 3)}): ${observedPart}go up to the upper end (${pctCeil(w.high, printDecimals)}).`
       }
       explanation.push(sentence)
     }
