@@ -158,7 +158,8 @@ describe('hunt:R9-AC-01 all but one right at the largest sample sizes is contrad
       expect(outcome(err(0, '0%', n, 1)), String(n)).toBe('contradicted [claim-outside-interval]')
     }
     const r = acc(1, '100%', Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER - 1)
-    expect(r.explanation[0]).toContain('just under 100%')
+    expect(r.explanation[0]).toContain('above the top of the 95% Wilson interval, which is just under 100% because not every item was counted right')
+    expect(r.explanation[0]).not.toContain('(')
   })
 
   it('hunt:R9-AC-01 every item right is still overstated at 100%, and s = n still gives high exactly 1', () => {

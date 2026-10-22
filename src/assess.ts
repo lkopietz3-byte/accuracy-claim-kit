@@ -866,15 +866,15 @@ export function assessAccuracyClaim(
     // the limit is still on the near side of the claim, so say that instead of printing a bare 100%.
     const nearCertain = higherIsBetter
       ? successes < n && top === pctCeil(1, 3)
-        ? ' (just under 100%: not every item was counted right)'
-        : ''
+        ? ', which is just under 100% because not every item was counted right'
+        : null
       : successes > 0 && bottom === pctFloor(0, 3)
-        ? ' (just above 0%: at least one error was counted)'
-        : ''
+        ? ', which is just above 0% because at least one error was counted'
+        : null
     explanation.push(
       higherIsBetter
-        ? `${subject} is above the top of the ${cl} Wilson interval (${top}${nearCertain}).`
-        : `${subject}${qualifier} is below the bottom of the ${cl} Wilson interval (${bottom}${nearCertain}).`,
+        ? `${subject} is above the top of the ${cl} Wilson interval${nearCertain ?? ` (${top})`}.`
+        : `${subject}${qualifier} is below the bottom of the ${cl} Wilson interval${nearCertain ?? ` (${bottom})`}.`,
     )
   } else {
     verdict = 'overstated'
