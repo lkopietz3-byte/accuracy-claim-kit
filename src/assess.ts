@@ -303,6 +303,29 @@ function placesWord(decimals: number): string {
 function supportsWord(decimals: number): string {
   return decimals === 0 ? 'whole percents only' : `at most ${placesWord(decimals)}`
 }
+/**
+ * The observed rate as a figure to print that the same assessment would pass as
+ * `matches-observed-rate`, or null when none exists. With `maxDecimals` null
+ * (the default, where excess precision is only noted) the figure is printed to
+ * three decimals, or to as many more as it takes to keep it off 0% and 100%
+ * (those are absolute claims a sample cannot show); with a limit (strictPrecision)
+ * it must fit that many decimals, and an exact tie may be reached from either
+ * neighbor. A candidate is judged by the display parser itself, so it cannot
+ * drift from what the assessment accepts.
+ */
+function observedAdvice(point: number, successes: number, n: number, maxDecimals: number | null, higherIsBetter: boolean): string | null {
+  if (point === 0 || point === 1) return null
+  const first = maxDecimals === null ? 3 : maxDecimals
+  const last = maxDecimals === null ? 12 : maxDecimals
+  for (let d = first; d <= last; d++) {
+    for (const printed of [pctNearest(point, d), pctFloor(point, d), pctCeil(point, d)]) {
+      const figure = parseDisplayFigure(printed, higherIsBetter)
+      if (figure.info.figure !== 0 && figure.info.figure !== 1 && figure.matchesObserved(successes, n)) return printed
+    }
+  }
+  return null
+}
+
 /** The statement's advice on how to print the figure. */
 function printAdvice(decimals: number): string {
   return decimals === 0 ? '; print it as a whole percent' : `; print it to at most ${placesWord(decimals)}`
@@ -904,17 +927,30 @@ export function assessAccuracyClaim(
       }
       // A figure on the cautious side of the observed rate is the usual honest round-down or
       // truncation (99.6 printed as 99): say so, and what to print instead. Only advise a figure the
-      // same assessment would pass: the observed rate is no way out when it is 0 or 100% (a sample
-      // cannot show certainty) or with options.conservative, and the bound is printed at the
+      // same assessment would pass (see observedAdvice): the observed rate is no way out when it is 0
+      // or 100% (a sample cannot show certainty), with options.conservative, or when no display
+      // within the precision strictPrecision allows can match it; the bound is printed at the
       // precision the interval permits when strictPrecision or conservative is set.
       if (beyondNoise(w.point, assessed, higherIsBetter)) {
         const allowed = maxDisplayDecimals(w.high - w.low)
         const printDecimals = strictPrecision ? allowed : Math.min(allowed + 2, 5)
-        const observedWorks = !conservative && w.point !== 0 && w.point !== 1
-        const observedPart = observedWorks ? 'print the observed rate, or ' : ''
+        const observedFigure = conservative ? null : observedAdvice(w.point, successes, n, strictPrecision ? allowed : null, higherIsBetter)
+        // The default observed figure is the one the sentence already quotes at three decimals;
+        // only a different figure (a precision limit, or more digits to keep it off 100%) is spelled out.
+        const observedPart =
+          observedFigure === null
+            ? ''
+            : !strictPrecision && observedFigure === pctNearest(w.point, 3)
+              ? 'print the observed rate, or '
+              : `print the observed rate (${observedFigure}), or `
+        // The bound at the permitted precision is cut in the cautious direction, so it is never
+        // beyond the conservative end and always passes as a claim of its own.
+        const lead = higherIsBetter
+          ? ` The figure is also below the observed rate (${observedText}, ${pctNearest(w.point, 3)}): `
+          : ` The figure is also above the observed rate (${observedText}, ${pctNearest(w.point, 3)}): `
         sentence += higherIsBetter
-          ? ` The figure is also below the observed rate (${observedText}, ${pctNearest(w.point, 3)}): ${observedPart}go down to the lower end (${pctFloor(w.low, printDecimals)}).`
-          : ` The figure is also above the observed rate (${observedText}, ${pctNearest(w.point, 3)}): ${observedPart}go up to the upper end (${pctCeil(w.high, printDecimals)}).`
+          ? `${lead}${observedPart}go down to the lower end (${pctFloor(w.low, printDecimals)}).`
+          : `${lead}${observedPart}go up to the upper end (${pctCeil(w.high, printDecimals)}).`
       }
       explanation.push(sentence)
     }
