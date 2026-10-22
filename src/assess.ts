@@ -862,10 +862,19 @@ export function assessAccuracyClaim(
   } else if (higherIsBetter ? assessed > w.high + tolFor(assessed) : assessed < w.low - tolFor(assessed)) {
     verdict = 'contradicted'
     reasons.push('claim-outside-interval')
+    // At a sample of billions of items one wrong item leaves the limit within a rounding of 100% (or 0%):
+    // the limit is still on the near side of the claim, so say that instead of printing a bare 100%.
+    const nearCertain = higherIsBetter
+      ? successes < n && top === pctCeil(1, 3)
+        ? ' (just under 100%: not every item was counted right)'
+        : ''
+      : successes > 0 && bottom === pctFloor(0, 3)
+        ? ' (just above 0%: at least one error was counted)'
+        : ''
     explanation.push(
       higherIsBetter
-        ? `${subject} is above the top of the ${cl} Wilson interval (${top}).`
-        : `${subject}${qualifier} is below the bottom of the ${cl} Wilson interval (${bottom}).`,
+        ? `${subject} is above the top of the ${cl} Wilson interval (${top}${nearCertain}).`
+        : `${subject}${qualifier} is below the bottom of the ${cl} Wilson interval (${bottom}${nearCertain}).`,
     )
   } else {
     verdict = 'overstated'
@@ -892,6 +901,14 @@ export function assessAccuracyClaim(
         } else if (!higherIsBetter && figure.bound === 'ceiling' && w.high - assessed < oneUnit) {
           sentence += ` The shortfall is within the rounding of the last printed digit, so print the bound rounded up: ${pctCeil(w.high, printedDecimals)}.`
         }
+      }
+      // A figure on the cautious side of the observed rate is the usual honest round-down or
+      // truncation (99.6 printed as 99): say so, and what to print instead.
+      if (beyondNoise(w.point, assessed, higherIsBetter)) {
+        const printDecimals = Math.min(maxDisplayDecimals(w.high - w.low) + 2, 5)
+        sentence += higherIsBetter
+          ? ` The figure is also below the observed rate (${observedText}, ${pctNearest(w.point, 3)}): print the observed rate, or go down to the lower end (${pctFloor(w.low, printDecimals)}).`
+          : ` The figure is also above the observed rate (${observedText}, ${pctNearest(w.point, 3)}): print the observed rate, or go up to the upper end (${pctCeil(w.high, printDecimals)}).`
       }
       explanation.push(sentence)
     }

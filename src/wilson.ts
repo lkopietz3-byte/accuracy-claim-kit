@@ -5,11 +5,13 @@ export const DEFAULT_CONFIDENCE = 0.95
 
 const TINY_CONFIDENCE = 1e-9
 const SQRT_HALF_PI = Math.sqrt(Math.PI / 2)
+/** The largest double below 1 (2^-53 under it). */
+const BELOW_ONE = 1 - 2 ** -53
 
 export interface WilsonInterval {
   /** Lower limit, in [0, point]. Exactly 0 when successes is 0. */
   low: number
-  /** Upper limit, in [point, 1]. Exactly 1 when successes equals n. */
+  /** Upper limit, in [point, 1]. Exactly 1 when successes equals n, and below 1 otherwise. */
   high: number
   /** successes / n. */
   point: number
@@ -75,7 +77,10 @@ export function wilsonWithZ(s: number, n: number, z: number): { low: number; hig
   // lower limit for the failures, which also makes the edge s = n give exactly 1.
   const low = Math.min(lowerLimit(s, n, z), point)
   const rawHigh = 2 * s <= n ? upperLimit(s, n, z) : 1 - lowerLimit(n - s, n, z)
-  const high = Math.min(1, Math.max(rawHigh, point))
+  // With one failure at about 4.5e15 items or more the true limit is nearer 1 than the next double
+  // below it, so 1 - lowerLimit rounds to exactly 1. The limit is only 1 when nothing failed; any
+  // other sample keeps it at the double just below 1, which no claim except exactly 1 can exceed.
+  const high = s < n ? Math.min(BELOW_ONE, Math.max(rawHigh, point)) : 1
   return { low, high, point }
 }
 

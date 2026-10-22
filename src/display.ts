@@ -306,7 +306,9 @@ export function parseDisplayFigure(display: unknown, higherIsBetter: boolean): D
       if (form === 'floor') return strict ? beyondNoise(value, shown, true) : !beyondNoise(shown, value, true)
       if (form === 'ceiling') return strict ? beyondNoise(value, shown, false) : !beyondNoise(shown, value, false)
       // a printed 100% or 0% is absolute: it is the figure only for a value that is exactly 1 or 0
-      // (within the value noise), never for 99.6% that merely rounds to it (AGENTS.md: absolute claims)
+      // (within the value noise), never for 99.6% that merely rounds to it (AGENTS.md: absolute claims).
+      // A figure written as approximate ("about 100%") keeps its rounding band on purpose, in the text scan:
+      // it does not claim certainty, and the README says so.
       if (form === 'percent' && (num.digits === 0n || num.digits === 10n ** BigInt(scale))) return snapAbsolute(value) === shown
       return withinHalfUnit(value, num.digits, scale, scale)
     },
@@ -352,7 +354,10 @@ const MAX_TEXT_FIGURES = 50
  */
 export function textFiguresDiffering(text: string, value: number, assessed: number, higherIsBetter: boolean): string[] {
   // "99.9 percent" is the figure "99.9%"
-  const folded = foldText(text).replace(/(\d) ?(?:percent|per cent|pct)(?![\p{L}\p{N}])/gu, '$1%')
+  // The Arabic percent sign (U+066A) has no compatibility fold to "%"; it is the same sign.
+  const folded = foldText(text)
+    .replace(/\u066A/g, '%')
+    .replace(/(\d) ?(?:percent|per cent|pct)(?![\p{L}\p{N}])/gu, '$1%')
   const differing: string[] = []
   let seen = 0
   for (const match of folded.matchAll(TEXT_FIGURE)) {

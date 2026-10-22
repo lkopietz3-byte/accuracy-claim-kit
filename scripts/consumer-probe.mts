@@ -15,6 +15,7 @@ import {
   type PopulationScope,
   type AgreementResult,
   type ReasonCode,
+  type UnsupportedMetric,
   type WilsonInterval,
 } from 'accuracy-claim-kit';
 
@@ -69,3 +70,24 @@ assertEqual(typeof verdict, 'string', 'verdict type');
 assertEqual(codes.length > 0, true, 'reasons');
 const bound: number | null = out.conservativeBound;
 assertEqual(bound === null || bound > 0, true, 'bound');
+
+// The README's TypeScript example: the evidence is hoisted into a const with `satisfies`, so the
+// literal types ('human', 'random') are kept, and the input is annotated as AccuracyClaimInput.
+const evidence = {
+  sample: { n: 1000, correct: 990 },
+  provenance: { source: 'human' },
+  sampling: 'random',
+} satisfies Pick<AccuracyClaimInput, 'sample' | 'provenance' | 'sampling'>;
+const readmeInput: AccuracyClaimInput = { claim: { metric: 'accuracy', value: 0.98, display: '98%' }, ...evidence };
+assertEqual(assessAccuracyClaim(readmeInput).verdict, 'supported', 'README example verdict');
+
+// Every public result type is importable from the package root, UnsupportedMetric included.
+const refusedMetric: UnsupportedMetric = 'f1';
+const refused: AccuracyAssessment = assessAccuracyClaim({
+  claim: { metric: refusedMetric, value: 0.9 },
+  sample: { n: 100, correct: 90 },
+  provenance: { source: 'human' },
+  sampling: 'random',
+});
+const echoedMetric: AccuracyAssessment['metric'] = refused.metric;
+assertEqual(echoedMetric, 'f1', 'unsupported metric echoed');

@@ -31,4 +31,5 @@ export type {
   SampleCounts,
   SamplingMethod,
   Stratum,
+  UnsupportedMetric,
 } from './types.js'
