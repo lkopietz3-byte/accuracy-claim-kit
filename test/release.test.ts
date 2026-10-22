@@ -61,3 +61,15 @@ describe('release-review: the docs describe the 0.1.0 first publish exactly', ()
     expect(changelog).toContain('## [0.1.0] - 2026-10-15')
   })
 })
+
+describe('release:trusted-publisher-timing a hand-published 0.1.0 gets its trusted publisher on the day of the 0.1.1 release', () => {
+  it('release:trusted-publisher-timing CONTRIBUTING.md and ENGINEERING.md set it up on the day of the 0.1.1 release, because npm expires an unused setting after 2 days', () => {
+    for (const [name, text] of [['CONTRIBUTING', contributing], ['ENGINEERING', engineering]] as const) {
+      expect(text, name).toContain('on the day of the 0.1.1 release')
+      expect(text, name).toContain('expires')
+      expect(text, name).toContain('2 days')
+      expect(text, name).not.toContain('the same `npm trust github` command the same day')
+      expect(text, name).not.toContain('then sets up trusted publishing the same day')
+    }
+  })
+})
