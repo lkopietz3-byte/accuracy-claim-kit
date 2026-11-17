@@ -8,10 +8,18 @@ The kit checks evidence. It does not certify that a figure is true or that a sys
 
 Zero runtime dependencies, TypeScript types included, ESM, Node 20 or newer. It reads no clock and uses no randomness: the same input gives the same output (dates are passed in, never read).
 
+**Reproducible benchmark.** From a clone, `npm run bench` (it needs `python3`) rebuilds a test set from 216 percentages printed with counts in 75 public FDA 510(k) summaries, runs the kit over it and checks 103 hand-labeled claims from other sources, and it fails if a pinned number moves. The oracle that judges the first set shares an author with the kit, so read it as "the kit does what it documents". Numbers and limits: [Agreement with an independent oracle and a hand-labeled holdout](#agreement-with-an-independent-oracle-and-a-hand-labeled-holdout).
+
 ## Install
 
+Not on npm yet: npm publishing is pending, so `npm i accuracy-claim-kit` does not work today. Install from a clone of this repository:
+
 ```sh
-npm i accuracy-claim-kit
+git clone https://github.com/lkopietz3-byte/accuracy-claim-kit
+cd accuracy-claim-kit
+npm ci && npm run build         # once, inside the clone
+cd ../your-project
+npm install ../accuracy-claim-kit
 ```
 
 ESM only: `import` it. A CommonJS file can `require()` it on Node 20.19 or newer and 22.12 or newer (the releases that can require an ES module); on older Node 20 use `await import('accuracy-claim-kit')`.
