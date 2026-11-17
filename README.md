@@ -12,14 +12,8 @@ Zero runtime dependencies, TypeScript types included, ESM, Node 20 or newer. It 
 
 ## Install
 
-Not on npm yet: npm publishing is pending, so `npm i accuracy-claim-kit` does not work today. Install from a clone of this repository:
-
 ```sh
-git clone https://github.com/lkopietz3-byte/accuracy-claim-kit
-cd accuracy-claim-kit
-npm ci && npm run build         # once, inside the clone
-cd ../your-project
-npm install ../accuracy-claim-kit
+npm i accuracy-claim-kit
 ```
 
 ESM only: `import` it. A CommonJS file can `require()` it on Node 20.19 or newer and 22.12 or newer (the releases that can require an ES module); on older Node 20 use `await import('accuracy-claim-kit')`.
