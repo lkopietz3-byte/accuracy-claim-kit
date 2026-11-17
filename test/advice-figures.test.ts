@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { assessAccuracyClaim } from '../src/index.js'
 import type { AccuracyAssessment, AssessOptions } from '../src/index.js'
 
-// Regression rows for the run 10 review. Every row name starts with the finding
+// Regression rows for the suggested statement. Every row name starts with the finding
 // id it pins, so `vitest -t "run10:P2"` runs one finding.
 
 const HUMAN = { provenance: { source: 'human' }, sampling: 'random' } as const
