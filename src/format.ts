@@ -53,6 +53,24 @@ export function pctNearest(proportion: number, decimals: number): string {
 }
 
 /**
+ * A point rate for explanatory wording. Keep the usual precision unless it
+ * would turn an interior rate into an absolute 0% or 100%; then add only the
+ * digits needed to distinguish it. This does not set claim precision or format
+ * bounds, which must still round in their cautious direction.
+ */
+export function pctRate(proportion: number, decimals: number): string {
+  if (proportion === 0 || proportion === 1) return pctNearest(proportion, decimals)
+  for (let d = decimals; d <= 20; d++) {
+    const text = pctNearest(proportion, d)
+    const shown = parseFloat(text)
+    if (shown > 0 && shown < 100) return text
+  }
+  // A positive caller-supplied point may be smaller than fixed notation can
+  // show. Counts cannot reach this case (n is at most MAX_SAFE_INTEGER).
+  return `${(proportion * 100).toExponential()}%`
+}
+
+/**
  * A number to `decimals` places, cut in a chosen direction instead of rounded to
  * the nearest, from the digits it is written with (0.57 is 0.57, not 0.5699...):
  * 'down' never shows more than the number (0.9996 is 0.99, -0.456 is -0.46),

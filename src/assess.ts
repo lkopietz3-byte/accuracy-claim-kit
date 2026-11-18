@@ -4,7 +4,7 @@ import { dayNumber } from './dates.js'
 import { parseDisplayFigure, textFiguresDiffering } from './display.js'
 import { beyondNoise, snapAbsolute, VALUE_NOISE } from './exact.js'
 import type { DisplayFigure } from './display.js'
-import { confidenceLabel, decimalCut, maxDisplayDecimals, pctCeil, pctFloor, pctNearest } from './format.js'
+import { confidenceLabel, decimalCut, maxDisplayDecimals, pctCeil, pctFloor, pctNearest, pctRate } from './format.js'
 import type {
   AccuracyAssessment,
   AccuracyClaimInput,
@@ -342,7 +342,7 @@ function textFigureNote(text: string | undefined, claimed: number, assessed: num
   if (differing.length === 0) return null
   const shown = differing.slice(0, 3).map((figure) => `"${clip(figure, 40)}"`).join(', ')
   const more = differing.length > 3 ? ` and ${String(differing.length - 3)} more` : ''
-  return `claim.text says ${shown}${more}, which is not the figure judged (${pctNearest(assessed, 3)}). The verdict judges value and display, never the wording, so make the text say what was judged.`
+  return `claim.text says ${shown}${more}, which is not the figure judged (${pctRate(assessed, 3)}). The verdict judges value and display, never the wording, so make the text say what was judged.`
 }
 
 /**
@@ -756,7 +756,7 @@ export function assessAccuracyClaim(
     const censusNotes: string[] = []
     let censusVerdict: AccuracyVerdict
     const shown = Math.min(countDecimals(n), 2)
-    const exactText = pctNearest(k / n, shown)
+    const exactText = pctRate(k / n, shown)
     // Every figure the reader can see is judged according to its form: a point
     // or approximate figure must match the count to its digits; a bound is an
     // inequality (strict ones exclude equality); a range and "1 in N" are judged
@@ -832,9 +832,9 @@ export function assessAccuracyClaim(
   let verdict: AccuracyVerdict
   const reasons: ReasonCode[] = []
   const explanation: string[] = []
-  const claimedText = pctNearest(assessed, 3)
+  const claimedText = pctRate(assessed, 3)
   const subject = fromDisplay
-    ? `The printed figure ${claimedText} (more favorable than the claim value ${pctNearest(claimed, 3)})`
+    ? `The printed figure ${claimedText} (more favorable than the claim value ${pctRate(claimed, 3)})`
     : `The claimed ${claimedText}`
   const qualifier = higherIsBetter ? '' : ` ${metricName}`
 
@@ -946,8 +946,8 @@ export function assessAccuracyClaim(
         // The bound at the permitted precision is cut in the cautious direction, so it is never
         // beyond the conservative end and always passes as a claim of its own.
         const lead = higherIsBetter
-          ? ` The figure is also below the observed rate (${observedText}, ${pctNearest(w.point, 3)}): `
-          : ` The figure is also above the observed rate (${observedText}, ${pctNearest(w.point, 3)}): `
+          ? ` The figure is also below the observed rate (${observedText}, ${pctRate(w.point, 3)}): `
+          : ` The figure is also above the observed rate (${observedText}, ${pctRate(w.point, 3)}): `
         sentence += higherIsBetter
           ? `${lead}${observedPart}go down to the lower end (${pctFloor(w.low, printDecimals)}).`
           : `${lead}${observedPart}go up to the upper end (${pctCeil(w.high, printDecimals)}).`

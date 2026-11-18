@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Keep nonzero and imperfect point rates distinct from absolute 0% and 100% in fixed-set statements and explanations, sample advice, and quoted claim values. Add digits only when the usual rounding would reach an endpoint; real endpoints and ordinary formatting stay the same. Verdicts, parsing, precision checks and Wilson bounds are unchanged.
+
 ## [0.1.0] - 2026-10-21
 
 First release. MIT licensed.
