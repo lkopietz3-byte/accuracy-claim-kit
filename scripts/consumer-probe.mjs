@@ -172,3 +172,14 @@ for (const [metric, value, observed] of [
   assert.equal(r.verdict, 'overstated');
   assert.ok(r.explanation[0].includes(`observed rate (${observed})`), r.explanation[0]);
 }
+
+for (const [metric, value, display, counts, headline, interval] of [
+  ['accuracy', 0.99, '99%', { correct: 999_999_990 }, 'at least 99.99999% accurate', '99.99999% to 99.9999995%'],
+  ['error-rate', 0.01, '1%', { errors: 10 }, 'at most 0.00001% error rate', '0.0000005% to 0.00001%'],
+]) {
+  const r = assessAccuracyClaim({ ...base, claim: { metric, value, display }, sample: { n: 1_000_000_000, ...counts } });
+  assert.ok(r.suggestedStatement.includes(`${headline} (95% Wilson interval ${interval},`), r.suggestedStatement);
+  for (const line of [r.suggestedStatement, ...r.explanation]) {
+    assert.doesNotMatch(line, /(?<![\d.])(?:0|100)(?:\.0+)?%/);
+  }
+}

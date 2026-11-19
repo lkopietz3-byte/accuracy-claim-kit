@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Keep nonzero and imperfect point rates distinct from absolute 0% and 100% in fixed-set statements and explanations, sample advice, and quoted claim values. Add digits only when the usual rounding would reach an endpoint; real endpoints and ordinary formatting stay the same. Verdicts, parsing, precision checks and Wilson bounds are unchanged.
+- Keep printed Wilson limits off false 0% and 100% endpoints by rounding outward with extra digits when needed, up to 15 decimal places, and using words if the limit still rounds to an endpoint.
 
 ## [0.1.0] - 2026-10-21
 

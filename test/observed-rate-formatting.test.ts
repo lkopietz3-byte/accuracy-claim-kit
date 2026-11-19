@@ -79,6 +79,7 @@ describe('observed rates keep nonzero and imperfect counts distinct from exact e
     expect(r.verdict).toBe('overstated')
     expect(r.reasons).toEqual(['claim-beyond-conservative-bound'])
     expect(r.explanation[0]).toContain(`observed rate (${observed})`)
+    expect(r.explanation[0]).toContain('print the observed rate, or')
   })
 
   it.each(BOUNDARIES)('sample explanation identifies the actual %s point claim near an endpoint', (metric, correct, value, shown) => {
@@ -112,4 +113,111 @@ describe('observed rates keep nonzero and imperfect counts distinct from exact e
     expect(r.reasons).toEqual(reasons)
     expect(r.suggestedStatement).toContain(': 99.9998% accuracy.')
   })
+})
+
+const ZERO_PERCENT = /(?<![\d.])0(?:\.0+)?%/
+const HUNDRED_PERCENT = /(?<![\d.])100(?:\.0+)?%/
+
+describe('Wilson interval wording preserves cautious rounding without false endpoints', () => {
+  it.each([
+    ['accuracy', 0.99, '99%', 'at least 99.99999% accurate', '99.99999% to 99.9999995%'],
+    ['error-rate', 0.01, '1%', 'at most 0.00001% error rate', '0.0000005% to 0.00001%'],
+  ] as const)('a near-perfect %s sample shows interior limits and the cautious headline', (metric, value, display, headline, interval) => {
+    const r = assessAccuracyClaim({
+      ...HUMAN, sampling: 'random', claim: { metric, value, display },
+      sample: { n: 1_000_000_000, ...(metric === 'accuracy' ? { correct: 999_999_990 } : { errors: 10 }) },
+    })
+    expect(r.suggestedStatement).toContain(`${headline} (95% Wilson interval ${interval},`)
+    for (const line of [r.suggestedStatement, ...r.explanation]) {
+      expect(line).not.toMatch(ZERO_PERCENT)
+      expect(line).not.toMatch(HUNDRED_PERCENT)
+    }
+  })
+
+  it.each([
+    ['accuracy', 0.99, '99.99999% to 100.00000%'],
+    ['error-rate', 0.01, '0.00000% to 0.00001%'],
+  ] as const)('a perfect sample preserves the actual %s interval endpoint', (metric, value, interval) => {
+    const r = assessAccuracyClaim({ ...HUMAN, sampling: 'random', claim: { metric, value }, sample: { n: 1_000_000_000, correct: 1_000_000_000 } })
+    expect(r.suggestedStatement).toContain(`95% Wilson interval ${interval},`)
+  })
+
+  it('uses words when even 15 decimals cannot show a positive Wilson lower limit', () => {
+    const r = assessAccuracyClaim({
+      ...HUMAN, sampling: 'random', claim: { metric: 'accuracy', value: 0.000001 },
+      sample: { n: Number.MAX_SAFE_INTEGER, correct: 1 },
+    }, { confidence: 1 - Number.EPSILON })
+    expect(r.interval?.low).toBeGreaterThan(0)
+    expect(r.interval?.low).toBeLessThan(1e-17)
+    expect(r.suggestedStatement).toContain('at least just above 0% accurate')
+    expect(r.suggestedStatement).toContain('Wilson interval just above 0% to ')
+  })
+
+  it('uses a numerical upper limit at the largest representable interior proportion', () => {
+    const n = Number.MAX_SAFE_INTEGER
+    const r = assessAccuracyClaim({ ...HUMAN, sampling: 'random', claim: { metric: 'accuracy', value: 0.99 }, sample: { n, correct: n - 1 } })
+    expect(r.suggestedStatement).toContain('to 99.99999999999999%,')
+  })
+
+  it.each([
+    ['accuracy', 0.01, 'at least 1%', /lower end \(0\.\d+%\)/],
+    ['error-rate', 0.99, 'at most 99%', /upper end \(99\.\d+%\)/],
+  ] as const)('describes the interior %s limit without advising a figure that exceeds strict precision', (metric, value, display, limit) => {
+    const r = assessAccuracyClaim({
+      ...HUMAN, sampling: 'random', claim: { metric, value, display }, sample: { n: 30, correct: 1 },
+    }, { strictPrecision: true })
+    expect(r.verdict).toBe('overstated')
+    expect(r.explanation[0]).toMatch(limit)
+    expect(r.explanation[0]).toContain('report the counts')
+    expect(r.explanation[0]).not.toContain('print the bound rounded')
+  })
+
+  it.each([{}, { strictPrecision: true }, { conservative: true }])('seeded sample and complete-set wording stays off false endpoints with %j', (options) => {
+    let seed = 0x9e3779b9
+    const next = (): number => {
+      seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0
+      return seed / 2 ** 32
+    }
+    const sizes = [10, 1_000_000_000_000]
+    for (let exponent = 1; exponent < 12; exponent++) {
+      for (let i = 0; i < 4; i++) sizes.push(Math.floor(10 ** exponent * (1 + 9 * next())))
+    }
+    for (const n of sizes) {
+      const near = 3 + Math.floor(next() * 5)
+      for (const correct of new Set([0, 1, 2, near, n - near, n - 2, n - 1, n])) {
+        for (const metric of ['accuracy', 'error-rate'] as const) {
+          const successes = metric === 'accuracy' ? correct : n - correct
+          // Use interior claims so any endpoint in the text comes from the counts.
+          const observed = Math.max(1, Math.min(n - 1, successes)) / n
+          for (const claim of [
+            { metric, value: observed },
+            metric === 'accuracy' ? { metric, value: 0.99, display: '99.00000%' } : { metric, value: 0.01, display: '1.00000%' },
+          ]) {
+            for (const sampling of ['random', 'complete'] as const) {
+              const r = assessAccuracyClaim({
+                ...HUMAN, sampling, claim: { ...claim, text: 'Measured on BenchX' }, sample: { n, correct },
+                ...(sampling === 'complete' ? { benchmark: { name: 'BenchX' } } : {}),
+              }, options)
+              const context = `${sampling} ${metric}, ${successes} of ${n}, claim ${claim.value}`
+              for (const line of [r.suggestedStatement, ...r.explanation]) {
+                if (successes !== 0) expect(line, context).not.toMatch(ZERO_PERCENT)
+                if (successes !== n) expect(line, context).not.toMatch(HUNDRED_PERCENT)
+              }
+            }
+          }
+        }
+      }
+    }
+  })
+})
+
+it.each([
+  [0.99999999, '98%', '98%', '99.999999%'],
+  [0.01, '99.999999%', '99.999999%', '1%'],
+  [1e-8, '2%', '2%', '0.000001%'],
+  [1e-32, '2%', '2%', '1e-30%'],
+] as const)('a mismatched display reports its percentage and the value %s without a false endpoint', (value, display, printedDisplay, printedValue) => {
+  expect(() => assessAccuracyClaim({ ...HUMAN, sampling: 'random', claim: { metric: 'accuracy', value, display } })).toThrow(
+    `claim.display "${display}" (${printedDisplay}) does not match claim.value ${String(value)} (${printedValue}):`,
+  )
 })

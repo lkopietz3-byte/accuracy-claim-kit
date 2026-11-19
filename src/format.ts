@@ -47,6 +47,23 @@ export function pctCeil(proportion: number, decimals: number): string {
   return render(scaledUnits(proportion, decimals, 'ceil'), decimals)
 }
 
+/** An interval limit rounded outward, with extra places only to avoid a false endpoint. */
+export function pctBound(proportion: number, decimals: number, mode: 'floor' | 'ceil'): string {
+  return pctNumericBound(proportion, decimals, mode) ?? (mode === 'floor' ? 'just above 0%' : 'just under 100%')
+}
+
+/** The same outward rounding for advice that needs a numeric figure within a precision limit. */
+export function pctNumericBound(proportion: number, decimals: number, mode: 'floor' | 'ceil', maxDecimals = Math.max(decimals, 15)): string | null {
+  checkProportion(proportion, decimals)
+  for (let d = decimals; d <= maxDecimals; d++) {
+    const units = scaledUnits(proportion, d, mode)
+    if (proportion === 0 || proportion === 1) return render(units, d)
+    const interior = mode === 'floor' ? units > 0n : units < 100n * 10n ** BigInt(d)
+    if (interior) return render(units, d)
+  }
+  return null
+}
+
 /** Nearest, for figures that are not bounds (the claim itself, a width). */
 export function pctNearest(proportion: number, decimals: number): string {
   return `${(proportion * 100).toFixed(decimals)}%`
