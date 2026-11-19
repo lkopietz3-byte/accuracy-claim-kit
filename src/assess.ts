@@ -4,7 +4,7 @@ import { dayNumber } from './dates.js'
 import { parseDisplayFigure, textFiguresDiffering } from './display.js'
 import { beyondNoise, snapAbsolute, VALUE_NOISE } from './exact.js'
 import type { DisplayFigure } from './display.js'
-import { confidenceLabel, decimalCut, maxDisplayDecimals, pctCeil, pctFloor, pctNearest } from './format.js'
+import { confidenceLabel, decimalCut, maxDisplayDecimals, pctBound, pctCeil, pctFloor, pctNearest, pctNumericBound, pctRate } from './format.js'
 import type {
   AccuracyAssessment,
   AccuracyClaimInput,
@@ -331,6 +331,11 @@ function printAdvice(decimals: number): string {
   return decimals === 0 ? '; print it as a whole percent' : `; print it to at most ${placesWord(decimals)}`
 }
 
+/** Trim fixed decimal padding while preserving the exponent of a tiny point rate. */
+function mismatchPercent(proportion: number): string {
+  return pctRate(proportion, 3).replace(/(\.\d*?[1-9])0+%$|\.0+%$/, '$1%')
+}
+
 /**
  * The informational note for a figure in `claim.text` that is not the figure
  * judged (`text-figure-differs`), or null. The text is only scanned: a verdict
@@ -342,7 +347,7 @@ function textFigureNote(text: string | undefined, claimed: number, assessed: num
   if (differing.length === 0) return null
   const shown = differing.slice(0, 3).map((figure) => `"${clip(figure, 40)}"`).join(', ')
   const more = differing.length > 3 ? ` and ${String(differing.length - 3)} more` : ''
-  return `claim.text says ${shown}${more}, which is not the figure judged (${pctNearest(assessed, 3)}). The verdict judges value and display, never the wording, so make the text say what was judged.`
+  return `claim.text says ${shown}${more}, which is not the figure judged (${pctRate(assessed, 3)}). The verdict judges value and display, never the wording, so make the text say what was judged.`
 }
 
 /**
@@ -459,7 +464,7 @@ export function assessAccuracyClaim(
     // one ulp of the value. No float tolerance is involved.
     if (!figure.consistentWith(judgedValue)) {
       throw new RangeError(
-        `claim.display "${clip(displayRaw, 40)}" (${pctNearest(figure.info.figure, 3).replace(/\.?0+%$/, '%')}) does not match claim.value ${String(claimed)} (${pctNearest(claimed, 3).replace(/\.?0+%$/, '%')}): ${figure.mismatchHint}`,
+        `claim.display "${clip(displayRaw, 40)}" (${mismatchPercent(figure.info.figure)}) does not match claim.value ${String(claimed)} (${mismatchPercent(claimed)}): ${figure.mismatchHint}`,
       )
     }
   }
@@ -756,7 +761,7 @@ export function assessAccuracyClaim(
     const censusNotes: string[] = []
     let censusVerdict: AccuracyVerdict
     const shown = Math.min(countDecimals(n), 2)
-    const exactText = pctNearest(k / n, shown)
+    const exactText = pctRate(k / n, shown)
     // Every figure the reader can see is judged according to its form: a point
     // or approximate figure must match the count to its digits; a bound is an
     // inequality (strict ones exclude equality); a range and "1 in N" are judged
@@ -832,9 +837,9 @@ export function assessAccuracyClaim(
   let verdict: AccuracyVerdict
   const reasons: ReasonCode[] = []
   const explanation: string[] = []
-  const claimedText = pctNearest(assessed, 3)
+  const claimedText = pctRate(assessed, 3)
   const subject = fromDisplay
-    ? `The printed figure ${claimedText} (more favorable than the claim value ${pctNearest(claimed, 3)})`
+    ? `The printed figure ${claimedText} (more favorable than the claim value ${pctRate(claimed, 3)})`
     : `The claimed ${claimedText}`
   const qualifier = higherIsBetter ? '' : ` ${metricName}`
 
@@ -854,8 +859,8 @@ export function assessAccuracyClaim(
         : figure.matchesObserved(successes, n) && (!valueMoreFavorable || matchesValue(judgedValue, successes, n))
   }
 
-  const top = pctCeil(w.high, 3)
-  const bottom = pctFloor(w.low, 3)
+  const top = pctBound(w.high, 3, 'ceil')
+  const bottom = pctBound(w.low, 3, 'floor')
   const observedText = `${String(successes)} of ${String(n)}`
   const strictBound = figure !== undefined && figure.strict
   // A bound claim is supported when it sits on the cautious side of the
@@ -885,13 +890,12 @@ export function assessAccuracyClaim(
   } else if (higherIsBetter ? assessed > w.high + tolFor(assessed) : assessed < w.low - tolFor(assessed)) {
     verdict = 'contradicted'
     reasons.push('claim-outside-interval')
-    // At a sample of billions of items one wrong item leaves the limit within a rounding of 100% (or 0%):
-    // the limit is still on the near side of the claim, so say that instead of printing a bare 100%.
+    // For an absolute claim near the interval limit, spell out why the counts rule it out.
     const nearCertain = higherIsBetter
-      ? successes < n && top === pctCeil(1, 3)
+      ? absolute && successes < n && pctCeil(w.high, 3) === pctCeil(1, 3)
         ? ', which is just under 100% because not every item was counted right'
         : null
-      : successes > 0 && bottom === pctFloor(0, 3)
+      : absolute && successes > 0 && pctFloor(w.low, 3) === pctFloor(0, 3)
         ? ', which is just above 0% because at least one error was counted'
         : null
     explanation.push(
@@ -916,13 +920,18 @@ export function assessAccuracyClaim(
         : `${subject}${qualifier} is inside the ${cl} Wilson interval but below its upper end (${top}), which is the least the evidence supports.`
       // A bound printed rounded to the nearest digit ("99.1%+" from a limit of 99.046%) can land
       // just past the limit; the figure to print is the limit rounded in the cautious direction.
+      const allowed = maxDisplayDecimals(w.high - w.low)
+      const adviceMaxDecimals = strictPrecision ? allowed : undefined
+      const boundMode = higherIsBetter ? 'floor' : 'ceil'
       const printedDecimals = figure !== undefined && figure.bound !== null ? figure.info.decimals : null
       if (printedDecimals !== null && figure !== undefined) {
         const oneUnit = 10 ** -(printedDecimals + 2)
-        if (higherIsBetter && figure.bound === 'floor' && assessed - w.low < oneUnit) {
-          sentence += ` The shortfall is within the rounding of the last printed digit, so print the bound rounded down: ${pctFloor(w.low, printedDecimals)}.`
-        } else if (!higherIsBetter && figure.bound === 'ceiling' && w.high - assessed < oneUnit) {
-          sentence += ` The shortfall is within the rounding of the last printed digit, so print the bound rounded up: ${pctCeil(w.high, printedDecimals)}.`
+        const shortfall = higherIsBetter ? assessed - w.low : w.high - assessed
+        if (figure.bound === (higherIsBetter ? 'floor' : 'ceiling') && shortfall < oneUnit) {
+          const rounded = pctNumericBound(conservativeBound, printedDecimals, boundMode, adviceMaxDecimals)
+          if (rounded !== null) {
+            sentence += ` The shortfall is within the rounding of the last printed digit, so print the bound rounded ${higherIsBetter ? 'down' : 'up'}: ${rounded}.`
+          }
         }
       }
       // A figure on the cautious side of the observed rate is the usual honest round-down or
@@ -932,25 +941,24 @@ export function assessAccuracyClaim(
       // within the precision strictPrecision allows can match it; the bound is printed at the
       // precision the interval permits when strictPrecision or conservative is set.
       if (beyondNoise(w.point, assessed, higherIsBetter)) {
-        const allowed = maxDisplayDecimals(w.high - w.low)
         const printDecimals = strictPrecision ? allowed : Math.min(allowed + 2, 5)
         const observedFigure = conservative ? null : observedAdvice(w.point, successes, n, strictPrecision ? allowed : null, higherIsBetter)
-        // The default observed figure is the one the sentence already quotes at three decimals;
-        // only a different figure (a precision limit, or more digits to keep it off 100%) is spelled out.
+        const observedRate = pctRate(w.point, 3)
+        // Repeat the figure only when the advice differs or carries a strict precision limit.
         const observedPart =
           observedFigure === null
             ? ''
-            : !strictPrecision && observedFigure === pctNearest(w.point, 3)
+            : !strictPrecision && observedFigure === observedRate
               ? 'print the observed rate, or '
               : `print the observed rate (${observedFigure}), or `
-        // The bound at the permitted precision is cut in the cautious direction, so it is never
-        // beyond the conservative end and always passes as a claim of its own.
         const lead = higherIsBetter
-          ? ` The figure is also below the observed rate (${observedText}, ${pctNearest(w.point, 3)}): `
-          : ` The figure is also above the observed rate (${observedText}, ${pctNearest(w.point, 3)}): `
-        sentence += higherIsBetter
-          ? `${lead}${observedPart}go down to the lower end (${pctFloor(w.low, printDecimals)}).`
-          : `${lead}${observedPart}go up to the upper end (${pctCeil(w.high, printDecimals)}).`
+          ? ` The figure is also below the observed rate (${observedText}, ${observedRate}): `
+          : ` The figure is also above the observed rate (${observedText}, ${observedRate}): `
+        const rounded = pctNumericBound(conservativeBound, printDecimals, boundMode, adviceMaxDecimals)
+        const boundPart = rounded === null
+          ? 'report the counts'
+          : `go ${higherIsBetter ? 'down to the lower' : 'up to the upper'} end (${rounded})`
+        sentence += `${lead}${observedPart}${boundPart}.`
       }
       explanation.push(sentence)
     }
@@ -986,7 +994,7 @@ export function assessAccuracyClaim(
     if (worse) {
       reasons.push('claim-worse-than-counts')
       explanation.push(
-        `${subject} is far less favorable than the counts support (the 99.9% Wilson interval is ${pctFloor(wide.low, 3)} to ${pctCeil(wide.high, 3)}). If this is a published figure it may be stale or wrong.`,
+        `${subject} is far less favorable than the counts support (the 99.9% Wilson interval is ${pctBound(wide.low, 3, 'floor')} to ${pctBound(wide.high, 3, 'ceil')}). If this is a published figure it may be stale or wrong.`,
       )
     }
   }
@@ -1006,18 +1014,20 @@ export function assessAccuracyClaim(
   }
 
   // ---- statement ---------------------------------------------------------
-  // One precision for the headline bound and the interval it quotes.
+  // Use the same printed bound in the headline and the quoted interval.
   const decimals = Math.min(maxDisplayDecimals(w.high - w.low) + 2, 5)
+  const statementLow = pctBound(w.low, decimals, 'floor')
+  const statementHigh = pctBound(w.high, decimals, 'ceil')
   // The lead names the scope first: the figure is about this sample (or the
   // declared evaluated population), so a pasted headline cannot read as a
   // property of the system.
   const scope = population === undefined ? 'On this sample' : `On this sample of ${population.evaluated}`
   const headline = higherIsBetter
-    ? `${scope}, at least ${pctFloor(w.low, decimals)} ${metricName}`
-    : `${scope}, at most ${pctCeil(w.high, decimals)} ${metricName}`
+    ? `${scope}, at least ${statementLow} ${metricName}`
+    : `${scope}, at most ${statementHigh} ${metricName}`
   const caveat = sampling === 'cross-validation' ? SAMPLING_ERROR_ONLY_CV : SAMPLING_ERROR_ONLY
   const parts = [
-    `${cl} Wilson interval ${pctFloor(w.low, decimals)} to ${pctCeil(w.high, decimals)}`,
+    `${cl} Wilson interval ${statementLow} to ${statementHigh}`,
     `n = ${String(n)}`,
     labelWord,
     SAMPLE_WORD[sampling] ?? 'random sample',

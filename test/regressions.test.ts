@@ -321,7 +321,7 @@ describe('hostile:F1 and codex:CX-1 the name matcher is linear in the claim text
     expect(ms).toBeLessThan(250) // 3,800 ms before the fix; about 1 ms after
   })
 
-  it('hostile:F1 codex:CX-1 CPU time grows less than 10x for 4x the text (500 and 2000 characters)', { timeout: GROWTH_TEST_TIMEOUT }, () => {
+  it('hostile:F1 codex:CX-1 CPU time stays under the growth limit for 8x the text (250 and 2000 characters)', { timeout: GROWTH_TEST_TIMEOUT }, () => {
     // fail fast, before the repeated loops, if one call is already slow
     expect(cpuMs(() => assessAccuracyClaim(heavy(2000)))).toBeLessThan(250)
     const ratio = growthRatio((length) => {
@@ -329,7 +329,8 @@ describe('hostile:F1 and codex:CX-1 the name matcher is linear in the claim text
       return () => {
         assessAccuracyClaim(input)
       }
-    }, 500, 2000)
+    // claim.text is capped at 2000 characters, so the big size is 2000 and the small size is 250 (8x)
+    }, 250, 2000, 'name matcher')
     expect(ratio).toBeLessThan(GROWTH_LIMIT)
   })
 
@@ -339,31 +340,38 @@ describe('hostile:F1 and codex:CX-1 the name matcher is linear in the claim text
       return () => {
         mentionsName(text, 'b')
       }
-    }, 5000, 20_000)
+    }, 5000, 40_000, 'mentionsName rejected matches')
     expect(ratio).toBeLessThan(GROWTH_LIMIT)
   })
 
-  it('hostile:F1 the growth harness still fails a quadratic function at the same limit, and passes a linear one', () => {
+  describe('hostile:F1 the growth harness still fails a quadratic function at the same limit, and passes a linear one', () => {
     let sink = 0
-    // CI (Node 26.3.0) read the old, cheaper quadratic function as 9.07 against the limit of 10, because its
-    // fixed overhead dominated the small size. This one does about 16 million steps at size 500, and the
-    // harness repeats it, so the ratio sits near 16.
+    // CI (Node 26.3.0) read an older, cheaper quadratic function as 9.07 against a limit of 10, because its
+    // fixed overhead dominated the small size. This one does about 16 million steps at size 250, and the
+    // harness repeats it, so the ratio sits near 64.
     const quadratic = (size: number) => (): void => {
-      for (let i = 0; i < size; i++) for (let j = 0; j < size * 64; j++) sink = (sink + (i ^ j)) | 0
+      for (let i = 0; i < size; i++) for (let j = 0; j < size * 256; j++) sink = (sink + (i ^ j)) | 0
     }
-    // a cheap quadratic function (a few microseconds per call at size 20) needs thousands of repeats to measure
+    // a cheap quadratic function (about a microsecond per call at size 10) needs tens of thousands of repeats to measure
     const cheapQuadratic = (size: number) => (): void => {
       for (let i = 0; i < size; i++) for (let j = 0; j < size * 4; j++) sink = (sink + (i ^ j)) | 0
     }
     const linear = (size: number) => (): void => {
-      for (let i = 0; i < size * 4000; i++) sink = (sink + i) | 0
+      for (let i = 0; i < size * 16_000; i++) sink = (sink + i) | 0
     }
-    // 4x the size: about 16x the CPU time for a quadratic function, about 4x for the linear one
-    expect(growthRatio(quadratic, 500, 2000)).toBeGreaterThanOrEqual(GROWTH_LIMIT + 4)
-    expect(growthRatio(cheapQuadratic, 20, 80)).toBeGreaterThanOrEqual(GROWTH_LIMIT + 2)
-    expect(growthRatio(linear, 500, 2000)).toBeLessThan(GROWTH_LIMIT)
-    expect(typeof sink).toBe('number')
-  }, 120_000) // the quadratic runs repeat until the small size costs 60 ms, so the big size costs about 1 s per run
+    // 8x the size: about 64x the CPU time for a quadratic function, about 8x for the linear one
+    it('fails a quadratic function (ratio near 64, required above 40)', { timeout: GROWTH_TEST_TIMEOUT }, () => {
+      expect(growthRatio(quadratic, 250, 2000, 'meta quadratic')).toBeGreaterThanOrEqual(40)
+    })
+    it('fails a cheap quadratic function that needs many repeats (ratio near 64, required above 40)', { timeout: GROWTH_TEST_TIMEOUT }, () => {
+      expect(growthRatio(cheapQuadratic, 10, 80, 'meta cheap quadratic')).toBeGreaterThanOrEqual(40)
+    })
+    it('passes a linear function well under the limit, and the limit is 20', { timeout: GROWTH_TEST_TIMEOUT }, () => {
+      expect(growthRatio(linear, 250, 2000, 'meta linear')).toBeLessThan(GROWTH_LIMIT)
+      expect(GROWTH_LIMIT).toBe(20)
+      expect(typeof sink).toBe('number')
+    })
+  })
 })
 
 describe('hostile:F3 a benchmark name needs a letter or a digit', () => {
@@ -889,13 +897,16 @@ describe('false-pass:F4 a figure in claim.text that differs from the figure judg
   it('false-pass:F4 the flag is listed once however many figures differ, and the text scan is linear', { timeout: GROWTH_TEST_TIMEOUT }, () => {
     const many = setCensus('99.9% 98.9% 97.9% 96.9% on the Foo set')
     expect(many.reasons).toEqual(['census-matches-count', 'text-figure-differs'])
-    // claim.text is capped at 2000 characters, so 320 copies (1,934 characters) is the largest 4x step; the old 100 and 300 were a 3x step
+    // claim.text is capped at 2000 characters, so 640 copies of the 3-character figure "9% " (1,934 characters) is the
+    // largest big size; the small size is 80 (8x). Both sizes are past the 50-figure scan limit, so the figure work is capped and the ratio reads near 1.5;
+    // the test fails only if the scan past the limit starts to grow.
+    expect(setCensus(`${'9% '.repeat(640)}on the Foo set`).reasons).toEqual(['census-matches-count', 'text-figure-differs'])
     const ratio = growthRatio((copies) => {
-      const text = `${'99.9% '.repeat(copies)}on the Foo set`
+      const text = `${'9% '.repeat(copies)}on the Foo set`
       return () => {
         setCensus(text)
       }
-    }, 80, 320)
+    }, 80, 640, 'text figures')
     expect(ratio).toBeLessThan(GROWTH_LIMIT)
   })
 })

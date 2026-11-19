@@ -141,3 +141,45 @@ assert.throws(() => assessAccuracyClaim(null), TypeError);
 
 assert.equal(maxDisplayDecimals(0.0109), 0);
 assert.equal(maxDisplayDecimals(0.001), 2);
+
+// Boundary wording must survive building, packing and installing by name.
+for (const [metric, n, correct, value, verdict, shown] of [
+  ['accuracy', 1000000000, 999999990, 0.99999999, 'supported', '99.999999%'],
+  ['accuracy', 1000000000, 999999990, 1, 'contradicted', '99.999999%'],
+  ['error-rate', 1000000000, 999999990, 1e-8, 'supported', '0.000001%'],
+  ['error-rate', 1000000000, 999999990, 0, 'contradicted', '0.000001%'],
+  ['accuracy', 1000000000, 1000000000, 1, 'supported', '100.00%'],
+  ['error-rate', 1000000000, 1000000000, 0, 'supported', '0.00%'],
+  ['accuracy', Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER - 1, 1, 'contradicted', '99.99999999999999%'],
+  ['error-rate', Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER - 1, 0, 'contradicted', '0.00000000000001%'],
+]) {
+  const r = assessAccuracyClaim({
+    claim: { metric, value, text: 'Measured on BenchX' },
+    sample: { n, correct },
+    provenance: human,
+    sampling: 'complete',
+    benchmark: { name: 'BenchX' },
+  });
+  assert.equal(r.verdict, verdict);
+  assert.ok(r.suggestedStatement.includes(`: ${shown} `), r.suggestedStatement);
+  assert.ok(r.explanation[0].includes(`, ${shown})`), r.explanation[0]);
+}
+for (const [metric, value, observed] of [
+  ['accuracy', 0.999995, '499999 of 500000, 99.9998%'],
+  ['error-rate', 0.000005, '1 of 500000, 0.0002%'],
+]) {
+  const r = assessAccuracyClaim({ ...base, claim: { metric, value }, sample: { n: 500000, correct: 499999 } });
+  assert.equal(r.verdict, 'overstated');
+  assert.ok(r.explanation[0].includes(`observed rate (${observed})`), r.explanation[0]);
+}
+
+for (const [metric, value, display, counts, headline, interval] of [
+  ['accuracy', 0.99, '99%', { correct: 999_999_990 }, 'at least 99.99999% accurate', '99.99999% to 99.9999995%'],
+  ['error-rate', 0.01, '1%', { errors: 10 }, 'at most 0.00001% error rate', '0.0000005% to 0.00001%'],
+]) {
+  const r = assessAccuracyClaim({ ...base, claim: { metric, value, display }, sample: { n: 1_000_000_000, ...counts } });
+  assert.ok(r.suggestedStatement.includes(`${headline} (95% Wilson interval ${interval},`), r.suggestedStatement);
+  for (const line of [r.suggestedStatement, ...r.explanation]) {
+    assert.doesNotMatch(line, /(?<![\d.])(?:0|100)(?:\.0+)?%/);
+  }
+}
