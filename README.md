@@ -8,7 +8,7 @@ The kit checks evidence. It does not certify that a figure is true or that a sys
 
 Zero runtime dependencies, TypeScript types included, ESM, Node 20 or newer. It reads no clock and uses no randomness: the same input gives the same output (dates are passed in, never read).
 
-**Reproducible benchmark.** From a clone, `npm run bench` (it needs `python3`) rebuilds a test set from 216 percentages printed with counts in 75 public FDA 510(k) summaries, runs the kit over it and checks 103 hand-labeled claims from other sources, and it fails if a pinned number moves. The oracle that judges the first set shares an author with the kit, so read it as "the kit does what it documents". Numbers and limits: [Agreement with an independent oracle and a hand-labeled holdout](#agreement-with-an-independent-oracle-and-a-hand-labeled-holdout).
+**Reproducible benchmark.** From a clone, `npm run bench` (it needs `python3`) rebuilds a test set from 216 percentages printed with counts in 75 public FDA 510(k) summaries, runs the kit over it and checks 103 claims from other sources that an AI coding agent labeled and I spot-checked, and it fails if a pinned number moves. The oracle that judges the first set shares an author with the kit, so read it as "the kit does what it documents". Numbers and limits: [Agreement with a second implementation and a spot-checked holdout](#agreement-with-a-second-implementation-and-a-spot-checked-holdout).
 
 ## Install
 
@@ -68,7 +68,7 @@ console.log(assessAccuracyClaim(input).verdict) // supported
 
 Every public type is exported from the package root (`AccuracyAssessment`, `ReasonCode`, `UnsupportedMetric` and the rest). The package is ESM only. With `"module": "node16"`, a TypeScript file that compiles to CommonJS (a `.ts` file in a package without `"type": "module"`, or a `.cts` file) gets TS1479 on `import ... from 'accuracy-claim-kit'`, and TS1541 on a type-only import. Make the file ESM (`"type": "module"` in your `package.json`, or the `.mts` extension) or load the package with `await import('accuracy-claim-kit')`. `"module": "nodenext"` accepts the import in TypeScript 5.9, the version checked.
 
-## Agreement with an independent oracle and a hand-labeled holdout
+## Agreement with a second implementation and a spot-checked holdout
 
 How often does the kit agree with a check that is not itself? Two re-runnable checks answer this, and neither is a sample of all accuracy claims. From a clone of the repository, `npm run bench` reproduces every number below (it needs `python3`; `bench/` is not in the npm package). They were measured on the 0.1.0 source at revision `373258b` of the repository; later commits also changed `src/` (an absolute 100% or 0% in `claim.text` is flagged against a rounded value, two explanations were reworded, the Wilson upper limit stays below 1 at about 4.5e15 items, the text scan reads the Arabic percent sign, and a type is exported; `git diff 373258b HEAD -- src` lists them). No benchmark verdict changed: `bench/expected.json` pins every number below, and `npm run bench` reproduces them on the release head.
 
@@ -80,7 +80,7 @@ How often does the kit agree with a check that is not itself? Two re-runnable ch
 
 The oracle restates this README's rules and shares an author with the kit, so agreement shows the kit does what it documents, not that the rules are right. The FDA corpus is one document family, and the altered claims are built by fixed rules, so 0 of 957 is not the rate on claims people actually write.
 
-**Holdout: 103 public claims from other sources.** 103 claims with printed counts, from 30 open-access papers and one vendor benchmark page, none from the FDA corpus. Each was labeled by hand from the rules before the kit ran on it. The kit's verdict equals the label on 103 of 103 (73 supported, 24 refused, 4 contradicted, 2 overstated). Five of the six contradicted or overstated rows are printed percentages that are not the rate their own counts give (four truncated instead of rounded, one mistyped). 71 of the 103 are scores over a fixed set, so the interval path is exercised by only 6 claims.
+**Holdout: 103 public claims from other sources.** 103 claims with printed counts, from 30 open-access papers and one vendor benchmark page, none from the FDA corpus. Each was labeled from the README's rules by an AI coding agent, and I spot-checked the labels, before the kit ran on it. The kit's verdict equals the label on 103 of 103 (73 supported, 24 refused, 4 contradicted, 2 overstated). Five of the six contradicted or overstated rows are printed percentages that are not the rate their own counts give (four truncated instead of rounded, one mistyped). 71 of the 103 are scores over a fixed set, so the interval path is exercised by only 6 claims.
 
 **Cross-check of the arithmetic.** Wilson intervals (8,899 cases), z, percent agreement, Cohen's kappa and Gwet's AC1 (1,500 two-rater tables) match statsmodels, scipy, scikit-learn and irrCAC to a largest difference of 4.9e-15 for Wilson and 6.7e-14 for kappa. See "Cross-checked against reference libraries".
 
@@ -439,7 +439,7 @@ From a clone, `npm run bench` runs the kit over 216 percentages with counts prin
 
 A slice of the corpus (547 cases) runs in the test suite (`test/field-corpus.test.ts`).
 
-A separate holdout (`bench/holdout/`) has 103 public claims with printed counts from 30 open-access papers and one vendor benchmark page, none from the FDA corpus. Each was labeled by hand from the README's rules and the label committed before the kit ran on it. The kit's verdict equals the label on 103 of 103 (73 supported, 24 refused, 4 contradicted, 2 overstated). The six contradicted or overstated rows are five percentages that are not the rate their own counts give (four truncated instead of rounded, one mistyped) and one vendor sentence. 71 of the 103 are scores over a fixed set, so the interval is exercised by only 6 claims; `bench/holdout/README.md` says what the result does not show.
+A separate holdout (`bench/holdout/`) has 103 public claims with printed counts from 30 open-access papers and one vendor benchmark page, none from the FDA corpus. Each was labeled from the README's rules by an AI coding agent, and I spot-checked the labels, before the kit ran on it. The kit's verdict equals the label on 103 of 103 (73 supported, 24 refused, 4 contradicted, 2 overstated). The six contradicted or overstated rows are five percentages that are not the rate their own counts give (four truncated instead of rounded, one mistyped) and one vendor sentence. 71 of the 103 are scores over a fixed set, so the interval is exercised by only 6 claims; `bench/holdout/README.md` says what the result does not show.
 
 ### Vectors
 

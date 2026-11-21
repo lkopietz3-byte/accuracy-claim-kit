@@ -95,7 +95,7 @@ describe('first5:F10 the lead and the heading say what the numbers show', () => 
     expect(readme).not.toContain('writes the most the evidence supports')
     expect(readme).toContain('writes a cautious statement the evidence supports')
     expect(readme).not.toContain('## Accuracy on real data')
-    expect(readme).toContain('## Agreement with an independent oracle and a hand-labeled holdout')
+    expect(readme).toContain('## Agreement with a second implementation and a spot-checked holdout')
     expect(readme).not.toContain('How often is the kit right?')
   })
 })
