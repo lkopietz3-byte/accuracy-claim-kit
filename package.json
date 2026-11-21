@@ -1,7 +1,7 @@
 {
   "name": "accuracy-claim-kit",
-  "version": "0.1.1",
-  "description": "Does this accuracy or error-rate number have the evidence to carry it? Wilson intervals, inter-rater agreement (percent agreement, Cohen's kappa, Gwet's AC1) and a refuse-or-judge verdict on a claimed figure, computed from caller-supplied counts. Zero-dependency, offline TypeScript.",
+  "version": "0.1.2",
+  "description": "Check whether the counts and methods you supply support an accuracy or error-rate claim. Get a suggested statement and an uncertainty range when the sample allows it.",
   "keywords": [
     "accuracy",
     "error-rate",

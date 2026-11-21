@@ -2,7 +2,7 @@
 
 Does this accuracy or error-rate number have the evidence to carry it? You give the kit the counts behind a published figure, who labeled the items and how they were chosen. It says whether those counts can carry the figure, and writes a cautious statement the evidence supports, as plain text you can publish instead.
 
-It is for people who publish a figure from their own evaluation: an AI-eval author, a team with a model or detector in production, a maintainer writing a benchmark README or a methodology page. Most real claims fail on a missing declaration (nobody wrote down who labeled, how items were picked, or what was measured), so expect `refused` often and read it as "write this down", not "false".
+It is for people who publish a figure from their own evaluation: an AI-eval author, a team with a model or detector in production, a maintainer writing a benchmark README or a methodology page. The kit returns `refused` if required details are missing, such as who labeled the items, how they were chosen or what was measured. That verdict tells you what is missing.
 
 The kit checks evidence. It does not certify that a figure is true or that a system is accurate, and it makes no legal or regulatory determination. A `supported` verdict means the claim is no more favorable than the counts you supplied, or is an honest report of the rate you observed. See "What it does not do" and [METHOD.md](https://github.com/lkopietz3-byte/accuracy-claim-kit/blob/main/METHOD.md), which gives the reason for every rule and default.
 
