@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.3] - 2026-11-21
+
+Documentation only. The package code and API are the same as 0.1.2.
+
+- README and bench README wording from the November 20 audit. The docs test is updated to match.
+
 ## [0.1.2] - 2026-11-20
 
 Documentation only. The package code and API are the same as 0.1.1.

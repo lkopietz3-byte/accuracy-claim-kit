@@ -794,7 +794,7 @@ describe('gate-review:R5-F7 gate-review:R5-F8 the measured-rate note and the ben
   it('gate-review:R5-F8 every mention of npm run bench in the README says it runs from a clone', () => {
     const mentions = readme.split('npm run bench').length - 1
     expect(mentions).toBeGreaterThan(0)
-    expect(readme).toContain('From a clone of the repository, `npm run bench` reproduces every number below')
+    expect(readme).toContain('From a clone of the repository, `npm run bench` reproduces the field benchmark and checks the holdout verdicts')
     expect(readme).toContain('`bench/` is not in the npm package')
     expect(readme).toContain('From a clone, `npm run bench` runs the kit over 216 percentages')
   })
