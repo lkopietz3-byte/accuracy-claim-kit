@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.1.2] - 2026-11-20
+
+Documentation only. The package code and API are the same as 0.1.1.
+
+### Changed
+
+- The README says the kit returns refused when required details are missing, without a claim about how often that happens.
+- A shorter package description that npm shows in full.
+
 ## [0.1.1] - 2026-11-18
 
 Wording fix. No verdict, threshold or API change.
@@ -13,7 +22,7 @@ First release. MIT licensed.
 
 ### What it does
 
-- `assessAccuracyClaim` judges a published accuracy or error-rate figure against the counts behind it and returns one of four verdicts: `supported`, `overstated`, `contradicted` or `refused`. Every result has reason codes, one plain sentence per code, and a cautious suggested statement that begins `On this sample` and says the interval covers sampling error only.
+- `assessAccuracyClaim` judges a published accuracy or error-rate figure against the counts behind it and returns one of four verdicts: `supported`, `overstated`, `contradicted` or `refused`. Every result has reason codes, one plain sentence per code, and a suggested statement based on the result. If a sample gets an interval, the statement explains that the range covers sampling error only.
 - `refused` means "cannot tell", never "false". It outranks every other verdict, lists every failed precondition and returns no interval. Preconditions: counts disclosed, human or deterministic labels, random or stratified or named whole-set sampling, `n` at or above `minN` (default 30), strata that do not clearly differ, known retractions included, and optional gates for agreement, age and scope.
 - Sample claims are compared with the Wilson interval (95% by default). A figure equal to the observed rate to its printed precision is `supported` (`matches-observed-rate`). Bounds such as `99%+` and `<1%`, and absolute claims of 0% or 100%, are never excused that way.
 - Claims about a whole fixed set (`sampling: 'complete'` or `'held-out-split'`, with `benchmark.name` and wording that names the set) are compared with the exact count, with no interval.
