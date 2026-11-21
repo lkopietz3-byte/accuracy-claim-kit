@@ -1,6 +1,6 @@
 # Holdout: 103 public accuracy claims from a family the FDA corpus does not cover
 
-The FDA corpus (`../fda/`) has one source family and an oracle written from the README. This holdout tests the kit on claims from other places, with verdicts decided by hand from the README's rules and written down before the kit was run on them.
+The FDA corpus (`../fda/`) uses an oracle written from the README. This holdout tests the kit on claims from other sources. Each claim was labeled from the README's rules by an AI coding agent, and I spot-checked the labels before the kit ran.
 
 ## What is in here
 
@@ -14,11 +14,11 @@ The FDA corpus (`../fda/`) has one source family and an oracle written from the 
 
 ## The claims
 
-- 59 `llm-exam-paper` claims: accuracy of a language model on exam or case questions, from 16 open-access papers. Each is a score over a fixed, named set, so it is declared `complete` and checked against the exact count.
-- 33 `ml-paper` claims: classifier results from 14 open-access papers, declared as a held-out test split (checked against the exact count), a random sample (judged with the interval), or a convenience sample.
+- 59 `llm-exam-paper` claims: accuracy of a language model on exam or case questions, from 16 open-access papers. Each reports a score over a fixed, named set and is declared `complete`.
+- 33 `ml-paper` claims: classifier results from 14 open-access papers, declared as a held-out test split, a random sample, or a convenience sample.
 - 11 `vendor-benchmark` claims from one AI-text-detector benchmark page that prints error counts. 8 have counts; 3 print an error count without a denominator.
 
-Every claim has counts printed in its source, except the 3 vendor claims noted above, which test the refusal when counts are missing. `../SOURCES.json` lists each paper, its license and how it was found.
+100 claims have both a numerator and a denominator. The three vendor claims with no counts at all test how the kit handles missing counts. `../SOURCES.json` lists each paper, its license and how it was found.
 
 ## How the labels were made
 
@@ -28,9 +28,9 @@ Every claim has counts printed in its source, except the 3 vendor claims noted a
 
 ## Result
 
-The kit's verdict equals the hand label on 103 of 103 claims (llm-exam-paper 59 of 59, ml-paper 33 of 33, vendor-benchmark 11 of 11), and the reason codes match on all 103. There are no disagreements to list.
+The kit's verdict equals the label on 103 of 103 claims (llm-exam-paper 59 of 59, ml-paper 33 of 33, vendor-benchmark 11 of 11), and the reason codes match on all 103.
 
-| Hand label | Kit | Claims | What they are |
+| Label | Kit | Claims | What they are |
 | --- | --- | --- | --- |
 | supported | supported | 73 | 71 figures that match their exact counts (`census-matches-count`), 2 sample estimates that equal the observed rate (`matches-observed-rate`) |
 | refused | refused | 24 | 14 `unknown-label-source` (the paper does not say who labeled), 5 `convenience-sample`, 3 `n-undisclosed` (the vendor page prints errors without a denominator), 1 `sample-too-small` (6 of 15), 1 `no-human-labels` (GPT-3 as the checker) |
@@ -45,4 +45,4 @@ The 6 contradicted or overstated rows are the informative ones: four of the five
 - The declarations are my reading of each source. A different reader could declare a claim differently, and the verdict would change with it. The kit cannot check them.
 - Most claims are honest reports of what was measured, so most labels are `supported` or a refusal.
 - Claims were picked for having printed counts, which most accuracy claims do not have. Of the six vendor, blog and model-card pages opened for counts, one printed any. This is not a sample of all accuracy claims and says nothing about how common overstated claims are.
-- 71 of 103 are scores over a fixed set, where the kit compares the figure with the exact count and an interval plays no part. Only 6 claims (2 judged `supported`, 2 `overstated`, 1 `sample-too-small`, 1 `no-human-labels`) went through the interval path.
+- The kit made 75 exact-count comparisons and calculated four Wilson intervals. It refused two random-sample claims before calculating an interval.

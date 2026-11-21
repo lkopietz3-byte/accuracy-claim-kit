@@ -50,7 +50,7 @@ See `SOURCES.json`: every source URL, the license or terms of each source, what 
 
 ## The holdout (`holdout/`)
 
-103 public accuracy claims with printed counts from 30 open-access papers and a vendor benchmark page, none from the FDA corpus, labeled from the README's rules by an AI coding agent, and spot-checked by me, before the kit was run: the kit agrees on 103 of 103 (73 supported, 24 refused, 4 contradicted, 2 overstated). `node bench/holdout/run.mjs` reproduces it; `holdout/README.md` says what it does not show.
+The holdout has 103 public accuracy claims from 30 open-access papers and one vendor benchmark page outside the FDA corpus. Of the 103 claims, 100 have both a numerator and a denominator. Each claim was labeled from the README's rules by an AI coding agent, and I spot-checked the labels before the kit ran. The kit's verdict equals the label on 103 of 103 (73 supported, 24 refused, 4 contradicted, 2 overstated). The kit made 75 exact-count comparisons and calculated four Wilson intervals. It refused two random-sample claims before calculating an interval. Run `node bench/holdout/run.mjs` to reproduce the verdict comparison. See [the holdout README](holdout/README.md) for the method and limits.
 
 ## Heuristic rates (`heuristics.mjs`)
 
